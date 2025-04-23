@@ -6,6 +6,10 @@
   <title>Action Jackson's</title>
   <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@1.5.10/css/pico.min.css" />
   <style>
+    body {
+      background-color: #111;
+      color: #f4f4f4;
+    }
     main {
       display: flex;
       flex-direction: column;
@@ -13,9 +17,38 @@
       align-items: center;
       min-height: 80vh;
       text-align: center;
+      padding: 3rem 1rem;
     }
     header nav ul {
       justify-content: flex-end;
+    }
+    .hero {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+    .hero img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+    }
+    .hero h1 {
+      font-size: 3rem;
+      margin-bottom: 0.5rem;
+    }
+    .hero p {
+      font-size: 1.2rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    section {
+      padding: 2rem 1rem;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    footer {
+      text-align: center;
+      padding: 2rem 0;
     }
   </style>
 </head>
@@ -26,20 +59,40 @@
         <li><strong>Action Jackson's</strong></li>
       </ul>
       <ul>
-        <li><a href="index.html">Home</a></li>
-        <li><a href="scheduling.html">Schedule</a></li>
-        <li><a href="quotes.html">Get a Quote</a></li>
+        <li><a href="/">Home</a></li>
+        <li><a href="/scheduling">Schedule</a></li>
+        <li><a href="/quotes">Get a Quote</a></li>
       </ul>
     </nav>
   </header>
 
-  <main class="container">
-    <h1>Welcome to Action Jackson's</h1>
-    <p>Affordable, reliable fiber installation. Book online today.</p>
+  <main class="container hero">
+    <h1>HOME INSTALLATIONS YOU CAN TRUST</h1>
+    <p>We provide clean, professional network drops and structured cabling for residential and small business customers across Mid-Missouri.</p>
+    <img src="https://images.unsplash.com/photo-1581090700227-1e8d9e5057f3" alt="Network installation illustration" />
     <p>
-      <a href="scheduling.html" class="contrast">Schedule Now</a>
+      <a href="/scheduling" class="contrast">Schedule Your Install</a>
     </p>
   </main>
+
+  <section>
+    <h2>Why Choose Us?</h2>
+    <ul>
+      <li><strong>Locally Owned:</strong> Proudly serving Mid-Missouri communities.</li>
+      <li><strong>Expert Installation:</strong> Fiber and Ethernet installs done clean, fast, and right.</li>
+      <li><strong>Transparent Pricing:</strong> Know what you pay — no surprises.</li>
+      <li><strong>Scheduling Simplicity:</strong> Our online portal makes it easy to book a job that fits your life.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>How It Works</h2>
+    <ol>
+      <li><strong>Request a Quote</strong> – Tell us what you need, and we’ll provide a price breakdown.</li>
+      <li><strong>Pick a Time</strong> – Use our scheduling tool to reserve your spot.</li>
+      <li><strong>Get Installed</strong> – We show up, get it done, and leave your home clean.</li>
+    </ol>
+  </section>
 
   <footer class="container">
     <small>&copy; 2025 Action Jackson Installs</small>
