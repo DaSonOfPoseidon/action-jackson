@@ -6,6 +6,9 @@
   <title>Action Jackson's</title>
   <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@1.5.10/css/pico.min.css" />
   <style>
+    :root {
+      --accent: #a3b18a; /* Sage green */
+    }
     body {
       background-color: #111;
       color: #f4f4f4;
@@ -19,36 +22,26 @@
       text-align: center;
       padding: 3rem 1rem;
     }
-    header nav ul {
-      justify-content: flex-end;
-    }
-    .hero {
-      display: flex;
-      flex-direction: column;
-      gap: 2rem;
-    }
-    .hero img {
-      max-width: 100%;
-      height: auto;
-      border-radius: 8px;
-    }
-    .hero h1 {
-      font-size: 3rem;
-      margin-bottom: 0.5rem;
-    }
-    .hero p {
-      font-size: 1.2rem;
-      max-width: 600px;
-      margin: 0 auto;
-    }
     section {
       padding: 2rem 1rem;
       max-width: 800px;
       margin: 0 auto;
     }
+    header nav ul {
+      justify-content: flex-end;
+    }
+    header nav ul:first-of-type a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: bold;
+    }
     footer {
       text-align: center;
       padding: 2rem 0;
+    }
+    a.button, button {
+      background-color: var(--accent);
+      border: none;
     }
   </style>
 </head>
@@ -56,10 +49,10 @@
   <header class="container">
     <nav>
       <ul>
-        <li><strong>Action Jackson's</strong></li>
+        <li><a href="/">Action Jackson's</a></li>
       </ul>
       <ul>
-        <li><a href="/">Home</a></li>
+        <li><a href="/about">About</a></li>
         <li><a href="/scheduling">Schedule</a></li>
         <li><a href="/quotes">Get a Quote</a></li>
       </ul>

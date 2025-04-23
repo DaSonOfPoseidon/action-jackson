@@ -7,12 +7,20 @@
   <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@1.5.10/css/pico.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <style>
+    :root {
+      --accent: #a3b18a; /* Sage green */
+    }
     body {
       background-color: #111;
       color: #f4f4f4;
     }
     header nav ul {
       justify-content: flex-end;
+    }
+    header nav ul:first-of-type a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: bold;
     }
     main {
       display: flex;
@@ -31,16 +39,20 @@
       text-align: center;
       padding: 2rem 0;
     }
+    a.button, button {
+      background-color: var(--accent);
+      border: none;
+    }
   </style>
 </head>
 <body>
   <header class="container">
     <nav>
       <ul>
-        <li><strong>Action Jackson's</strong></li>
+        <li><a href="/">Action Jackson's</a></li>
       </ul>
       <ul>
-        <li><a href="/">Home</a></li>
+        <li><a href="/about">About</a></li>
         <li><a href="/scheduling">Schedule</a></li>
         <li><a href="/quotes">Get a Quote</a></li>
       </ul>
