@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Get a Quote</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script defer src="/scripts/quotes.js"></script>
+    <script src="/scripts/components.js"></script>
+
+</head>
+<body>
+    <div id="navbar-container"></div>
+    
+
+    <div class="container my-5">
+        <h2>Get a Quote</h2>
+        <form id="quote-form">
+            <div class="form-group">
+                <label for="serviceType">Select Service:</label>
+                <select class="form-control" id="serviceType" required>
+                    <option value="Ethernet">Ethernet</option>
+                    <option value="Phone">Phone</option>
+                    <option value="Coax">Coax</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="drops">Number of Drops:</label>
+                <input type="number" class="form-control" id="drops" required>
+            </div>
+            <div class="form-group">
+                <label>Under Construction/Renovation?</label><br>
+                <input type="radio" name="construction" value="true" required> Yes
+                <input type="radio" name="construction" value="false"> No
+            </div>
+            <div class="form-group">
+                <label>Attic or Crawl Space?</label><br>
+                <input type="radio" name="atticCrawl" value="true" required> Yes
+                <input type="radio" name="atticCrawl" value="false"> No
+            </div>
+            <button type="submit" class="btn btn-primary">Get a Quote</button>
+        </form>
+    </div>
+</body>
+</html>

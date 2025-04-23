@@ -1,0 +1,18 @@
+{
+    "name": "action-jacksons-backend",
+    "version": "1.0.0",
+    "description": "Backend API for Action Jackson's installation services",
+    "main": "server.js",
+    "scripts": {
+      "start": "node server.js"
+    },
+    "dependencies": {
+      "express": "^4.18.2",
+      "mongoose": "^6.7.0",
+      "body-parser": "^1.20.1",
+      "cors": "^2.8.5",
+      "dotenv": "^16.0.3",
+      "nodemailer": "^6.9.1"
+    }
+  }
+  
