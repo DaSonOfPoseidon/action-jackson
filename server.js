@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -8,6 +9,7 @@ const app = express();
 // Middleware
 app.use(bodyParser.json());
 app.use(express.static('public'));
+app.use('/pics', express.static(path.join(__dirname, 'public/pics')));
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI, {
@@ -40,6 +42,10 @@ app.get('/scheduling', (req, res) => {
 // Serve quotes.html for /quotes
 app.get('/quotes', (req, res) => {
   res.sendFile(__dirname + '/public/quotes.html');
+});
+
+app.get('/about', (req, res) => {
+  res.sendFile(__dirname, '/public/quotes.html');
 });
 
 app.use((req, res) => {
