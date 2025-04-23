@@ -3,22 +3,32 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Get a Quote</title>
+  <title>Get a Quote | Action Jackson's</title>
   <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@1.5.10/css/pico.min.css">
   <style>
+    body {
+      background-color: #111;
+      color: #f4f4f4;
+    }
+    header nav ul {
+      justify-content: flex-end;
+    }
     main {
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      min-height: 80vh;
+      padding: 3rem 1rem;
+      text-align: center;
     }
     form {
       max-width: 500px;
       width: 100%;
+      margin-top: 2rem;
     }
-    header nav ul {
-      justify-content: flex-end;
+    footer {
+      text-align: center;
+      padding: 2rem 0;
     }
   </style>
 </head>
@@ -29,15 +39,17 @@
         <li><strong>Action Jackson's</strong></li>
       </ul>
       <ul>
-        <li><a href="index.html">Home</a></li>
-        <li><a href="scheduling.html">Schedule</a></li>
-        <li><a href="quotes.html">Get a Quote</a></li>
+        <li><a href="/">Home</a></li>
+        <li><a href="/scheduling">Schedule</a></li>
+        <li><a href="/quotes">Get a Quote</a></li>
       </ul>
     </nav>
   </header>
 
   <main class="container">
-    <h2>Get a Quote</h2>
+    <h1>Request a Custom Installation Quote</h1>
+    <p>Fill out the form below and we’ll follow up with pricing tailored to your home or business installation.</p>
+
     <form method="POST" action="/submit-quote">
       <label for="service">Select Service:</label>
       <select id="service" name="service" required>
