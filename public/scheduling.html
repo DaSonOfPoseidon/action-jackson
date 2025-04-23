@@ -1,32 +1,59 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Schedule Installation</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <script defer src="/scripts/scheduling.js"></script>
-    <script src="/scripts/components.js"></script>
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Schedule Installation</title>
+  <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@1.5.10/css/pico.min.css">
+  <style>
+    main {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 80vh;
+    }
+    form {
+      max-width: 500px;
+      width: 100%;
+    }
+    header nav ul {
+      justify-content: flex-end;
+    }
+  </style>
 </head>
 <body>
-    <div id="navbar-container"></div>
+  <header class="container">
+    <nav>
+      <ul>
+        <li><strong>Action Jackson's</strong></li>
+      </ul>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="scheduling.html">Schedule</a></li>
+        <li><a href="quotes.html">Get a Quote</a></li>
+      </ul>
+    </nav>
+  </header>
 
-    <div class="container my-5">
-        <h2>Schedule Your Installation</h2>
-        <form id="schedule-form">
-            <div class="form-group">
-                <label for="name">Your Name:</label>
-                <input type="text" class="form-control" id="name" required>
-            </div>
-            <div class="form-group">
-                <label for="email">Your Email:</label>
-                <input type="email" class="form-control" id="email" required>
-            </div>
-            <div class="form-group">
-                <label for="date">Select Date:</label>
-                <input type="date" class="form-control" id="date" required>
-            </div>
-            <button type="submit" class="btn btn-primary">Book Now</button>
-        </form>
-    </div>
+  <main class="container">
+    <h2>Schedule Your Installation</h2>
+    <form method="POST" action="/submit-schedule">
+      <label for="name">Your Name:</label>
+      <input type="text" id="name" name="name" required>
+
+      <label for="email">Your Email:</label>
+      <input type="email" id="email" name="email" required>
+
+      <label for="date">Select Date:</label>
+      <input type="date" id="date" name="date" required>
+
+      <button type="submit">Book Now</button>
+    </form>
+  </main>
+
+  <footer class="container">
+    <small>&copy; 2025 Action Jackson Installs</small>
+  </footer>
 </body>
 </html>

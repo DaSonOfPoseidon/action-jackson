@@ -1,43 +1,72 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Get a Quote</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <script defer src="/scripts/quotes.js"></script>
-    <script src="/scripts/components.js"></script>
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Get a Quote</title>
+  <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@1.5.10/css/pico.min.css">
+  <style>
+    main {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 80vh;
+    }
+    form {
+      max-width: 500px;
+      width: 100%;
+    }
+    header nav ul {
+      justify-content: flex-end;
+    }
+  </style>
 </head>
 <body>
-    <div id="navbar-container"></div>
-    
+  <header class="container">
+    <nav>
+      <ul>
+        <li><strong>Action Jackson's</strong></li>
+      </ul>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="scheduling.html">Schedule</a></li>
+        <li><a href="quotes.html">Get a Quote</a></li>
+      </ul>
+    </nav>
+  </header>
 
-    <div class="container my-5">
-        <h2>Get a Quote</h2>
-        <form id="quote-form">
-            <div class="form-group">
-                <label for="serviceType">Select Service:</label>
-                <select class="form-control" id="serviceType" required>
-                    <option value="Ethernet">Ethernet</option>
-                    <option value="Phone">Phone</option>
-                    <option value="Coax">Coax</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="drops">Number of Drops:</label>
-                <input type="number" class="form-control" id="drops" required>
-            </div>
-            <div class="form-group">
-                <label>Under Construction/Renovation?</label><br>
-                <input type="radio" name="construction" value="true" required> Yes
-                <input type="radio" name="construction" value="false"> No
-            </div>
-            <div class="form-group">
-                <label>Attic or Crawl Space?</label><br>
-                <input type="radio" name="atticCrawl" value="true" required> Yes
-                <input type="radio" name="atticCrawl" value="false"> No
-            </div>
-            <button type="submit" class="btn btn-primary">Get a Quote</button>
-        </form>
-    </div>
+  <main class="container">
+    <h2>Get a Quote</h2>
+    <form method="POST" action="/submit-quote">
+      <label for="service">Select Service:</label>
+      <select id="service" name="service" required>
+        <option value="Ethernet">Ethernet</option>
+        <option value="Fiber">Fiber</option>
+        <option value="Drop Runs">Drop Runs</option>
+      </select>
+
+      <label for="drops">Number of Drops:</label>
+      <input type="number" id="drops" name="drops" min="1" required>
+
+      <fieldset>
+        <legend>Under Construction/Renovation?</legend>
+        <label><input type="radio" name="construction" value="yes" required> Yes</label>
+        <label><input type="radio" name="construction" value="no" required> No</label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Attic or Crawl Space?</legend>
+        <label><input type="radio" name="attic" value="yes" required> Yes</label>
+        <label><input type="radio" name="attic" value="no" required> No</label>
+      </fieldset>
+
+      <button type="submit">Get a Quote</button>
+    </form>
+  </main>
+
+  <footer class="container">
+    <small>&copy; 2025 Action Jackson Installs</small>
+  </footer>
 </body>
 </html>
