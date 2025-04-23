@@ -1,20 +1,19 @@
-# Use official Node.js image as base
-FROM node:14
+FROM node:14-alpine
 
-# Set working directory
+# Create app directory
 WORKDIR /usr/src/app
 
-# Copy package.json and package-lock.json
+# Copy only package files first (leverages caching)
 COPY package*.json ./
 
 # Install dependencies
-RUN npm install
+RUN npm ci --only=production
 
-# Copy application source code
+# Copy the rest of the app
 COPY . .
 
-# Expose port
+# Expose the app port
 EXPOSE 3000
 
-# Run the application
+# Start the app
 CMD ["node", "server.js"]

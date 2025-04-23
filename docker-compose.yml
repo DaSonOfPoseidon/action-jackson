@@ -1,3 +1,4 @@
+version: "3.8"
 services:
   app:
     build: .
@@ -5,11 +6,12 @@ services:
       - "3000:3000"
     depends_on:
       - mongo
+    restart: unless-stopped
     environment:
       MONGO_URI: mongodb://mongo:27017/action_jackson
-      EMAIL_USER: your-email@gmail.com
-      EMAIL_PASS: your-email-password
-      ADMIN_EMAIL: admin-email@gmail.com
+      EMAIL_USER: ${EMAIL_USER}
+      EMAIL_PASS: ${EMAIL_PASS}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
     networks:
       - app-network
 
@@ -17,6 +19,7 @@ services:
     image: mongo
     ports:
       - "27017:27017"
+    restart: unless-stopped
     networks:
       - app-network
 
