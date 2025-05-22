@@ -1,22 +1,29 @@
-<!DOCTYPE html>
-<html lang="en">
+<%- include('partials/header', { title: 'Home' }) %>
+
+<main class="container">
+  <section class="hero">
+    <div class="container">
+      <h1>Welcome to Action Jackson’s</h1>
+      <p>Affordable, reliable fiber installation. Book online today.</p>
+      <a href="/scheduling" class="contrast">Schedule Now</a>
+    </div>
+  </section>
+
+  <section class="features container">
+    <article class="card">
+      <h2>Fast Setup</h2>
+      <p>Same-day installs available.</p>
+    </article>
+    <article class="card">
+      <h2>Quality Gear</h2>
+      <p>Latest cables &amp; hardware.</p>
+    </article>
+    <article class="card">
+      <h2>Expert Support</h2>
+      <p>Certified technicians at your service.</p>
+    </article>
+  </section>
+</main>
+
 <script src="/scripts/home.js"></script>
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Action Jackson's</title>
-  <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@1.5.10/css/pico.min.css" />
-  <link rel="stylesheet" href="/public/styles/custom.css" />
-</head>
-<body>
-  <%- include('partials/header') %>
-
-  <main class="container">
-    <h1>Welcome to Action Jackson's</h1>
-    <p>Affordable, reliable fiber installation. Book online today.</p>
-    <p><a href="/scheduling" class="contrast">Schedule Now</a></p>
-  </main>
-
-  <%- include('partials/footer') %>
-</body>
-</html>
+<%- include('partials/footer') %>

@@ -33,22 +33,22 @@ app.use('/api/shared', sharedRoutes);
 
 // Home
 app.get('/', (req, res) => {
-  res.render('index');
+  res.render('index', { title: 'Home' });
 });
 
 // Scheduling
 app.get('/scheduling', (req, res) => {
-  res.render('scheduling');
+  res.render('scheduling', { title: 'Schedule' });
 });
 
 // Quotes
 app.get('/quotes', (req, res) => {
-  res.render('quotes');
+  res.render('quotes', { title: 'Quotes' });
 });
 
 // About
 app.get('/about', (req, res) => {
-  res.render('about');
+  res.render('about', { title: 'About' });
 });
 
 app.use((req, res) => {
