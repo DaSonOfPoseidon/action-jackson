@@ -10,6 +10,8 @@ const app = express();
 app.use(bodyParser.json());
 app.use(express.static('public'));
 app.use('/pics', express.static(path.join(__dirname, 'public/pics')));
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI, {
@@ -29,23 +31,24 @@ app.use('/api/scheduling', schedulingRoutes);
 app.use('/api/quotes', quotesRoutes);
 app.use('/api/shared', sharedRoutes);
 
-// Serve index.html for home
+// Home
 app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/public/index.html');
+  res.render('index');
 });
 
-// Serve scheduling.html for /scheduling
+// Scheduling
 app.get('/scheduling', (req, res) => {
-  res.sendFile(__dirname + '/public/scheduling.html');
+  res.render('scheduling');
 });
 
-// Serve quotes.html for /quotes
+// Quotes
 app.get('/quotes', (req, res) => {
-  res.sendFile(__dirname + '/public/quotes.html');
+  res.render('quotes');
 });
 
+// About
 app.get('/about', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'about.html'));
+  res.render('about');
 });
 
 app.use((req, res) => {

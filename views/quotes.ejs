@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Get a Quote | Action Jackson</title>
+  <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@1.5.10/css/pico.min.css" />
+</head>
+<body>
+  <% include partials/header %>
+
+  <main class="container">
+    <h1>Request a Quote</h1>
+
+    <!-- Packages Overview -->
+    <section>
+      <h2>Packages</h2>
+
+      <article>
+        <h3>Basic</h3>
+        <ul>
+          <li>$50 per drop</li>
+          <li>$20 deposit on quotes over $100</li>
+          <li>Install lines from A to B</li>
+          <li>Standard termination (RJ45/11 or punch down)</li>
+          <li>Testing and verification</li>
+          <li>Low-voltage box, plate, and keystone included</li>
+        </ul>
+      </article>
+
+      <article>
+        <h3>Premium</h3>
+        <p><em>$50/hr add-on</em> (Highly recommend survey)</p>
+        <ul>
+          <li>Everything in Basic</li>
+          <li>All labor included</li>
+          <li>Mount &amp; install routers, switches, APs, cameras, media panels, patch panels, etc.</li>
+          <li>Cable management</li>
+          <li>Setup and test all devices</li>
+          <li>Install management app on client device (if applicable)</li>
+        </ul>
+      </article>
+
+      <article>
+        <h3>Survey</h3>
+        <p><em>$100 (≈2 hrs) due up front, applied as credit to install costs</em></p>
+        <ul>
+          <li>On-site walk-through and discussion of goals &amp; budget</li>
+          <li>Advise on placements and specs</li>
+          <li>Provide recommended parts list upon request</li>
+          <li>Estimate provided at the end</li>
+        </ul>
+      </article>
+    </section>
+
+    <!-- Additional Services -->
+    <section>
+      <h2>Additional Services</h2>
+      <ul>
+        <li>Device mounting: $10/item</li>
+        <li>Network setup: $20</li>
+        <li>Media panel install (panel not included): $50</li>
+      </ul>
+    </section>
+
+    <!-- Quote Request Form -->
+    <form id="quoteForm">
+      <fieldset>
+        <legend>Contact Information</legend>
+        <label for="name">Name</label>
+        <input id="name" name="name" required />
+
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" required />
+      </fieldset>
+
+      <fieldset>
+        <legend>Quote Details</legend>
+
+        <label>Package</label>
+        <label for="packageBasic">
+          <input type="radio" id="packageBasic" name="package" value="Basic" required /> Basic
+        </label>
+        <label for="packagePremium">
+          <input type="radio" id="packagePremium" name="package" value="Premium" /> Premium
+        </label>
+        <label for="packageSurvey">
+          <input type="checkbox" id="packageSurvey" name="package" value="Survey" /> Survey
+        </label>
+
+      <!-- Cable Runs -->
+      <fieldset id="runsSection">
+        <legend>Cable Runs</legend>
+        <label for="coaxRuns">
+          Coax runs:
+          <input
+            type="number"
+            id="coaxRuns"
+            name="coaxRuns"
+            min="0"
+            value="0"
+          />
+        </label>
+
+        <label for="cat6Runs">
+          Cat6 runs:
+          <input
+            type="number"
+            id="cat6Runs"
+            name="cat6Runs"
+            min="0"
+            value="0"
+          />
+        </label>
+      <fieldset id="servicesSection">
+        <legend>Additional Services</legend>
+
+        <label for="deviceMountQty">
+          Device mounting ($10/item):
+          <input
+            type="number"
+            id="deviceMountQty"
+            name="deviceMountQty"
+            min="0"
+            value="0"
+          />
+        </label>
+
+        <label for="networkSetupQty">
+          Network setup ($20):
+          <input
+            type="number"
+            id="networkSetupQty"
+            name="networkSetupQty"
+            min="0"
+            value="0"
+          />
+        </label>
+
+        <label for="mediaPanelQty">
+          Media panel install ($50):
+          <input
+            type="number"
+            id="mediaPanelQty"
+            name="mediaPanelQty"
+            min="0"
+            value="0"
+          />
+        </label>
+      </fieldset>
+
+      <button type="submit">Request Quote</button>
+    </form>
+    <p id="quoteStatus"></p>
+  </main>
+
+  <% include partials/footer %>
+  <script src="/scripts/quotes.js"></script>
+</body>
+</html>
