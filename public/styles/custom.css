@@ -1,0 +1,6 @@
+/* public/styles/custom.css */
+
+/* Tweak Pico’s background variable to a light grey */
+:root {
+  --background: #f5f5f5;
+}
