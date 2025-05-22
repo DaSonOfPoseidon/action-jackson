@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@1.5.10/css/pico.min.css" />
 </head>
 <body>
-  <% include partials/header %>
+  <%- include('partials/header') %>
 
   <main class="container">
     <h1>Request a Quote</h1>
@@ -79,74 +79,98 @@
 
         <label>Package</label>
         <label for="packageBasic">
-          <input type="radio" id="packageBasic" name="package" value="Basic" required /> Basic
+          <input
+            type="radio"
+            id="packageBasic"
+            name="package"
+            value="Basic"
+            required
+          />
+          Basic
         </label>
         <label for="packagePremium">
-          <input type="radio" id="packagePremium" name="package" value="Premium" /> Premium
+          <input
+            type="radio"
+            id="packagePremium"
+            name="package"
+            value="Premium"
+          />
+          Premium
         </label>
         <label for="packageSurvey">
-          <input type="checkbox" id="packageSurvey" name="package" value="Survey" /> Survey
+          <input
+            type="checkbox"
+            id="packageSurvey"
+            name="package"
+            value="Survey"
+          />
+          Survey
         </label>
 
-      <!-- Cable Runs -->
-      <fieldset id="runsSection">
-        <legend>Cable Runs</legend>
-        <label for="coaxRuns">
-          Coax runs:
-          <input
-            type="number"
-            id="coaxRuns"
-            name="coaxRuns"
-            min="0"
-            value="0"
-          />
-        </label>
+        <!-- Cable Runs -->
+        <fieldset id="runsSection">
+          <legend>Cable Runs</legend>
 
-        <label for="cat6Runs">
-          Cat6 runs:
-          <input
-            type="number"
-            id="cat6Runs"
-            name="cat6Runs"
-            min="0"
-            value="0"
-          />
-        </label>
-      <fieldset id="servicesSection">
-        <legend>Additional Services</legend>
+          <label for="coaxRuns">
+            Coax runs:
+            <input
+              type="number"
+              id="coaxRuns"
+              name="coaxRuns"
+              min="0"
+              value="0"
+            />
+          </label>
 
-        <label for="deviceMountQty">
-          Device mounting ($10/item):
-          <input
-            type="number"
-            id="deviceMountQty"
-            name="deviceMountQty"
-            min="0"
-            value="0"
-          />
-        </label>
+          <label for="cat6Runs">
+            Cat6 runs:
+            <input
+              type="number"
+              id="cat6Runs"
+              name="cat6Runs"
+              min="0"
+              value="0"
+            />
+          </label>
+        </fieldset>
 
-        <label for="networkSetupQty">
-          Network setup ($20):
-          <input
-            type="number"
-            id="networkSetupQty"
-            name="networkSetupQty"
-            min="0"
-            value="0"
-          />
-        </label>
+        <!-- Additional Services with quantities -->
+        <fieldset id="servicesSection">
+          <legend>Additional Services</legend>
 
-        <label for="mediaPanelQty">
-          Media panel install ($50):
-          <input
-            type="number"
-            id="mediaPanelQty"
-            name="mediaPanelQty"
-            min="0"
-            value="0"
-          />
-        </label>
+          <label for="deviceMountQty">
+            Device mounting ($10/item):
+            <input
+              type="number"
+              id="deviceMountQty"
+              name="deviceMountQty"
+              min="0"
+              value="0"
+            />
+          </label>
+
+          <label for="networkSetupQty">
+            Network setup ($20):
+            <input
+              type="number"
+              id="networkSetupQty"
+              name="networkSetupQty"
+              min="0"
+              value="0"
+            />
+          </label>
+
+          <label for="mediaPanelQty">
+            Media panel install ($50):
+            <input
+              type="number"
+              id="mediaPanelQty"
+              name="mediaPanelQty"
+              min="0"
+              value="0"
+            />
+          </label>
+        </fieldset>
       </fieldset>
 
       <button type="submit">Request Quote</button>
@@ -154,7 +178,7 @@
     <p id="quoteStatus"></p>
   </main>
 
-  <% include partials/footer %>
+  <%- include('partials/footer') %>
   <script src="/scripts/quotes.js"></script>
 </body>
 </html>

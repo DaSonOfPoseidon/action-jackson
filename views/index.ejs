@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@1.5.10/css/pico.min.css" />
 </head>
 <body>
-  <% include partials/header %>
+  <%- include('partials/header') %>
 
   <main class="container">
     <h1>Welcome to Action Jackson's</h1>
@@ -16,6 +16,6 @@
     <p><a href="/scheduling" class="contrast">Schedule Now</a></p>
   </main>
 
-  <% include partials/footer %>
+  <%- include('partials/footer') %>
 </body>
 </html>

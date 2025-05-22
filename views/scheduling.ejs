@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@1.5.10/css/pico.min.css" />
 </head>
 <body>
-  <% include partials/header %>
+  <%- include('partials/header') %>
 
   <main class="container">
     <h1>Schedule an Installation</h1>
@@ -26,7 +26,7 @@
     <p id="schedulingStatus"></p>
   </main>
 
-  <% include partials/footer %>
+  <%- include('partials/footer') %>
   <script src="/scripts/scheduling.js"></script>
 </body>
 </html>
