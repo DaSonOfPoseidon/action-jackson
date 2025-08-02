@@ -12,6 +12,7 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 app.use(compression());
+mongoose.set('strictQuery', false);
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 app.use('/pics', express.static(path.join(__dirname, 'public/pics')));
@@ -23,9 +24,9 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "https://kit.fontawesome.com"],
-      styleSrc: ["'self'", "https://unpkg.com"],
+      styleSrc: ["'self'", "https://unpkg.com", "https://fonts.googleapis.com"],
       imgSrc: ["'self'", "data:"],
-      fontSrc: ["'self'", "https://kit.fontawesome.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com", "https://kit.fontawesome.com"],
     }
   }
 }));
@@ -70,12 +71,8 @@ async function connectDB() {
     console.error('MongoDB connection error:', err);
   }
 }
+connectDB();
 
-try {
-  connectDB();
-} catch (err) {
-  console.error('Failed to connect to MongoDB:', err);
-}
 
 // Import API routes
 const homeRoutes = require('./routes/home');
@@ -134,15 +131,27 @@ app.get('/healthz', async (req, res) => {
   res.status(healthy ? 200 : 503).json(payload);
 });
 
+// Specific error handler for server errors
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).render('error', { title: 'Server Error', message: 'Something went wrong.' });
+  const statusCode = err.status || err.statusCode || 500;
+  const message = statusCode === 500 ? 'Something went wrong on our end.' : err.message;
+  
+  res.status(statusCode).render('error', { 
+    title: `Error ${statusCode}`, 
+    message: message,
+    statusCode: statusCode
+  });
 });
 
+// 404 handler (must be last)
 app.use((req, res) => {
-  res.status(404).render('404', { title: 'Not Found' });
+  res.status(404).render('error', { 
+    title: 'Page Not Found', 
+    message: 'The page you\'re looking for doesn\'t exist.',
+    statusCode: 404
+  });
 });
-
 // Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
