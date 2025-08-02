@@ -1,27 +1,49 @@
-version: "3.8"
+version: "3.9"
+
 services:
+  mongo:
+    image: arm64v8/mongo:4.4.18
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: actionjackson
+      MONGO_INITDB_ROOT_PASSWORD: "${MONGO_ROOT_PASSWORD}"  # load from .env or secret; do NOT hardcode.
+    healthcheck:                              
+      test: ["CMD-SHELL", "mongo --eval 'db.adminCommand(\"ping\")' --quiet || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - app-network
+    # SECURITY: avoid exposing Mongo to the world unless needed.
+    # If you need host-local access for debugging, bind to localhost only:
+    # ports:
+    #   - "127.0.0.1:27017:27017"            # internal-only binding.
+
   app:
     build: .
-    ports:
-      - "3000:3000"
-    depends_on:
-      - mongo
     restart: unless-stopped
+    depends_on:
+      - mongo                              # startup order only; readiness must be handled by app or via retries.
+      - "3000:3000"                        # consider restricting to 127.0.0.1 if only accessed via Cloudflare Tunnel.
     environment:
-      MONGO_URI: mongodb://mongo:27017/action_jackson
-      EMAIL_USER: ${EMAIL_USER}
-      EMAIL_PASS: ${EMAIL_PASS}
-      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      MONGO_URI: "mongodb://jackson:${MONGO_ROOT_PASSWORD}@mongo:27017/action_jackson?authSource=admin"
+      EMAIL_USER: "${EMAIL_USER}"
+      EMAIL_PASS: "${EMAIL_PASS}"
+      ADMIN_EMAIL: "${ADMIN_EMAIL}"
+    healthcheck:                          # assumes your app exposes e.g. GET /healthz returning 200.
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/healthz || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     networks:
       - app-network
 
-  mongo:
-    image: arm64v8/mongo:4.4.18
-    ports:
-      - "27017:27017"
-    restart: unless-stopped
-    networks:
-      - app-network
+volumes:
+  mongo-data:
 
 networks:
   app-network:

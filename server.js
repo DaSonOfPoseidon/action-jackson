@@ -68,10 +68,14 @@ async function connectDB() {
     console.log('MongoDB connected');
   } catch (err) {
     console.error('MongoDB connection error:', err);
-    process.exit(1); // or implement exponential backoff/retry
   }
 }
-connectDB();
+
+try {
+  connectDB();
+} catch (err) {
+  console.error('Failed to connect to MongoDB:', err);
+}
 
 // Import API routes
 const homeRoutes = require('./routes/home');
@@ -107,6 +111,27 @@ app.get('/quotes', (req, res) => {
 // About
 app.get('/about', (req, res) => {
   res.render('about', { title: 'About' });
+});
+
+app.get('/healthz', async (req, res) => {
+  const payload = { app: 'ok', db: null };
+  let healthy = true;
+
+  if (mongoose.connection.readyState === 1) {
+    try {
+      await mongoose.connection.db.command({ ping: 1 });
+      payload.db = 'ok';
+    } catch (err) {
+      payload.db = 'error';
+      payload.dbError = err.message;
+      healthy = false;
+    }
+  } else {
+    payload.db = 'disconnected';
+    healthy = false;
+  }
+
+  res.status(healthy ? 200 : 503).json(payload);
 });
 
 app.use((err, req, res, next) => {
