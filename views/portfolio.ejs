@@ -1,0 +1,28 @@
+<%- include('partials/header', { title: title }) %>
+
+<main class="container">
+  <section class="hero">
+    <h1>Developer Hub</h1>
+    <p>Action Jackson Installs Toolkit — automation and tools I’ve built to streamline operations.</p>
+  </section>
+
+  <section class="projects grid">
+    <article class="card">
+      <h2>CalendarBuddy</h2>
+      <p>Self-updating job scraper that eliminates 35+ hrs/week of manual work.</p>
+      <p><strong>Stack:</strong> Python, Playwright, Tkinter, GitHub Actions</p>
+      <a href="https://github.com/DaSonOfPoseidon/CalendarBuddy" aria-label="View CalendarBuddy on GitHub">View on GitHub</a>
+    </article>
+
+    <article class="card">
+      <h2>Assigner</h2>
+      <p>Automated job assignment email generator with advanced parsing logic.</p>
+      <p><strong>Stack:</strong> Python, Regex, Email Automation</p>
+      <a href="https://github.com/DaSonOfPoseidon/JobAssignment" aria-label="View Assigner on GitHub">View on GitHub</a>
+    </article>
+
+    <!-- Add more tool cards similarly -->
+  </section>
+</main>
+
+<%- include('partials/footer') %>
