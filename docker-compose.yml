@@ -8,7 +8,7 @@ services:
       - mongo-data:/data/db
     environment:
       MONGO_INITDB_ROOT_USERNAME: actionjackson
-      MONGO_INITDB_ROOT_PASSWORD: "${MONGO_ROOT_PASSWORD}"  # load from .env or secret; do NOT hardcode.
+      MONGO_INITDB_ROOT_PASSWORD: "${MONGO_ROOT_PASSWORD}"  # load from .env or secret
     healthcheck:                              
       test: ["CMD-SHELL", "mongo --eval 'db.adminCommand(\"ping\")' --quiet || exit 1"]
       interval: 10s
@@ -26,7 +26,8 @@ services:
     build: .
     restart: unless-stopped
     depends_on:
-      - mongo                              # startup order only; readiness must be handled by app or via retries.
+      - mongo 
+    ports:                            # startup order only; readiness must be handled by app or via retries.
       - "3000:3000"                        # consider restricting to 127.0.0.1 if only accessed via Cloudflare Tunnel.
     environment:
       MONGO_URI: "mongodb://jackson:${MONGO_ROOT_PASSWORD}@mongo:27017/action_jackson?authSource=admin"

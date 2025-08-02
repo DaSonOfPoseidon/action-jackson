@@ -10,9 +10,9 @@
   <meta property="og:url" content="https://actionjacksoninstalls.com/" />
   <meta property="og:image" content="https://actionjacksoninstalls.com/preview.png" />
   <% 
-  const defaultPageTitle = variant === 'portfolio' ? 'Developer Hub' : 'Installer Site';
+  const defaultPageTitle = variant === 'portfolio' ? 'Action Jackson Builds' : 'Action Jackson Installs';
   const pageTitle = title || defaultPageTitle;
-  const siteName = variant === 'portfolio' ? 'Action Jackson Installs Toolkit' : 'Action Jackson Installs';
+  const siteName = variant === 'portfolio' ? 'Action Jackson Builds' : 'Action Jackson Installs';
   %>
   <title><%= pageTitle %> | <%= siteName %></title>
 
@@ -21,8 +21,16 @@
     rel="stylesheet"
     href="https://unpkg.com/@picocss/pico@1.5.10/css/pico.min.css"
   />
+    <!-- Base styles & fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap"
+    rel="stylesheet"
+  />
   <!-- custom overrides -->
-  <link rel="stylesheet" href="/styles/custom.css" />
+  <link rel="stylesheet" href="/styles/base.css">
+  <link rel="stylesheet" href="/styles/<%= variant === 'portfolio' ? 'software' : 'business' %>.css">
 
   <!-- Font Awesome Kit  -->
   <script
@@ -35,7 +43,7 @@
     <nav class="container">
       <a href="<%= variant === 'portfolio' ? '/' : '/' %>" class="contrast brand">
         <% if (variant === 'portfolio') { %>
-          Action Jackson Installs Toolkit
+          Action Jackson Builds 
         <% } else { %>
           Action Jackson Installs
         <% } %>
@@ -48,22 +56,11 @@
           <li><a href="/quotes" class="contrast">Get a Quote</a></li>
         <% } else { %>
           <!-- Portfolio / developer nav -->
-          <li><a href="/">Developer Hub</a></li>
-          <a href="https://github.com/DaSonOfPoseidon" target="_blank" rel="noopener noreferrer">GitHub</a>
-          <li><a href="https://actionjacksoninstalls.com">Installer Site</a></li>
+          <li><a href="/">Action Jackson Builds</a></li>
+          <li><a href="https://www.linkedin.com/in/jackson-keithley-115582213/" target="_blank" rel="noopener noreferrer">LinkedIn</a></li>
+          <li><a href="https://github.com/DaSonOfPoseidon" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+          <li><a href="https://actionjacksoninstalls.com">Action Jackson Installs</a></li>
         <% } %>
       </ul>
     </nav>
-
-    <div class="site-switcher" style="padding:6px 0; text-align:center;">
-      <% if (variant === 'business') { %>
-        <a href="<%= switcherUrl %>" aria-label="View Developer Hub">
-          Looking for the software engineering portfolio? View Developer Hub →
-        </a>
-      <% } else { %>
-        <a href="<%= switcherUrl %>" aria-label="Go to Installer Site">
-          Need installations or a quote? Go to Installer Site →
-        </a>
-      <% } %>
-    </div>
   </header>

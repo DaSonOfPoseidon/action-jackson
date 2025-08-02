@@ -1,0 +1,85 @@
+/* public/styles/custom.css */
+
+:root {
+  /* Palette */
+  --background: #9a9a9a;
+  --surface: #ffffff; /* card & form bg */
+  --text: #333333; /* dark text */
+  --primary: #2c3e50; /* dark slate */
+  --contrast: #18bc9c; /* mint green */
+
+  /* Shared design tokens */
+  --radius: 8px;
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.15);
+  --transition: all 0.2s ease-in-out;
+}
+
+.hero {
+  background: linear-gradient(135deg, var(--primary), var(--contrast)), 
+              url('/images/hero-bg.jpg') center/cover no-repeat;
+  color: white;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.6);
+  padding: 6rem 0;
+}
+.hero .container {
+  max-width: 700px;
+  text-align: center;
+}
+.hero .contrast {
+  margin-top: 1.5rem;
+  padding: 0.75rem 1.5rem;
+}
+
+.features {
+  display: grid;
+  gap: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  margin: 4rem 0;
+}
+
+.card {
+  background: var(--surface);
+  padding: 2rem;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+}
+.card:hover,
+.card:focus-within {
+  transform: scale(1.02);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+}
+
+footer {
+  padding: 2rem 0;
+  font-size: 0.9rem;
+}
+footer .grid {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.social {
+  list-style: none;
+  display: flex;
+  gap: 1rem;
+}
+.social a { font-size: 1.25rem; }
+
+body {
+  font-family: 'Inter', sans-serif;
+}
+
+button,
+a.contrast {
+  transition: var(--transition);
+}
+
+button:hover,
+button:focus,
+a.contrast:hover,
+a.contrast:focus {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}

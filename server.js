@@ -92,7 +92,7 @@ app.use('/api/shared', sharedRoutes);
 // Home
 app.get('/', (req, res) => {
   if (res.locals.variant === 'portfolio') {
-    res.render('portfolio', { title: 'Developer Hub' });
+    res.render('portfolio', { title: 'Action Jackson Builds' });
   } else {
     res.render('index', { title: 'Home' });
   }

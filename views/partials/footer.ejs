@@ -1,6 +1,18 @@
   <footer>
     <div class="container grid">
-      <small>© 2025 Action Jackson Installs</small>
+      <div class="brand-block">
+        <% if (variant === 'portfolio') { %>
+          <strong>Action Jackson Builds</strong>
+          <p>Custom tools to streamline installations.</p>
+          <a href="<%= switcherUrl %>" aria-label="Visit Installer Site">Visit Installer Site &rarr;</a>
+          <small>© 2025 Action Jackson Builds</small>
+        <% } else { %>
+          <strong>Action Jackson Installs</strong>
+          <p>Affordable, reliable copper installation.</p>
+          <a href="<%= switcherUrl %>" aria-label="Explore the Developer Portfolio">Explore the Developer Portfolio &rarr;</a>
+          <small>© 2025 Action Jackson Installs</small>
+        <% } %>
+      </div>
       <nav aria-label="Social links">
         <ul class="social">
           <li><a href="#"><i class="fab fa-facebook"></i></a></li>
