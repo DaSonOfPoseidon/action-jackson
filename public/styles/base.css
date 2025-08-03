@@ -1,22 +1,202 @@
-/* public/styles/custom.css */
+/* public/styles/base.css */
+
+/* CSS Reset and Base Styles */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', sans-serif;
+  background-color: var(--background);
+  color: var(--text);
+}
+
+/* Container and Layout */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Navigation */
+header {
+  background-color: var(--surface);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1rem 0;
+}
+
+nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+nav ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 2rem;
+}
+
+nav a {
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 500;
+  transition: var(--transition);
+}
+
+nav a:hover {
+  color: var(--primary);
+}
+
+nav a.contrast {
+  background: var(--primary-dark);
+  color: var(--background);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius);
+}
+
+nav a.contrast:hover {
+  background: var(--accent-dark);
+  color: var(--background);
+}
+
+.brand {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #000000 !important;
+  background: var(--accent);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius);
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  margin: 0 0 1rem 0;
+  color: var(--text);
+  font-weight: 700;
+}
+
+h1 { font-size: 2.5rem; }
+h2 { font-size: 2rem; }
+h3 { font-size: 1.5rem; }
+h4 { font-size: 1.25rem; }
+
+p {
+  margin: 0 0 1rem 0;
+}
+
+/* Buttons */
+button, .button, input[type="submit"] {
+  background: var(--primary-dark);
+  color: var(--background);
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius);
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  transition: var(--transition);
+}
+
+button:hover, .button:hover, input[type="submit"]:hover {
+  background: var(--accent-dark);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Forms */
+input, textarea, select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font-family: inherit;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(125, 211, 252, 0.3);
+}
+
+label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+/* Main content */
+main {
+  min-height: 80vh;
+  padding: 2rem 0;
+}
+
+/* Links */
+a {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--accent);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  nav {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  nav ul {
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .container {
+    padding: 0 0.5rem;
+  }
+  
+  h1 { font-size: 2rem; }
+  h2 { font-size: 1.75rem; }
+}
 
 :root {
-  /* Palette */
-  --background: #9a9a9a;
-  --surface: #ffffff; /* card & form bg */
-  --text: #333333; /* dark text */
-  --primary: #2C5F2D; 
-  --contrast: #18bc9c; /* mint green */
+  /* Accessible Color Palette */
+  --background: #121212; /* deep charcoal background */
+  --surface: #1e1e1e; /* card & form bg - dark grey */
+  --surface-light: #2a2a2a; /* lighter surface for contrast */
+  --text: #f5f5f5; /* high contrast white text */
+  --text-muted: #b3b3b3; /* muted text with good contrast */
+  --primary: #7dd3fc; /* accessible pastel blue */
+  --primary-dark: #0ea5e9; /* darker blue for buttons */
+  --accent: #a7f3d0; /* accessible pastel green accent */
+  --accent-dark: #10b981; /* darker green for interactions */
+  --warning: #fde68a; /* accessible pastel yellow */
+  --error: #fca5a5; /* accessible pastel red */
 
   /* Shared design tokens */
   --radius: 8px;
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.15);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.6);
   --transition: all 0.2s ease-in-out;
 }
 
 .hero {
-  background: linear-gradient(135deg, var(--primary), var(--contrast)), 
+  background: linear-gradient(135deg, var(--primary), var(--accent)), 
               url('/images/hero-bg.jpg') center/cover no-repeat;
   color: white;
   text-shadow: 0 2px 6px rgba(0,0,0,0.6);
@@ -74,7 +254,7 @@ footer .container {
 .brand-block strong {
   display: block;
   margin-bottom: 0.5rem;
-  color: var(--primary);
+  color: var(--accent);
 }
 
 .brand-block p {
@@ -150,9 +330,6 @@ nav[aria-label="Social links"] {
   }
 }
 
-body {
-  font-family: 'Inter', sans-serif;
-}
 
 button,
 a.contrast {
@@ -283,14 +460,14 @@ a.contrast:focus {
 
 /* Portfolio variant - Terminal illustration */
 .terminal {
-  background: #1a1a1a;
+  background: var(--background);
   border-radius: var(--radius);
   overflow: hidden;
   box-shadow: var(--shadow-lg);
 }
 
 .terminal-header {
-  background: #333;
+  background: var(--surface);
   padding: 0.5rem 1rem;
   display: flex;
   gap: 0.5rem;
@@ -302,14 +479,14 @@ a.contrast:focus {
   border-radius: 50%;
 }
 
-.terminal-dot.red { background: #ff5f57; }
-.terminal-dot.yellow { background: #ffbd2e; }
-.terminal-dot.green { background: #28ca42; }
+.terminal-dot.red { background: #ff6b6b; }
+.terminal-dot.yellow { background: var(--warning); }
+.terminal-dot.green { background: var(--accent); }
 
 .terminal-body {
   padding: 1rem;
   font-family: 'Courier New', monospace;
-  color: #00ff00;
+  color: var(--accent);
 }
 
 .terminal-line {
@@ -317,11 +494,11 @@ a.contrast:focus {
 }
 
 .prompt {
-  color: #58a6ff;
+  color: var(--primary);
 }
 
 .error-line {
-  color: #ff6b6b;
+  color: #ff8a8a;
 }
 
 .cursor {

@@ -24,7 +24,7 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "https://kit.fontawesome.com"],
-      styleSrc: ["'self'", "https://unpkg.com", "https://fonts.googleapis.com"],
+      styleSrc: ["'self'", "https://fonts.googleapis.com"],
       imgSrc: ["'self'", "data:"],
       fontSrc: ["'self'", "https://fonts.gstatic.com", "https://kit.fontawesome.com"],
     }

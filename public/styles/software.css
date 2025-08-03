@@ -1,9 +1,18 @@
 /* public/styles/software.css */
 
 :root {
-  --background: #0d1117;
-  --surface: #161b22;
-  --text: #c9d1d9;
-  --primary: #58a6ff;
-  --contrast: #d73a49;
+  /* Casual/Creative Software Portfolio Palette */
+  --background: #0f0f23; /* deep navy background */
+  --surface: #1a1a2e; /* dark purple-grey surface */
+  --surface-light: #2a2a40; /* lighter purple surface */
+  --text: #f0f0f0; /* crisp white text */
+  --text-muted: #a8a8b3; /* muted lavender text */
+  --primary: #c084fc; /* accessible pastel purple */
+  --primary-dark: #9333ea; /* darker purple for buttons */
+  --accent: #86efac; /* accessible pastel green accent */
+  --accent-dark: #16a34a; /* darker green for interactions */
+  --secondary: #fbbf24; /* warm pastel yellow */
+  --tertiary: #fb7185; /* soft pastel pink */
+  --warning: #fde68a; /* accessible pastel yellow */
+  --error: #fca5a5; /* accessible pastel red */
 }

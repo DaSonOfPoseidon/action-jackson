@@ -2,6 +2,15 @@ const express = require('express');
 const router = express.Router();
 const Schedule = require('../models/Schedule');
 
+/*
+TODO
+- Add validation for date and time inputs
+- Implement user authentication for booking
+- Add email confirmation for scheduled appointments
+- Implement cancellation of appointments
+- Add quote validation from database via quoteID
+*/
+
 // Get available time slots
 router.get('/slots', async (req, res) => {
     try {
