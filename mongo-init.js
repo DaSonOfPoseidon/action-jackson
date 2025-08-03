@@ -10,7 +10,7 @@ db.createUser({
   pwd: process.env.MONGO_DEV_PASSWORD || 'changeme123',
   roles: [
     {
-      role: 'read',
+      role: 'readWrite',
       db: 'action_jackson'
     }
   ]
