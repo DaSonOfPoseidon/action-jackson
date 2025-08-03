@@ -6,9 +6,12 @@ services:
     restart: unless-stopped
     volumes:
       - mongo-data:/data/db
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
     environment:
       MONGO_INITDB_ROOT_USERNAME: actionjackson
       MONGO_INITDB_ROOT_PASSWORD: "${MONGO_ROOT_PASSWORD}"  # load from .env or secret
+      MONGO_INITDB_DATABASE: action_jackson
+      MONGO_DEV_PASSWORD: "${MONGO_DEV_PASSWORD}"  # Password for read-only dev user
     healthcheck:                              
       test: ["CMD-SHELL", "mongo --eval 'db.adminCommand(\"ping\")' --quiet || exit 1"]
       interval: 10s
@@ -17,10 +20,10 @@ services:
       start_period: 10s
     networks:
       - app-network
-    # SECURITY: avoid exposing Mongo to the world unless needed.
-    # If you need host-local access for debugging, bind to localhost only:
-    # ports:
-    #   - "127.0.0.1:27017:27017"            # internal-only binding.
+    # SECURITY: Exposing Mongo for local network access
+    # Binding to local network interface for development access
+    ports:
+      - "192.168.1.69:27017:27017"  # Bind to server's local IP for network access
 
   app:
     build: .
@@ -30,7 +33,7 @@ services:
     ports:                            # startup order only; readiness must be handled by app or via retries.
       - "3000:3000"                        # consider restricting to 127.0.0.1 if only accessed via Cloudflare Tunnel.
     environment:
-      MONGO_URI: "mongodb://jackson:${MONGO_ROOT_PASSWORD}@mongo:27017/action_jackson?authSource=admin"
+      MONGO_URI: "mongodb://actionjackson:${MONGO_ROOT_PASSWORD}@mongo:27017/action_jackson?authSource=admin"
       EMAIL_USER: "${EMAIL_USER}"
       EMAIL_PASS: "${EMAIL_PASS}"
       ADMIN_EMAIL: "${ADMIN_EMAIL}"

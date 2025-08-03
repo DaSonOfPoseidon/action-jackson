@@ -6,8 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - `npm install` - Install dependencies
 - `npm start` - Start the application (runs `node server.js`)
+- `npm run dev` - Development with auto-restart (uses nodemon)
+- `npm test` - Run the comprehensive test suite
 - `node server.js` - Direct server startup
-- `npx nodemon server.js` - Development with auto-restart
 - `docker compose up --build -d` - Containerized deployment
 - `docker compose logs -f` - View container logs
 - `docker compose down` - Stop containers
@@ -43,6 +44,13 @@ This is a dual-domain Express.js application serving both business and portfolio
 - CSS/JS organized by business vs software themes
 - Client-side scripts for quotes, scheduling, home page
 
+**Testing Infrastructure**: Comprehensive test suite in `/tests/`
+- Jest test runner with 32+ tests covering all endpoints
+- Supertest for HTTP testing
+- MongoDB Memory Server for isolated database testing
+- Nodemailer mocking for email testing
+- Model validation and integration tests
+
 ### Key Middleware & Features
 
 - Helmet CSP with specific allowlists for FontAwesome and Google Fonts
@@ -62,11 +70,14 @@ Required `.env` variables:
 
 ### Testing & Verification
 
-Always verify critical paths after changes:
+Always run tests after making changes:
+- `npm test` - Run full test suite (32+ tests)
 - Server starts without errors
 - `/healthz` returns 200 OK
 - Main pages render correctly for both domains
 - Database connection is established
+- All API endpoints function correctly
+- Model validation works as expected
 
 ### Deployment Notes
 

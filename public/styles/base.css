@@ -153,6 +153,37 @@ a:hover {
   color: var(--accent);
 }
 
+/* Grid Layouts */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin: 2rem 0;
+}
+
+.projects.grid {
+  margin-top: 3rem;
+}
+
+/* Portfolio-specific styling */
+.hero {
+  text-align: center;
+  padding: 4rem 0;
+  margin-bottom: 2rem;
+}
+
+.hero h1 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.hero p {
+  font-size: 1.2rem;
+  opacity: 0.9;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
   nav {
@@ -172,6 +203,15 @@ a:hover {
   
   h1 { font-size: 2rem; }
   h2 { font-size: 1.75rem; }
+  
+  .hero h1 {
+    font-size: 2.5rem;
+  }
+  
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
 }
 
 :root {

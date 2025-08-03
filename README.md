@@ -37,6 +37,7 @@ This repository powers the Action Jackson web presence: a combined business/bran
 - **Database:** MongoDB via Mongoose
 - **Email:** Nodemailer (for quote submission notifications)
 - **Styling & Assets:** Custom CSS/JS in `public/`
+- **Testing:** Jest with Supertest and MongoDB Memory Server
 - **Containerization:** Docker & Docker Compose
 
 ## Features
@@ -48,6 +49,7 @@ This repository powers the Action Jackson web presence: a combined business/bran
 - Security and utility middleware (Helmet, compression, cookie-parser)
 - Quote submission with admin notification
 - Health check endpoint (`/healthz`)
+- Comprehensive test suite with 32+ tests
 - Dockerized for consistent environments
 - Easy content editing via templates
 
@@ -76,15 +78,30 @@ npm install
 npm start
 # or
 node server.js
+
+# For development with auto-restart
+npm run dev
 ```
 
 By default, the app listens on port 3000 unless overridden via the `PORT` environment variable.
 
-For faster development iteration, you can use nodemon:
+### Testing
+
+Run the comprehensive test suite:
 
 ```bash
-npx nodemon server.js
+# Run all tests
+npm test
+
+# Run tests with coverage
+npm test -- --coverage
 ```
+
+The test suite includes:
+- **Server tests** - Middleware, routing, error handling
+- **API route tests** - All endpoints with database mocking
+- **Model tests** - Data validation and schema testing
+- **Integration tests** - End-to-end functionality
 
 ### Environment Variables
 
@@ -174,13 +191,14 @@ The application is designed for easy content customization:
 
 ## Future Enhancements
 
-- Add a comprehensive test suite and integrate `npm test` for CI validation
 - Introduce optional authentication/login system
 - Dynamically surface recent work (e.g., GitHub activity integration)
 - Improve accessibility and responsive design
 - Add GitHub Actions for linting, testing, and automated deployments
 - Enhance portfolio with interactive elements (live metrics, project filters)
 - Implement caching strategies for better performance
+- Add invoice management UI components
+- Integrate real-time scheduling conflicts detection
 
 ## License
 

@@ -24,22 +24,34 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "https://kit.fontawesome.com"],
-      styleSrc: ["'self'", "https://fonts.googleapis.com"],
-      imgSrc: ["'self'", "data:"],
+      connectSrc: ["'self'", "https://ka-f.fontawesome.com"],
+      styleSrc: ["'self'", "https://fonts.googleapis.com", "https://ka-f.fontawesome.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com", "https://kit.fontawesome.com"],
+      imgSrc: ["'self'", "data:"],
     }
   }
 }));
 
 app.set('trust proxy', true);
 
-// Subdomain-based variant detection: sets which “half” of the site we’re on and the switcher URL
+// Subdomain-based variant detection: sets which "half" of the site we're on and the switcher URL
 app.use((req, res, next) => {
   const subdomains = req.subdomains || [];
-  res.locals.variant = subdomains.includes('dev') ? 'portfolio' : 'business';
+  const hostname = req.hostname || req.get('host') || '';
+  
+  // Debug logging
+  console.log('Host:', req.get('host'));
+  console.log('Hostname:', hostname);
+  console.log('Subdomains:', subdomains);
+  
+  // Check if hostname starts with 'dev.' or includes 'dev'
+  const isPortfolio = subdomains.includes('dev') || hostname.startsWith('dev.');
+  res.locals.variant = isPortfolio ? 'portfolio' : 'business';
   res.locals.switcherUrl = res.locals.variant === 'business'
     ? 'https://dev.actionjacksoninstalls.com'
     : 'https://actionjacksoninstalls.com';
+    
+  console.log('Variant:', res.locals.variant);
   next();
 });
 
@@ -152,6 +164,10 @@ app.use((req, res) => {
     statusCode: 404
   });
 });
-// Start server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Start server only if not in test environment
+if (process.env.NODE_ENV !== 'test') {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+}
+
+module.exports = app;
