@@ -3,45 +3,102 @@
   <main class="container">
     <h1>Request a Quote</h1>
 
-    <!-- Packages Overview -->
-    <section>
-      <h2>Packages</h2>
+    <!-- Package Selection Cards -->
+    <section class="package-selection">
+      <h2>Select Your Package</h2>
+      <div class="package-cards grid">
+        
+        <article class="card package-card" data-package="Basic">
+          <h3>Basic</h3>
+          <p class="package-price">$50 per drop + $50 install fee</p>
+          <ul class="package-features">
+            <li>Install lines A to B</li>
+            <li>Standard termination (RJ45/11 or punch down)</li>
+            <li>Testing and verification</li>
+            <li>Low-voltage box, plate, keystone included</li>
+          </ul>
+          <p class="package-deposit">$20 deposit on quotes over $100</p>
+          <button type="button" class="package-select-btn" data-package="Basic">Select Basic</button>
+        </article>
 
-      <article>
-        <h3>Basic</h3>
-        <ul>
-          <li>$50 per drop</li>
-          <li>$20 deposit on quotes over $100</li>
-          <li>Install lines from A to B</li>
-          <li>Standard termination (RJ45/11 or punch down)</li>
-          <li>Testing and verification</li>
-          <li>Low-voltage box, plate, and keystone included</li>
-        </ul>
-      </article>
+        <article class="card package-card" data-package="Premium">
+          <h3>Premium</h3>
+          <p class="package-price">$50/hr (Est. 3-5 hours)</p>
+          <ul class="package-features">
+            <li>Everything in Basic</li>
+            <li>All labor included</li>
+            <li>Mount & install routers, switches, APs, cameras, panel hardware</li>
+            <li>Cable management and setup</li>
+          </ul>
+          <p class="package-note">Highly recommended for complex setups</p>
+          <button type="button" class="package-select-btn" data-package="Premium">Select Premium</button>
+        </article>
 
-      <article>
-        <h3>Premium</h3>
-        <p><em>$50/hr add-on</em> (Highly recommend survey)</p>
-        <ul>
-          <li>Everything in Basic</li>
-          <li>All labor included</li>
-          <li>Mount &amp; install routers, switches, APs, cameras, media panels, patch panels, etc.</li>
-          <li>Cable management</li>
-          <li>Setup and test all devices</li>
-          <li>Install management app on client device (if applicable)</li>
-        </ul>
-      </article>
+      </div>
 
-      <article>
-        <h3>Survey</h3>
-        <p><em>$100 (≈2 hrs) due up front, applied as credit to install costs</em></p>
-        <ul>
-          <li>On-site walk-through and discussion of goals &amp; budget</li>
-          <li>Advise on placements and specs</li>
-          <li>Provide recommended parts list upon request</li>
-          <li>Estimate provided at the end</li>
-        </ul>
-      </article>
+      <!-- Survey Add-on -->
+      <div class="survey-option">
+        <article class="card survey-card">
+          <h3>Site Survey Add-on</h3>
+          <p class="survey-price">$100 (≈2 hrs) due up front</p>
+          <ul class="survey-features">
+            <li>On-site walk-through and discussion of goals & budget</li>
+            <li>Advise on placements and specs</li>
+            <li>Provide recommended parts list upon request</li>
+            <li>Estimate provided at the end</li>
+            <li>Applied as credit to install costs</li>
+          </ul>
+          <p class="survey-note">Replaces Basic package deposit requirement</p>
+          <label for="includeSurvey" class="survey-checkbox">
+            <input type="checkbox" id="includeSurvey" name="includeSurvey" />
+            Include Site Survey
+          </label>
+        </article>
+      </div>
+    </section>
+
+    <!-- Speed Tier & Equipment Selection -->
+    <section id="equipmentSection" style="display: none;">
+      <h2>Equipment Selection</h2>
+      <p>Select your target speed tier to see compatible equipment options:</p>
+      
+      <!-- Speed Tier Selection -->
+      <div class="speed-tier-selection">
+        <h3>Target Speed Tier</h3>
+        <div class="speed-tier-options">
+          <label class="speed-tier-option">
+            <input type="radio" name="speedTier" value="1 Gig" id="speedTier1Gig">
+            <span class="speed-tier-label">1 Gig</span>
+          </label>
+          <label class="speed-tier-option">
+            <input type="radio" name="speedTier" value="5 Gig" id="speedTier5Gig">
+            <span class="speed-tier-label">5 Gig</span>
+          </label>
+          <label class="speed-tier-option">
+            <input type="radio" name="speedTier" value="10 Gig" id="speedTier10Gig">
+            <span class="speed-tier-label">10 Gig</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Equipment Options (dynamically populated) -->
+      <div id="equipmentOptions" style="display: none;">
+        <h3>Available Equipment</h3>
+        <div id="equipmentCards" class="equipment-grid">
+          <!-- Equipment cards will be populated by JavaScript -->
+        </div>
+      </div>
+
+      <!-- Shopping Cart -->
+      <div id="equipmentCart" style="display: none;">
+        <h3>Selected Equipment</h3>
+        <div id="cartItems">
+          <!-- Cart items will be populated by JavaScript -->
+        </div>
+        <div class="cart-total">
+          <strong>Equipment Total: $<span id="equipmentTotal">0</span></strong>
+        </div>
+      </div>
     </section>
 
     <!-- Additional Services -->
@@ -68,35 +125,13 @@
       <fieldset>
         <legend>Quote Details</legend>
 
-        <label>Package</label>
-        <label for="packageBasic">
-          <input
-            type="radio"
-            id="packageBasic"
-            name="package"
-            value="Basic"
-            required
-          />
-          Basic
-        </label>
-        <label for="packagePremium">
-          <input
-            type="radio"
-            id="packagePremium"
-            name="package"
-            value="Premium"
-          />
-          Premium
-        </label>
-        <label for="packageSurvey">
-          <input
-            type="checkbox"
-            id="packageSurvey"
-            name="package"
-            value="Survey"
-          />
-          Survey
-        </label>
+        <!-- Hidden inputs for selected package -->
+        <input type="hidden" id="selectedPackage" name="package" required />
+        
+        <div id="selectedPackageDisplay" style="display: none; margin-bottom: 1rem;">
+          <strong>Selected Package: <span id="packageDisplayName"></span></strong>
+          <button type="button" id="changePackageBtn" style="margin-left: 1rem; font-size: 0.9rem;">Change Package</button>
+        </div>
 
         <!-- Cable Runs -->
         <fieldset id="runsSection">
@@ -162,9 +197,30 @@
             />
           </label>
         </fieldset>
+
+        <!-- Dynamic Pricing Display -->
+        <fieldset id="pricingSection" style="display: none;">
+          <legend>Estimated Pricing</legend>
+          
+          <div id="basicPricing" style="display: none;">
+            <p><strong>Total Cost: $<span id="totalCost">0</span></strong></p>
+            <p id="equipmentCostBasic" style="display: none;">Equipment: $<span id="equipmentCostBasicAmount">0</span></p>
+            <p id="depositInfo">Deposit Required: $<span id="depositAmount">0</span></p>
+            <p id="surveyFeeInfo" style="display: none;">Site Survey Fee: $<span id="surveyFee">0</span></p>
+          </div>
+          
+          <div id="premiumPricing" style="display: none;">
+            <p><strong>Estimated Hours: <span id="estimatedHours">0</span> hrs @ $<span id="laborRate">50</span>/hr</strong></p>
+            <p><strong>Estimated Total: $<span id="estimatedTotal">0</span></strong></p>
+            <p id="equipmentCostPremium" style="display: none;">Equipment: $<span id="equipmentCostPremiumAmount">0</span></p>
+            <p id="premiumSurveyFeeInfo" style="display: none;">Site Survey Fee: $<span id="premiumSurveyFee">0</span></p>
+          </div>
+          
+          <p><em>Note: Final pricing may vary based on site conditions and specific requirements.</em></p>
+        </fieldset>
       </fieldset>
 
-      <button type="submit">Request Quote</button>
+      <button type="submit" id="submitBtn" disabled>Request Quote</button>
     </form>
     <p id="quoteStatus"></p>
   </main>

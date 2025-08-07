@@ -75,13 +75,14 @@ describe('Data Models', () => {
   });
 
   describe('Quote Model', () => {
-    test('should create a quote with all fields', async () => {
+    test('should create a quote with all fields including new package features', async () => {
       const quoteData = {
         customer: {
           name: 'John Doe',
           email: 'john@example.com'
         },
-        packageOption: 'premium',
+        packageOption: 'Premium',
+        includeSurvey: true,
         discount: 15,
         runs: {
           coax: 5,
@@ -92,6 +93,12 @@ describe('Data Models', () => {
           networkSetup: 2,
           mediaPanel: 1
         },
+        pricing: {
+          estimatedLaborHours: 8.5,
+          laborRate: 50,
+          estimatedTotal: 495,
+          surveyFee: 100
+        },
         ip: '192.168.1.100'
       };
 
@@ -101,27 +108,60 @@ describe('Data Models', () => {
       expect(savedQuote._id).toBeDefined();
       expect(savedQuote.customer.name).toBe('John Doe');
       expect(savedQuote.customer.email).toBe('john@example.com');
-      expect(savedQuote.packageOption).toBe('premium');
+      expect(savedQuote.packageOption).toBe('Premium');
+      expect(savedQuote.includeSurvey).toBe(true);
       expect(savedQuote.discount).toBe(15);
       expect(savedQuote.runs.coax).toBe(5);
       expect(savedQuote.runs.cat6).toBe(8);
       expect(savedQuote.services.deviceMount).toBe(3);
+      expect(savedQuote.pricing.estimatedLaborHours).toBe(8.5);
+      expect(savedQuote.pricing.laborRate).toBe(50);
+      expect(savedQuote.pricing.estimatedTotal).toBe(495);
+      expect(savedQuote.pricing.surveyFee).toBe(100);
       expect(savedQuote.ip).toBe('192.168.1.100');
       expect(savedQuote.createdAt).toBeDefined();
     });
 
-    test('should use default values for optional fields', async () => {
+    test('should create Basic package quote with cost pricing', async () => {
       const quoteData = {
         customer: {
           name: 'Jane Smith',
           email: 'jane@example.com'
         },
-        packageOption: 'basic'
+        packageOption: 'Basic',
+        includeSurvey: false,
+        runs: { coax: 2, cat6: 3 },
+        services: { deviceMount: 1, networkSetup: 1, mediaPanel: 0 },
+        pricing: {
+          totalCost: 530,
+          depositRequired: 20,
+          surveyFee: 0
+        }
       };
 
       const quote = new Quote(quoteData);
       const savedQuote = await quote.save();
 
+      expect(savedQuote.packageOption).toBe('Basic');
+      expect(savedQuote.includeSurvey).toBe(false);
+      expect(savedQuote.pricing.totalCost).toBe(530);
+      expect(savedQuote.pricing.depositRequired).toBe(20);
+      expect(savedQuote.pricing.surveyFee).toBe(0);
+    });
+
+    test('should use default values for optional fields', async () => {
+      const quoteData = {
+        customer: {
+          name: 'Default User',
+          email: 'default@example.com'
+        },
+        packageOption: 'Basic'
+      };
+
+      const quote = new Quote(quoteData);
+      const savedQuote = await quote.save();
+
+      expect(savedQuote.includeSurvey).toBe(false);
       expect(savedQuote.discount).toBe(0);
       expect(savedQuote.runs.coax).toBe(0);
       expect(savedQuote.runs.cat6).toBe(0);
@@ -130,12 +170,70 @@ describe('Data Models', () => {
       expect(savedQuote.services.mediaPanel).toBe(0);
     });
 
+    test('should validate packageOption enum values', async () => {
+      const quoteWithInvalidPackage = new Quote({
+        customer: {
+          name: 'Test User',
+          email: 'test@example.com'
+        },
+        packageOption: 'InvalidPackage'
+      });
+
+      await expect(quoteWithInvalidPackage.save()).rejects.toThrow();
+    });
+
+    test('should accept valid packageOption enum values', async () => {
+      const basicQuote = new Quote({
+        customer: {
+          name: 'Basic User',
+          email: 'basic@example.com'
+        },
+        packageOption: 'Basic'
+      });
+
+      const premiumQuote = new Quote({
+        customer: {
+          name: 'Premium User',
+          email: 'premium@example.com'
+        },
+        packageOption: 'Premium'
+      });
+
+      const savedBasic = await basicQuote.save();
+      const savedPremium = await premiumQuote.save();
+
+      expect(savedBasic.packageOption).toBe('Basic');
+      expect(savedPremium.packageOption).toBe('Premium');
+    });
+
+    test('should handle survey pricing correctly', async () => {
+      const quoteWithSurvey = new Quote({
+        customer: {
+          name: 'Survey User',
+          email: 'survey@example.com'
+        },
+        packageOption: 'Basic',
+        includeSurvey: true,
+        pricing: {
+          totalCost: 200,
+          depositRequired: 0, // Survey waives deposit
+          surveyFee: 100
+        }
+      });
+
+      const savedQuote = await quoteWithSurvey.save();
+
+      expect(savedQuote.includeSurvey).toBe(true);
+      expect(savedQuote.pricing.depositRequired).toBe(0);
+      expect(savedQuote.pricing.surveyFee).toBe(100);
+    });
+
     test('should require customer name', async () => {
       const quote = new Quote({
         customer: {
           email: 'test@example.com'
         },
-        packageOption: 'basic'
+        packageOption: 'Basic'
       });
 
       await expect(quote.save()).rejects.toThrow();
@@ -146,7 +244,7 @@ describe('Data Models', () => {
         customer: {
           name: 'Test User'
         },
-        packageOption: 'basic'
+        packageOption: 'Basic'
       });
 
       await expect(quote.save()).rejects.toThrow();
@@ -161,6 +259,31 @@ describe('Data Models', () => {
       });
 
       await expect(quote.save()).rejects.toThrow();
+    });
+
+    test('should handle premium pricing fields correctly', async () => {
+      const premiumQuote = new Quote({
+        customer: {
+          name: 'Premium Test',
+          email: 'premium@example.com'
+        },
+        packageOption: 'Premium',
+        includeSurvey: true,
+        runs: { coax: 2, cat6: 2 },
+        pricing: {
+          estimatedLaborHours: 7,
+          laborRate: 50,
+          estimatedTotal: 420,
+          surveyFee: 100
+        }
+      });
+
+      const savedQuote = await premiumQuote.save();
+
+      expect(savedQuote.pricing.estimatedLaborHours).toBe(7);
+      expect(savedQuote.pricing.laborRate).toBe(50);
+      expect(savedQuote.pricing.estimatedTotal).toBe(420);
+      expect(savedQuote.pricing.surveyFee).toBe(100);
     });
   });
 
