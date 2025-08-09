@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - Action Jackson Admin</title>
+    
+    <!-- Security Headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="/styles/business.css">
+    <link rel="stylesheet" href="https://kit.fontawesome.com/da7c56b6ed.css" crossorigin="anonymous">
+    
+    <style>
+        :root {
+            /* Admin-specific variables */
+            --admin-primary: #2563eb;
+            --admin-accent: #1e40af;
+            --admin-success: #059669;
+            --admin-warning: #d97706;
+            --admin-danger: #dc2626;
+            --admin-sidebar: #1e293b;
+            --admin-nav: #0f172a;
+        }
+
+        body {
+            background: var(--background);
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .admin-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .admin-sidebar {
+            background: var(--admin-sidebar);
+            width: 250px;
+            padding: 1rem 0;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .admin-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 1rem;
+        }
+
+        .admin-header h1 {
+            color: var(--admin-primary);
+            font-size: 1.25rem;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .admin-user {
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .admin-nav {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .admin-nav li {
+            margin: 0.25rem 0;
+        }
+
+        .admin-nav a {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1.5rem;
+            color: var(--text);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .admin-nav a:hover,
+        .admin-nav a.active {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--admin-primary);
+            border-right: 3px solid var(--admin-primary);
+        }
+
+        .admin-content {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .content-header {
+            margin-bottom: 2rem;
+        }
+
+        .content-header h1 {
+            color: var(--text);
+            margin: 0 0 0.5rem 0;
+            font-size: 2rem;
+        }
+
+        .content-header p {
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            text-align: center;
+            transition: var(--transition);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .stat-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--admin-primary);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text);
+            margin: 0;
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+
+        .activity-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+        }
+
+        .activity-card {
+            background: var(--surface);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .activity-header {
+            background: var(--admin-nav);
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .activity-header h3 {
+            color: var(--text);
+            margin: 0;
+            font-size: 1.125rem;
+        }
+
+        .activity-list {
+            padding: 1rem 0;
+        }
+
+        .activity-item {
+            padding: 0.75rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-info h4 {
+            color: var(--text);
+            margin: 0 0 0.25rem 0;
+            font-size: 0.875rem;
+        }
+
+        .activity-info p {
+            color: var(--text-muted);
+            margin: 0;
+            font-size: 0.75rem;
+        }
+
+        .activity-meta {
+            text-align: right;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-top: 0.25rem;
+        }
+
+        .status-pending { background: rgba(217, 119, 6, 0.1); color: #fbbf24; }
+        .status-approved { background: rgba(5, 150, 105, 0.1); color: #10b981; }
+        .status-confirmed { background: rgba(37, 99, 235, 0.1); color: #3b82f6; }
+        .status-completed { background: rgba(5, 150, 105, 0.1); color: #10b981; }
+
+        .logout-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: var(--admin-danger);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: var(--transition);
+        }
+
+        .logout-btn:hover {
+            background: #b91c1c;
+        }
+
+        @media (max-width: 768px) {
+            .admin-layout {
+                flex-direction: column;
+            }
+
+            .admin-sidebar {
+                width: 100%;
+                order: 2;
+            }
+
+            .admin-content {
+                order: 1;
+                padding: 1rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .activity-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-layout">
+        <aside class="admin-sidebar">
+            <div class="admin-header">
+                <h1>🛠️ Admin Panel</h1>
+                <div class="admin-user">
+                    Logged in as <strong><%= user.username %></strong><br>
+                    <span class="status-badge status-<%= user.role %>"><%= user.role.toUpperCase() %></span>
+                </div>
+            </div>
+            <nav>
+                <ul class="admin-nav">
+                    <li><a href="/admin/dashboard" class="active">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                    </a></li>
+                    <li><a href="/admin/quotes">
+                        <i class="fas fa-file-invoice"></i> Quotes (<%= stats.quotes %>)
+                    </a></li>
+                    <li><a href="/admin/schedule">
+                        <i class="fas fa-calendar-alt"></i> Schedule (<%= stats.schedules %>)
+                    </a></li>
+                    <li><a href="/api/invoices">
+                        <i class="fas fa-receipt"></i> Invoices (<%= stats.invoices %>)
+                    </a></li>
+                    <li><a href="/" target="_blank">
+                        <i class="fas fa-external-link-alt"></i> View Site
+                    </a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="admin-content">
+            <button class="logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+
+            <div class="content-header">
+                <h1>Dashboard</h1>
+                <p>Overview of your Action Jackson business operations</p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-file-invoice"></i>
+                    </div>
+                    <div class="stat-number"><%= stats.quotes %></div>
+                    <div class="stat-label">New Quotes (30 days)</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <div class="stat-number"><%= stats.schedules %></div>
+                    <div class="stat-label">New Appointments (30 days)</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-receipt"></i>
+                    </div>
+                    <div class="stat-number"><%= stats.invoices %></div>
+                    <div class="stat-label">New Invoices (30 days)</div>
+                </div>
+            </div>
+
+            <div class="activity-grid">
+                <div class="activity-card">
+                    <div class="activity-header">
+                        <h3>Recent Quotes</h3>
+                    </div>
+                    <div class="activity-list">
+                        <% if (recentActivity.quotes.length > 0) { %>
+                            <% recentActivity.quotes.forEach(quote => { %>
+                                <div class="activity-item">
+                                    <div class="activity-info">
+                                        <h4><%= quote.customerName %></h4>
+                                        <p><%= quote.serviceType %> - $<%= quote.totalCost %></p>
+                                    </div>
+                                    <div class="activity-meta">
+                                        <div><%= quote.createdAt.toLocaleDateString() %></div>
+                                        <div class="status-badge status-<%= quote.status || 'pending' %>">
+                                            <%= (quote.status || 'pending').toUpperCase() %>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% }) %>
+                        <% } else { %>
+                            <div class="activity-item">
+                                <div class="activity-info">
+                                    <p>No recent quotes</p>
+                                </div>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+
+                <div class="activity-card">
+                    <div class="activity-header">
+                        <h3>Recent Appointments</h3>
+                    </div>
+                    <div class="activity-list">
+                        <% if (recentActivity.schedules.length > 0) { %>
+                            <% recentActivity.schedules.forEach(schedule => { %>
+                                <div class="activity-item">
+                                    <div class="activity-info">
+                                        <h4><%= schedule.customerName %></h4>
+                                        <p><%= schedule.service %></p>
+                                    </div>
+                                    <div class="activity-meta">
+                                        <div><%= schedule.scheduledDate.toLocaleDateString() %></div>
+                                        <div class="status-badge status-<%= schedule.status || 'pending' %>">
+                                            <%= (schedule.status || 'pending').toUpperCase() %>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% }) %>
+                        <% } else { %>
+                            <div class="activity-item">
+                                <div class="activity-info">
+                                    <p>No recent appointments</p>
+                                </div>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+
+                <div class="activity-card">
+                    <div class="activity-header">
+                        <h3>Recent Invoices</h3>
+                    </div>
+                    <div class="activity-list">
+                        <% if (recentActivity.invoices.length > 0) { %>
+                            <% recentActivity.invoices.forEach(invoice => { %>
+                                <div class="activity-item">
+                                    <div class="activity-info">
+                                        <h4><%= invoice.customerName %></h4>
+                                        <p><%= invoice.invoiceNumber %> - $<%= invoice.totalAmount %></p>
+                                    </div>
+                                    <div class="activity-meta">
+                                        <div><%= invoice.createdAt.toLocaleDateString() %></div>
+                                        <div class="status-badge status-<%= invoice.status || 'pending' %>">
+                                            <%= (invoice.status || 'pending').toUpperCase() %>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% }) %>
+                        <% } else { %>
+                            <div class="activity-item">
+                                <div class="activity-info">
+                                    <p>No recent invoices</p>
+                                </div>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        async function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                try {
+                    const response = await fetch('/auth/logout', {
+                        method: 'POST',
+                        credentials: 'include'
+                    });
+
+                    if (response.ok) {
+                        window.location.href = '/admin/login?message=' + encodeURIComponent('Logged out successfully');
+                    } else {
+                        alert('Logout failed. Please try again.');
+                    }
+                } catch (error) {
+                    console.error('Logout error:', error);
+                    alert('Logout error. Please try again.');
+                }
+            }
+        }
+
+        // Auto-refresh dashboard every 5 minutes
+        setInterval(() => {
+            window.location.reload();
+        }, 5 * 60 * 1000);
+    </script>
+</body>
+</html>

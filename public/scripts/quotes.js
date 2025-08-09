@@ -15,7 +15,12 @@ const pricing = {
     deviceMount: { cost: 10, time: 0.25 },
     clientDevice: { cost: 10, time: 0.25 },
     serverDevice: { cost: 50, time: 1.0 },
-    mediaPanel: { cost: 100, time: 1.0 }
+    mediaPanel: { cost: 50, time: 1.0 }
+  },
+  cameras: {
+    internalCameras: { cost: 80, time: 1.0 },    // Placeholder - update when you determine prices
+    externalCameras: { cost: 100, time: 1.5 },    // Placeholder - update when you determine prices
+    doorbellCameras: { cost: 150, time: 2.0 }    // Placeholder - update when you determine prices
   },
   packages: {
     basic: {
@@ -100,6 +105,63 @@ const equipmentCatalog = {
       recommended: ['10 Gig'],
       description: 'High-performance all-in-one solution with built-in controller and redundant WAN'
     },
+    {
+      sku: 'UX7',
+      name: 'UniFi Express 7',
+      price: 199,
+      subCategory: 'Exposed',
+      speedTiers: ['5 Gig', '10 Gig'],
+      features: {
+        PoE: false,
+        sfp: false,
+        portSpeeds: [2.5, 10],
+        uplinkSpeeds: [10],
+        maxThroughput: 10000,
+        managedPorts: 1,
+        wanPorts: 1
+      },
+      tags: ['compact', 'mesh-scalable', 'wifi7', '10g'],
+      recommended: ['5 Gig'],
+      description: 'Mesh‑scalable, super‑compact 10G Cloud Gateway with integrated WiFi 7'
+    },
+    {
+      sku: 'UDR7',
+      name: 'UniFi Dream Router 7',
+      price: 279,
+      subCategory: 'Exposed',
+      speedTiers: ['5 Gig', '10 Gig'],
+      features: {
+        PoE: true,
+        sfp: false,
+        portSpeeds: [1, 2.5, 10],
+        uplinkSpeeds: [10],
+        maxThroughput: 10000,
+        managedPorts: 4,
+        wanPorts: 1
+      },
+      tags: ['desktop', 'wifi7', 'poe-switch', 'nvr-storage'],
+      recommended: ['10 Gig'],
+      description: 'Desktop 10G Cloud Gateway with integrated WiFi 7, PoE switch, microSD storage, and full UniFi application support'
+    },
+    {
+      sku: 'UCG-Ultra',
+      name: 'Cloud Gateway Ultra',
+      price: 129,
+      subCategory: 'Media Panel',
+      speedTiers: ['1 Gig'],
+      features: {
+        PoE: false,
+        sfp: false,
+        portSpeeds: [1],
+        uplinkSpeeds: [1],
+        maxThroughput: 1000,
+        managedPorts: 0,
+        wanPorts: 2
+      },
+      tags: ['compact', 'entry-level', 'multi-wan', 'budget-friendly'],
+      recommended: ['1 Gig'],
+      description: 'Compact Cloud Gateway with 30+ UniFi device/300+ client support, 1 Gbps IPS routing, and multi‑WAN load balancing'
+    }
   ],
   switches: [ 
     { 
@@ -155,26 +217,171 @@ const equipmentCatalog = {
       tags: ['10g-capable', 'high-power-poe', 'enterprise-grade', 'fiber-ready'],
       recommended: ['10 Gig'],
       description: '8-port 10G PoE++ switch for high-performance enterprise networks'
+    },
+    {
+      sku: 'USW-Flex-2.5G-8',
+      name: 'UniFi Switch Flex 2.5G',
+      price: 159,
+      speedTiers: ['2.5 Gig', '5 Gig'],
+      features: {
+        sfp: true,
+        PoE: false,
+        numPorts: 8,
+        portSpeeds: [2.5],
+        uplinkSpeeds: [10],
+        maxThroughput: 60000,
+        poeWattage: 0
+      },
+      tags: ['non-poe', '2.5g-capable', 'compact', 'fanless'],
+      recommended: ['2.5 Gig'],
+      description: 'Flexible, 8‑port 2.5 GbE switch with a 10 GbE RJ45/SFP+ combination uplink port that can be powered with a USB‑C or PoE+ adapter'
+    },
+    {
+      sku: 'USW-Flex-2.5G-5',
+      name: 'UniFi Switch Flex Mini 2.5G',
+      price: 49,
+      speedTiers: ['2.5 Gig'],
+      features: {
+        sfp: false,
+        PoE: false,
+        numPorts: 5,
+        portSpeeds: [2.5],
+        uplinkSpeeds: [2.5],
+        maxThroughput: 12500,
+        poeWattage: 0
+      },
+      tags: ['compact', '2.5g', 'desk-mount', 'budget-friendly'],
+      recommended: ['2.5 Gig'],
+      description: 'Compact, 5‑port 2.5G switch that can be powered with PoE or a USB‑C adapter'
+    },
+    {
+      sku: 'USW-Lite-8-POE',
+      name: 'UniFi Switch Lite 8 PoE',
+      price: 109,
+      speedTiers: ['1 Gig'],
+      features: {
+        sfp: false,
+        PoE: true,
+        numPorts: 8,
+        portSpeeds: [1],
+        uplinkSpeeds: [1],
+        maxThroughput: 16000,
+        poeWattage: 52
+      },
+      tags: ['fanless', 'poe', 'budget', 'quiet'],
+      recommended: ['1 Gig'],
+      description: 'An 8‑port, Layer 2 PoE switch supporting silent fanless cooling'
+    },
+    {
+      sku: 'USW-Lite-16-POE',
+      name: 'UniFi Switch Lite 16 PoE',
+      price: 199,
+      speedTiers: ['1 Gig'],
+      features: {
+        sfp: false,
+        PoE: true,
+        numPorts: 16,
+        portSpeeds: [1],
+        uplinkSpeeds: [1],
+        maxThroughput: 32000,
+        poeWattage: 45
+      },
+      tags: ['wall-mountable', 'fanless', 'poe', 'mid-range'],
+      recommended: ['1 Gig'],
+      description: 'A wall‑mountable, 16‑port, Layer 2 PoE switch with a fanless cooling system'
+    },
+    {
+      sku: 'USW-Pro-Max-16',
+      name: 'UniFi Switch Pro Max 16',
+      price: 279,
+      speedTiers: ['2.5 Gig', '5 Gig'],
+      features: {
+        sfp: true,
+        PoE: false,
+        numPorts: 16,
+        portSpeeds: [2.5],
+        uplinkSpeeds: [10],
+        maxThroughput: 84000,
+        poeWattage: 0
+      },
+      tags: ['etherlighting', '2.5g', 'enterprise', 'silent'],
+      recommended: ['2.5 Gig'],
+      description: 'A 16‑port, Layer 3 Etherlighting™ switch 2.5 GbE and versatile mounting options'
+    },
+    {
+      sku: 'USW-Pro-Max-24',
+      name: 'UniFi Switch Pro Max 24',
+      price: 449,
+      speedTiers: ['2.5 Gig', '5 Gig'],
+      features: {
+        sfp: true,
+        PoE: false,
+        numPorts: 24,
+        portSpeeds: [2.5],
+        uplinkSpeeds: [10],
+        maxThroughput: 126000,
+        poeWattage: 0
+      },
+      tags: ['layer3', '2.5g', 'enterprise', 'scalable'],
+      recommended: ['2.5 Gig'],
+      description: 'A 24‑port, Layer 3 Etherlighting™ switch with 2.5 GbE'
+    },
+    {
+      sku: 'USW-24-POE',
+      name: 'UniFi Switch Standard 24 PoE',
+      price: 379,
+      speedTiers: ['1 Gig'],
+      features: {
+        sfp: false,
+        PoE: true,
+        numPorts: 24,
+        portSpeeds: [1],
+        uplinkSpeeds: [1],
+        maxThroughput: 52000,
+        poeWattage: 95
+      },
+      tags: ['layer2', 'poe', 'fanless', 'standard'],
+      recommended: ['1 Gig'],
+      description: 'A 24‑port, Layer 2 PoE switch with a fanless cooling system'
+    },
+    {
+      sku: 'USW-48',
+      name: 'UniFi Switch Standard 48',
+      price: 399,
+      speedTiers: ['1 Gig'],
+      features: {
+        sfp: false,
+        PoE: false,
+        numPorts: 48,
+        portSpeeds: [1],
+        uplinkSpeeds: [1],
+        maxThroughput: 104000,
+        poeWattage: 0
+      },
+      tags: ['layer2', 'silent', 'high-density', 'standard'],
+      recommended: ['1 Gig'],
+      description: 'A 48‑port, Layer 2 switch with a silent, fanless cooling system'
+    },
+    {
+      sku: 'USW-Pro-Max-48',
+      name: 'UniFi Switch Pro Max 48',
+      price: 649,
+      speedTiers: ['2.5 Gig', '5 Gig'],
+      features: {
+        sfp: true,
+        PoE: false,
+        numPorts: 48,
+        portSpeeds: [2.5],
+        uplinkSpeeds: [10],
+        maxThroughput: 168000,
+        poeWattage: 0
+      },
+      tags: ['layer3', '2.5g', 'high-density', 'enterprise'],
+      recommended: ['2.5 Gig'],
+      description: 'A 48‑port, Layer 3 Etherlighting™ switch with 2.5 GbE'
     }
   ],
   accessPoints: [
-    { 
-      sku: 'U6-LITE', 
-      name: 'UniFi 6 Lite', 
-      price: 99,
-      speedTiers: ['1 Gig', '2.5 Gig'],
-      features: {
-        wifiStandard: 'WiFi 6',
-        maxSpeed: 1500,
-        bands: ['2.4GHz', '5GHz'],
-        mimo: '2x2',
-        powerConsumption: 12,
-        mountType: 'ceiling'
-      },
-      tags: ['budget-friendly', 'wifi6', 'indoor', 'low-power'],
-      recommended: ['1 Gig'],
-      description: 'Entry-level WiFi 6 access point for small to medium spaces'
-    },
     { 
       sku: 'U6-PRO', 
       name: 'UniFi 6 Pro', 
@@ -226,12 +433,200 @@ const equipmentCatalog = {
       tags: ['in-wall', 'wifi6', 'hotel-style', 'integrated-switch'],
       recommended: ['1 Gig'],
       description: 'In-wall WiFi 6 access point with additional Ethernet port'
+    },
+    {
+      sku: 'U7-Pro-XG',
+      name: 'UniFi 7 Pro XG',
+      price: 199,
+      speedTiers: ['5 Gig', '10 Gig'],
+      features: {
+        wifiStandard: 'WiFi 7',
+        maxSpeed: 8000,
+        bands: ['2.4GHz', '5GHz', '6GHz'],
+        mimo: '6x6',
+        powerConsumption: 25,
+        mountType: 'ceiling',
+        uplinkPorts: ['10G', '5G', '2.5G', '1G']
+      },
+      tags: ['wifi7', 'ceiling', 'six-stream', '10g-uplink'],
+      recommended: ['10 Gig'],
+      description: 'Ceiling‑mounted 6‑stream WiFi 7 AP with 10/5/2.5/1 GbE support'
+    },
+    {
+      sku: 'U7-Lite',
+      name: 'UniFi 7 Lite',
+      price: 99,
+      speedTiers: ['2.5 Gig'],
+      features: {
+        wifiStandard: 'WiFi 7',
+        maxSpeed: 3600,
+        bands: ['2.4GHz', '5GHz', '6GHz'],
+        mimo: '4x4',
+        powerConsumption: 18,
+        mountType: 'ceiling',
+        uplinkPorts: ['2.5G']
+      },
+      tags: ['compact', 'wifi7', 'four-stream', 'budget'],
+      recommended: ['2.5 Gig'],
+      description: 'Compact, ceiling‑mounted WiFi 7 AP with 4 spatial streams and a 2.5 GbE uplink'
+    },
+    {
+      sku: 'U7-Pro-Outdoor',
+      name: 'UniFi 7 Pro Outdoor',
+      price: 279,
+      speedTiers: ['2.5 Gig', '5 Gig', '10 Gig'],
+      features: {
+        wifiStandard: 'WiFi 7',
+        maxSpeed: 6000,
+        bands: ['2.4GHz', '5GHz', '6GHz'],
+        mimo: '6x6',
+        powerConsumption: 25,
+        mountType: 'outdoor',
+        weatherRating: 'IP67',
+        antenna: 'directional super antenna'
+      },
+      tags: ['outdoor', 'wifi7', 'directional', 'weatherproof'],
+      recommended: ['5 Gig'],
+      description: 'All‑weather IP67 WiFi 7 AP with 6 spatial streams, extended‑range AFC 6 GHz support, integrated directional super antenna, and an articulation mounting bracket'
+    },
+    {
+      sku: 'U7-Outdoor',
+      name: 'UniFi 7 Outdoor',
+      price: 199,
+      speedTiers: ['2.5 Gig', '5 Gig'],
+      features: {
+        wifiStandard: 'WiFi 7',
+        maxSpeed: 4800,
+        bands: ['2.4GHz', '5GHz', '6GHz'],
+        mimo: '4x4',
+        powerConsumption: 20,
+        mountType: 'outdoor',
+        weatherRating: 'IP67',
+        antenna: 'directional super antenna'
+      },
+      tags: ['outdoor', 'wifi7', 'directional', 'weatherproof'],
+      recommended: ['2.5 Gig'],
+      description: 'All‑weather WiFi 7 AP with 4 spatial streams, an integrated directional super antenna, and versatile mounting options'
+    },
+    {
+      sku: 'U7-IW',
+      name: 'UniFi 7 In‑Wall',
+      price: 149,
+      speedTiers: ['1 Gig', '2.5 Gig'],
+      features: {
+        wifiStandard: 'WiFi 7',
+        maxSpeed: 3600,
+        bands: ['2.4GHz', '5GHz'],
+        mimo: '4x4',
+        powerConsumption: 15,
+        mountType: 'wall',
+        additionalPorts: 1,
+        integratedSwitch: true
+      },
+      tags: ['in-wall', 'wifi7', 'poe-switch', 'hospitality'],
+      recommended: ['1 Gig'],
+      description: 'Wall‑mounted WiFi 7 AP with 4 spatial streams and an integrated 2.5 GbE PoE switch designed for hospitality environments'
+    },
+    {
+      sku: 'U7-Pro-Wall',
+      name: 'UniFi 7 Pro Wall',
+      price: 199,
+      speedTiers: ['2.5 Gig', '5 Gig', '10 Gig'],
+      features: {
+        wifiStandard: 'WiFi 7',
+        maxSpeed: 6600,
+        bands: ['2.4GHz', '5GHz', '6GHz'],
+        mimo: '6x6',
+        powerConsumption: 20,
+        mountType: 'wall',
+        additionalPorts: 0
+      },
+      tags: ['wall-mount', 'wifi7', 'six-stream', 'home-builder'],
+      recommended: ['5 Gig'],
+      description: 'Wall‑mounted WiFi 7 AP with 6 spatial streams and 6 GHz support tailored for home builders with seamless installation options'
+    },
+    {
+      sku: 'U6+',
+      name: 'UniFi 6 Plus',
+      price: 129,
+      speedTiers: ['1 Gig', '2.5 Gig'],
+      features: {
+        wifiStandard: 'WiFi 6',
+        maxSpeed: 3000,
+        bands: ['2.4GHz', '5GHz'],
+        mimo: '4x4',
+        powerConsumption: 15,
+        mountType: 'ceiling'
+      },
+      tags: ['wifi6', 'ceiling', 'four-stream', 'smb'],
+      recommended: ['1 Gig'],
+      description: 'Compact, ceiling‑mounted WiFi 6 AP with 4 spatial streams that improves upon the U6 Lite with higher performance and dual‑band WiFi 6 support—ideal for small and medium‑sized businesses'
     }
   ],
   cameras: [
-    { 
-      sku: 'UVC-G4-BULLET', 
-      name: 'UniFi Protect G4 Bullet', 
+    {
+      sku: 'UVC-G4-Doorbell-Pro-PoE-Kit',
+      name: 'G4 Doorbell Pro PoE Kit',
+      price: 379,
+      subCategory: 'Doorbell Camera',
+      speedTiers: ['all'],
+      securityTypes: ['doorbellCameras'],
+      features: {
+        resolution: '2K',
+        nightVision: true,
+        weatherRating: 'IP65',
+        powerType: 'PoE',
+        storageType: 'network',
+        fieldOfView: 160,
+        twoWayAudio: true
+      },
+      tags: ['doorbell', 'poe', 'night-vision', 'chime-included'],
+      recommended: ['1 Gig', '2.5 Gig', '5 Gig', '10 Gig'],
+      description: 'Premium UniFi doorbell with integrated PoE and included PoE chime for plug‑and‑play installation'
+    },
+    {
+      sku: 'UVC-G5-Bullet',
+      name: 'G5 Bullet',
+      price: 129,
+      subCategory: 'Bullet Camera',
+      speedTiers: ['all'],
+      securityTypes: ['externalCameras'],
+      features: {
+        resolution: '2K',
+        nightVision: true,
+        weatherRating: 'IP66',
+        powerType: 'PoE',
+        storageType: 'network',
+        fieldOfView: 102,
+        multiAIEngine: false
+      },
+      tags: ['2k', 'poe', 'outdoor', 'compact'],
+      recommended: ['1 Gig', '2.5 Gig', '5 Gig', '10 Gig'],
+      description: 'Next‑gen indoor/outdoor 2K HD PoE camera'
+    },
+    {
+      sku: 'UVC-G5-Turret-Ultra',
+      name: 'G5 Turret Ultra',
+      price: 129,
+      subCategory: 'Turret Camera',
+      speedTiers: ['all'],
+      securityTypes: ['externalCameras'],
+      features: {
+        resolution: '2K',
+        nightVision: true,
+        weatherRating: 'IP67',
+        powerType: 'PoE',
+        storageType: 'network',
+        fieldOfView: 102,
+        tamperResistant: true
+      },
+      tags: ['2k', 'weatherproof', 'turret', 'long-range'],
+      recommended: ['1 Gig', '2.5 Gig', '5 Gig', '10 Gig'],
+      description: 'Ultra‑compact, tamper‑resistant, and weatherproof 2K HD PoE camera with long‑range night vision'
+    },
+    {
+      sku: 'UVC-G6-Bullet',
+      name: 'G6 Bullet',
       price: 199,
       subCategory: 'Bullet Camera',
       speedTiers: ['all'],
@@ -242,50 +637,33 @@ const equipmentCatalog = {
         weatherRating: 'IP67',
         powerType: 'PoE',
         storageType: 'network',
-        fieldOfView: 80
+        fieldOfView: 120,
+        multiAIEngine: true
       },
-      tags: ['4k', 'outdoor', 'bullet', 'night-vision', 'weatherproof'],
+      tags: ['4k', 'multi-ai', 'all-weather', 'long-range'],
       recommended: ['1 Gig', '2.5 Gig', '5 Gig', '10 Gig'],
-      description: '4K bullet camera with excellent night vision for outdoor surveillance'
+      description: 'All‑weather 4K PoE camera with a 1/1.8" 8MP image sensor, Multi‑TOPS AI Engine, and long‑range IR night vision'
     },
-    { 
-      sku: 'UVC-G4-DOME', 
-      name: 'UniFi Protect G4 Dome', 
-      price: 179,
+    {
+      sku: 'UVC-G6-Dome',
+      name: 'G6 Dome',
+      price: 279,
       subCategory: 'Dome Camera',
       speedTiers: ['all'],
       securityTypes: ['internalCameras', 'externalCameras'],
       features: {
         resolution: '4K',
         nightVision: true,
-        weatherRating: 'IP54',
+        weatherRating: 'IK10',
         powerType: 'PoE',
         storageType: 'network',
-        fieldOfView: 87
+        fieldOfView: 125,
+        multiAIEngine: true,
+        vandalProof: true
       },
-      tags: ['4k', 'dome', 'vandal-resistant', 'low-profile'],
+      tags: ['4k', 'vandal-proof', 'high-traffic', 'discreet'],
       recommended: ['1 Gig', '2.5 Gig', '5 Gig', '10 Gig'],
-      description: '4K dome camera with vandal-resistant design for discreet monitoring'
-    },
-    { 
-      sku: 'UVC-G4-DOORBELL', 
-      name: 'UniFi Protect G4 Doorbell', 
-      price: 149,
-      subCategory: 'Doorbell Camera',
-      speedTiers: ['all'],
-      securityTypes: ['doorbellCameras'],
-      features: {
-        resolution: '4K',
-        nightVision: true,
-        weatherRating: 'IP54',
-        powerType: 'PoE',
-        storageType: 'network',
-        fieldOfView: 160,
-        twoWayAudio: true
-      },
-      tags: ['4k', 'doorbell', 'two-way-audio', 'motion-detection'],
-      recommended: ['1 Gig', '2.5 Gig', '5 Gig', '10 Gig'],
-      description: '4K doorbell camera with two-way audio and wide field of view'
+      description: 'All‑weather, vandal‑proof 4K PoE camera with a 1/1.8" 8MP image sensor, Multi‑TOPS AI Engine, and long‑range IR night vision ideal for discreet installations in high‑traffic areas'
     }
   ],
   doorAccess: [
@@ -334,63 +712,10 @@ document.addEventListener('DOMContentLoaded', () => {
   initializeFormHandling();
   setupCalculationListeners();
   populatePackagePricing();
-  initializeSecurityOptions();
+  initializeCameraListeners();
 });
 
-function initializeSecurityOptions() {
-  // Handle Security Cameras subsections
-  const securityCamerasCheckbox = document.getElementById('securityCameras');
-  const cameraSubsections = document.getElementById('cameraSubsections');
-  
-  if (securityCamerasCheckbox && cameraSubsections) {
-    securityCamerasCheckbox.addEventListener('change', (e) => {
-      if (e.target.checked) {
-        cameraSubsections.style.display = 'block';
-      } else {
-        cameraSubsections.style.display = 'none';
-        // Uncheck all camera subsections when main option is unchecked
-        const cameraSubCheckboxes = cameraSubsections.querySelectorAll('input[type="checkbox"]');
-        cameraSubCheckboxes.forEach(checkbox => checkbox.checked = false);
-      }
-    });
-  }
 
-  // Handle Remote Installation subsections
-  const remoteInstallationCheckbox = document.getElementById('remoteInstallation');
-  const remoteSubsections = document.getElementById('remoteSubsections');
-  
-  if (remoteInstallationCheckbox && remoteSubsections) {
-    remoteInstallationCheckbox.addEventListener('change', (e) => {
-      if (e.target.checked) {
-        remoteSubsections.style.display = 'block';
-      } else {
-        remoteSubsections.style.display = 'none';
-        // Uncheck all remote subsections when main option is unchecked
-        const remoteSubCheckboxes = remoteSubsections.querySelectorAll('input[type="checkbox"]');
-        remoteSubCheckboxes.forEach(checkbox => checkbox.checked = false);
-      }
-    });
-  }
-
-  // Add listeners to update equipment display when security options change
-  const allSecurityCheckboxes = document.querySelectorAll('#securitySection input[type="checkbox"]');
-  allSecurityCheckboxes.forEach(checkbox => {
-    checkbox.addEventListener('change', updateSecurityEquipmentDisplay);
-  });
-}
-
-function updateSecurityEquipmentDisplay() {
-  // This function will be called when security options change
-  // It will influence what equipment shows on Step 3
-  
-  // Refresh equipment display if we're on step 3 and have a selected speed tier
-  if (selectedSpeedTier) {
-    showEquipmentOptions();
-  }
-  
-  // Also trigger a pricing recalculation
-  calculatePricing();
-}
 
 function populatePackagePricing() {
   // Update Basic package pricing - calculate from cable pricing since they should be the same
@@ -532,18 +857,30 @@ function updateServiceLabels(packageType) {
     deviceMount: 'Device mounting',
     clientDevice: 'Client device setup',
     serverDevice: 'Host/server device setup',
-    mediaPanel: 'Media panel install'
+    mediaPanel: 'Media panel install',
+    internalCameras: 'Internal cameras',
+    externalCameras: 'External cameras',
+    doorbellCameras: 'Doorbell cameras'
   };
   
   serviceLabels.forEach(label => {
     const serviceType = label.dataset.service;
-    if (servicePricing[serviceType] && serviceNames[serviceType]) {
-      const service = servicePricing[serviceType];
+    let service = null;
+    
+    // Check if it's a regular service or camera service
+    if (servicePricing[serviceType]) {
+      service = servicePricing[serviceType];
+    } else if (pricing.cameras[serviceType]) {
+      service = pricing.cameras[serviceType];
+    }
+    
+    if (service && serviceNames[serviceType]) {
       const baseName = serviceNames[serviceType];
       
       if (packageType === 'Basic') {
         const unit = serviceType === 'mediaPanel' ? '' : 
-                    serviceType.includes('device') || serviceType.includes('Device') ? '/device' : '/item';
+                    serviceType.includes('device') || serviceType.includes('Device') ? '/device' : 
+                    serviceType.includes('Cameras') ? '/camera' : '/item';
         label.textContent = `${baseName} ($${service.cost}${unit})`;
       } else if (packageType === 'Premium') {
         const timeText = service.time === 1 ? '1 hr' : `${service.time} hrs`;
@@ -639,22 +976,13 @@ function showEquipmentOptions() {
 function getAllEquipmentForSpeedTier(speedTier) {
   const allEquipment = [];
   
-  // Get selected security options
-  const selectedSecurityTypes = getSelectedSecurityTypes();
-  
   Object.entries(equipmentCatalog).forEach(([categoryKey, categoryItems]) => {
     const categoryName = getCategoryDisplayName(categoryKey);
     categoryItems.forEach(item => {
       // Include item if it matches the speed tier or if it's security equipment (marked with 'all')
       const speedTierMatch = item.speedTiers.includes(speedTier) || item.speedTiers.includes('all');
       
-      // For security equipment, only show if the relevant security option is selected
-      let securityMatch = true;
-      if (item.securityTypes) {
-        securityMatch = item.securityTypes.some(secType => selectedSecurityTypes.includes(secType));
-      }
-      
-      if (speedTierMatch && securityMatch) {
+      if (speedTierMatch) {
         // Add the category name to the item when we retrieve it
         allEquipment.push({ ...item, category: categoryName });
       }
@@ -664,38 +992,6 @@ function getAllEquipmentForSpeedTier(speedTier) {
   return allEquipment;
 }
 
-function getSelectedSecurityTypes() {
-  const selectedTypes = [];
-  
-  // Check security cameras subsections
-  if (document.getElementById('internalCameras')?.checked) {
-    selectedTypes.push('internalCameras');
-  }
-  if (document.getElementById('externalCameras')?.checked) {
-    selectedTypes.push('externalCameras');
-  }
-  if (document.getElementById('doorbellCameras')?.checked) {
-    selectedTypes.push('doorbellCameras');
-  }
-  
-  // Check door access
-  if (document.getElementById('doorAccess')?.checked) {
-    selectedTypes.push('doorAccess');
-  }
-  
-  // Check remote installation subsections
-  if (document.getElementById('gateInstallation')?.checked) {
-    selectedTypes.push('gateInstallation');
-  }
-  if (document.getElementById('guardShackInstallation')?.checked) {
-    selectedTypes.push('guardShackInstallation');
-  }
-  if (document.getElementById('externalBuildingInstallation')?.checked) {
-    selectedTypes.push('externalBuildingInstallation');
-  }
-  
-  return selectedTypes;
-}
 
 function getCategoryDisplayName(categoryKey) {
   const categoryNames = {
@@ -974,7 +1270,8 @@ window.removeFromCart = removeFromCart;
 function setupCalculationListeners() {
   // Add listeners to all input fields for real-time calculation
   const inputFields = [
-    'coaxRuns', 'cat6Runs', 'deviceMountQty', 'clientDeviceQty', 'serverDeviceQty', 'mediaPanelQty'
+    'coaxRuns', 'cat6Runs', 'deviceMountQty', 'clientDeviceQty', 'serverDeviceQty', 'mediaPanelQty',
+    'internalCamerasQty', 'externalCamerasQty', 'doorbellCamerasQty'
   ];
   
   inputFields.forEach(fieldId => {
@@ -998,6 +1295,12 @@ async function calculatePricing() {
     clientDevice: parseInt(document.getElementById('clientDeviceQty')?.value) || 0,
     serverDevice: parseInt(document.getElementById('serverDeviceQty')?.value) || 0,
     mediaPanel: parseInt(document.getElementById('mediaPanelQty')?.value) || 0
+  };
+
+  const cameras = {
+    internalCameras: parseInt(document.getElementById('internalCamerasQty')?.value) || 0,
+    externalCameras: parseInt(document.getElementById('externalCamerasQty')?.value) || 0,
+    doorbellCameras: parseInt(document.getElementById('doorbellCamerasQty')?.value) || 0
   };
 
   // Calculate equipment total
@@ -1259,8 +1562,12 @@ function updateServicesSummary() {
   const clientDevice = parseInt(document.getElementById('clientDeviceQty')?.value) || 0;
   const serverDevice = parseInt(document.getElementById('serverDeviceQty')?.value) || 0;
   const mediaPanel = parseInt(document.getElementById('mediaPanelQty')?.value) || 0;
+  const internalCameras = parseInt(document.getElementById('internalCamerasQty')?.value) || 0;
+  const externalCameras = parseInt(document.getElementById('externalCamerasQty')?.value) || 0;
+  const doorbellCameras = parseInt(document.getElementById('doorbellCamerasQty')?.value) || 0;
   
-  if (deviceMount === 0 && clientDevice === 0 && serverDevice === 0 && mediaPanel === 0) {
+  if (deviceMount === 0 && clientDevice === 0 && serverDevice === 0 && mediaPanel === 0 &&
+      internalCameras === 0 && externalCameras === 0 && doorbellCameras === 0) {
     if (summaryServices) summaryServices.style.display = 'none';
     return;
   }
@@ -1290,6 +1597,24 @@ function updateServicesSummary() {
     servicesHTML += `<div class="summary-service-item">
       <span>Media panel install (${mediaPanel}x)</span>
       <span>$${mediaPanel * servicePricing.mediaPanel.cost}</span>
+    </div>`;
+  }
+  if (internalCameras > 0) {
+    servicesHTML += `<div class="summary-service-item">
+      <span>Internal cameras (${internalCameras}x)</span>
+      <span>$${internalCameras * pricing.cameras.internalCameras.cost}</span>
+    </div>`;
+  }
+  if (externalCameras > 0) {
+    servicesHTML += `<div class="summary-service-item">
+      <span>External cameras (${externalCameras}x)</span>
+      <span>$${externalCameras * pricing.cameras.externalCameras.cost}</span>
+    </div>`;
+  }
+  if (doorbellCameras > 0) {
+    servicesHTML += `<div class="summary-service-item">
+      <span>Doorbell cameras (${doorbellCameras}x)</span>
+      <span>$${doorbellCameras * pricing.cameras.doorbellCameras.cost}</span>
     </div>`;
   }
   
@@ -1347,6 +1672,9 @@ function updateFinalTotals() {
   const clientDevice = parseInt(document.getElementById('clientDeviceQty')?.value) || 0;
   const serverDevice = parseInt(document.getElementById('serverDeviceQty')?.value) || 0;
   const mediaPanel = parseInt(document.getElementById('mediaPanelQty')?.value) || 0;
+  const internalCameras = parseInt(document.getElementById('internalCamerasQty')?.value) || 0;
+  const externalCameras = parseInt(document.getElementById('externalCamerasQty')?.value) || 0;
+  const doorbellCameras = parseInt(document.getElementById('doorbellCamerasQty')?.value) || 0;
   
   let serviceSubtotal = 0;
   
@@ -1358,9 +1686,12 @@ function updateFinalTotals() {
                          (clientDevice * pricing.services.clientDevice.cost) + 
                          (serverDevice * pricing.services.serverDevice.cost) + 
                          (mediaPanel * pricing.services.mediaPanel.cost);
+    const camerasTotal = (internalCameras * pricing.cameras.internalCameras.cost) + 
+                        (externalCameras * pricing.cameras.externalCameras.cost) + 
+                        (doorbellCameras * pricing.cameras.doorbellCameras.cost);
     const installFee = totalRuns > 0 ? pricing.packages.basic.installFee : 0;
     
-    serviceSubtotal = runsTotal + servicesTotal + installFee;
+    serviceSubtotal = runsTotal + servicesTotal + camerasTotal + installFee;
     
   } else if (selectedPackage === 'Premium') {
     // Premium package: hours calculated purely from actual work
@@ -1369,7 +1700,10 @@ function updateFinalTotals() {
                         (clientDevice * pricing.services.clientDevice.time) + 
                         (serverDevice * pricing.services.serverDevice.time) + 
                         (mediaPanel * pricing.services.mediaPanel.time);
-    const totalHours = runHours + serviceHours;
+    const cameraHours = (internalCameras * pricing.cameras.internalCameras.time) + 
+                       (externalCameras * pricing.cameras.externalCameras.time) + 
+                       (doorbellCameras * pricing.cameras.doorbellCameras.time);
+    const totalHours = runHours + serviceHours + cameraHours;
     
     const laborTotal = totalHours * pricing.packages.premium.hourlyRate;
     
@@ -1399,3 +1733,9 @@ function updateFinalTotals() {
     summaryFinalTotal.textContent = `$${finalTotal.toFixed(2)}`;
   }
 }
+
+function initializeCameraListeners() {
+  // Camera installations factor in their own ethernet drops, so no Cat6 auto-increment needed
+  // Camera quantity changes will only trigger pricing recalculations through existing setupCalculationListeners
+}
+

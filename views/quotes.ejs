@@ -66,7 +66,7 @@
 
       <!-- Cable Runs -->
       <fieldset id="runsSection">
-        <legend>Cable Runs</legend>
+        <legend>Cable Runs (In-House RJ45 Ports)</legend>
 
         <label for="coaxRuns">
           <span class="cable-label" data-cable="coax">Coaxial runs</span>:
@@ -91,49 +91,42 @@
         </label>
       </fieldset>
 
-      <!-- Security Options -->
+      <!-- Security Camera Installation -->
       <fieldset id="securitySection">
-        <legend>Security Options</legend>
-
-        <label>
-          <input type="checkbox" id="securityCameras" name="securityCameras"> Security Cameras
-        </label>
+        <legend>Security Camera Installation</legend>
         
-        <div id="cameraSubsections" class="security-subsections" style="display: none;">
-          <div class="subsection-group">
-            <label>
-              <input type="checkbox" id="internalCameras" name="internalCameras"> Internal Cameras
-            </label>
-            <label>
-              <input type="checkbox" id="externalCameras" name="externalCameras"> External Cameras
-            </label>
-            <label>
-              <input type="checkbox" id="doorbellCameras" name="doorbellCameras"> Doorbell Cameras
-            </label>
-          </div>
-        </div>
-
-        <label>
-          <input type="checkbox" id="doorAccess" name="doorAccess"> Door Access Control
+        <label for="internalCamerasQty">
+          <span class="service-label" data-service="internalCameras">Internal cameras</span>:
+          <input
+            type="number"
+            id="internalCamerasQty"
+            name="internalCamerasQty"
+            min="0"
+            value="0"
+          />
         </label>
 
-        <label>
-          <input type="checkbox" id="remoteInstallation" name="remoteInstallation"> Remote Installation
+        <label for="externalCamerasQty">
+          <span class="service-label" data-service="externalCameras">External cameras</span>:
+          <input
+            type="number"
+            id="externalCamerasQty"
+            name="externalCamerasQty"
+            min="0"
+            value="0"
+          />
         </label>
-        
-        <div id="remoteSubsections" class="security-subsections" style="display: none;">
-          <div class="subsection-group">
-            <label>
-              <input type="checkbox" id="gateInstallation" name="gateInstallation"> Gate Installation
-            </label>
-            <label>
-              <input type="checkbox" id="guardShackInstallation" name="guardShackInstallation"> Guard Shack Installation
-            </label>
-            <label>
-              <input type="checkbox" id="externalBuildingInstallation" name="externalBuildingInstallation"> External Building Installation
-            </label>
-          </div>
-        </div>
+
+        <label for="doorbellCamerasQty">
+          <span class="service-label" data-service="doorbellCameras">Doorbell cameras</span>:
+          <input
+            type="number"
+            id="doorbellCamerasQty"
+            name="doorbellCamerasQty"
+            min="0"
+            value="0"
+          />
+        </label>
       </fieldset>
 
       <!-- Additional Services with quantities -->
@@ -1095,51 +1088,6 @@
       font-weight: 500;
     }
 
-    /* Security section styling */
-    #securitySection label {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin-bottom: 1rem;
-      cursor: pointer;
-      font-weight: 500;
-    }
-
-    #securitySection input[type="checkbox"] {
-      width: auto;
-      margin: 0;
-      flex-shrink: 0;
-    }
-
-    /* Security subsections styling */
-    .security-subsections {
-      margin-top: 1rem;
-      margin-left: 1.5rem;
-      padding: 1rem;
-      background: var(--surface-light);
-      border-radius: var(--radius);
-      border-left: 3px solid var(--primary);
-    }
-
-    .subsection-group {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-
-    .subsection-group label {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin-bottom: 0;
-      cursor: pointer;
-      font-weight: 400;
-    }
-
-    .subsection-group input[type="checkbox"] {
-      width: auto;
-      margin: 0;
-    }
 
     /* Mobile Responsive */
     @media (max-width: 768px) {

@@ -4,6 +4,8 @@ const path = require('path');
 const compression = require('compression');
 const cookieParser = require('cookie-parser');
 const helmet = require('helmet');
+const session = require('express-session');
+const MongoStore = require('connect-mongo');
 require('dotenv').config();
 
 const app = express();
@@ -35,6 +37,28 @@ app.use(helmet({
 // Configure trust proxy securely - only trust first proxy (e.g., Cloudflare)
 app.set('trust proxy', 1);
 
+// Session configuration for admin authentication
+app.use(session({
+  secret: process.env.ADMIN_SESSION_SECRET || 'fallback-secret-change-immediately',
+  name: 'admin-session',
+  resave: false,
+  saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGO_URI,
+    touchAfter: 24 * 3600, // lazy session update (24 hours)
+    crypto: {
+      secret: process.env.ADMIN_SESSION_SECRET || 'fallback-secret-change-immediately'
+    }
+  }),
+  cookie: {
+    secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+    httpOnly: true,
+    maxAge: 60 * 60 * 1000, // 1 hour
+    sameSite: 'strict'
+  },
+  rolling: true // Reset expiration on activity
+}));
+
 // Subdomain-based variant detection: sets which "half" of the site we're on and the switcher URL
 app.use((req, res, next) => {
   const subdomains = req.subdomains || [];
@@ -56,11 +80,11 @@ app.use((req, res, next) => {
   next();
 });
 
-// TODO: Implement proper authentication system when needed
-// - Use JWT tokens with proper secret management
-// - Implement secure password hashing (bcrypt/argon2)
-// - Add rate limiting on auth endpoints
-// - Consider OAuth integration for admin access
+// Admin authentication system implemented with:
+// - JWT tokens with secure secret management
+// - bcrypt password hashing with 12 salt rounds
+// - Rate limiting on auth endpoints (3 attempts/15min)
+// - Account lockout and brute force protection
 
 // Connect to MongoDB
 async function connectDB() {
@@ -80,6 +104,8 @@ const schedulingRoutes = require('./routes/scheduling');
 const quotesRoutes = require('./routes/quotes');
 const sharedRoutes = require('./routes/shared');
 const invoicesRoutes = require('./routes/invoices');
+const authRoutes = require('./routes/auth');
+const adminRoutes = require('./routes/admin');
 
 // Use API routes
 app.use('/api/home', homeRoutes);
@@ -87,6 +113,8 @@ app.use('/api/scheduling', schedulingRoutes);
 app.use('/api/quotes', quotesRoutes);
 app.use('/api/shared', sharedRoutes);
 app.use('/api/invoices', invoicesRoutes);
+app.use('/auth', authRoutes);
+app.use('/admin', adminRoutes);
 
 // Home
 app.get('/', (req, res) => {
