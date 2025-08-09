@@ -52,6 +52,7 @@ const QuoteSchema = new mongoose.Schema({
   },
 
   ip:        { type: String },
+  userAgent: { type: String },
   createdAt: { type: Date, default: Date.now }
 });
 

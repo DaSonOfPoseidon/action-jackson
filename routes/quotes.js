@@ -1,13 +1,74 @@
-const express    = require('express');
-const router     = express.Router();
-const Quote      = require('../models/Quote');
+const express = require('express');
+const router = express.Router();
+const Quote = require('../models/Quote');
 const nodemailer = require('nodemailer');
+const rateLimit = require('express-rate-limit');
+const { body, validationResult } = require('express-validator');
+const validator = require('validator');
 
 // Helper to grab real client IP (works behind proxies)
-const getClientIP = req =>
-  req.headers['x-forwarded-for'] ||
-  req.socket.remoteAddress ||
-  null;
+const getClientIP = req => {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (forwarded) {
+    // Take the first IP from the forwarded list
+    return forwarded.split(',')[0].trim();
+  }
+  return req.socket.remoteAddress || null;
+};
+
+// Rate limiting for quote creation
+const quoteRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 3, // limit each IP to 3 quote requests per windowMs
+  message: {
+    error: 'Too many quote requests from this IP, please try again in 15 minutes.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => {
+    // Skip rate limiting for test and development environments
+    return process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development';
+  }
+});
+
+// Stricter rate limiting for calculate endpoint
+const calculateRateLimit = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 30, // limit each IP to 30 calculation requests per minute
+  message: {
+    error: 'Too many calculation requests, please slow down.'
+  },
+  skip: (req) => {
+    // Skip rate limiting for test and development environments
+    return process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development';
+  }
+});
+
+// Input sanitization helper
+const sanitizeString = (str) => {
+  if (!str || typeof str !== 'string') return '';
+  return validator.escape(validator.trim(str));
+};
+
+// Email domain validation (basic business email check)
+const isValidBusinessEmail = (email) => {
+  if (!validator.isEmail(email)) return false;
+  
+  // Block common disposable email domains
+  const disposableDomains = [
+    '10minutemail.com', 'mailinator.com', 'guerrillamail.com',
+    'tempmail.org', 'temp-mail.org', '0-mail.com'
+  ];
+  
+  const domain = email.split('@')[1]?.toLowerCase();
+  
+  // Allow example.com for testing
+  if (process.env.NODE_ENV === 'test' && domain === 'example.com') {
+    return true;
+  }
+  
+  return !disposableDomains.includes(domain);
+};
 
 // Package configuration
 const packageConfig = {
@@ -86,7 +147,7 @@ const calculatePricing = (packageOption, runs, services, includeSurvey = false, 
 };
 
 // GET route for real-time calculation
-router.get('/calculate', (req, res) => {
+router.get('/calculate', calculateRateLimit, (req, res) => {
   const { packageOption, includeSurvey, discount } = req.query;
 
   if (!packageOption || !['Basic', 'Premium'].includes(packageOption)) {
@@ -126,36 +187,115 @@ router.get('/calculate', (req, res) => {
   }
 });
 
-router.post('/create', async (req, res) => {
+// Validation middleware for quote creation
+const validateQuote = [
+  body('customer.name')
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Name must be between 2 and 100 characters')
+    .matches(/^[a-zA-Z\s'-]+$/)
+    .withMessage('Name can only contain letters, spaces, apostrophes, and hyphens'),
+  body('customer.email')
+    .isEmail()
+    .normalizeEmail()
+    .withMessage('Valid email address is required')
+    .custom((email) => {
+      if (!isValidBusinessEmail(email)) {
+        throw new Error('Please use a valid business email address');
+      }
+      return true;
+    }),
+  body('packageOption')
+    .isIn(['Basic', 'Premium'])
+    .withMessage('Invalid package option'),
+  body('discount')
+    .optional()
+    .isInt({ min: 0, max: 100 })
+    .withMessage('Discount must be between 0 and 100'),
+  body('runs.coax')
+    .optional()
+    .isInt({ min: 0, max: 50 })
+    .withMessage('Coax runs must be between 0 and 50'),
+  body('runs.cat6')
+    .optional()
+    .isInt({ min: 0, max: 50 })
+    .withMessage('Cat6 runs must be between 0 and 50'),
+  body('services.deviceMount')
+    .optional()
+    .isInt({ min: 0, max: 20 })
+    .withMessage('Device mounts must be between 0 and 20'),
+  body('services.networkSetup')
+    .optional()
+    .isInt({ min: 0, max: 10 })
+    .withMessage('Network setups must be between 0 and 10'),
+  body('services.mediaPanel')
+    .optional()
+    .isInt({ min: 0, max: 10 })
+    .withMessage('Media panels must be between 0 and 10'),
+  body('speedTier')
+    .optional()
+    .isIn(['1 Gig', '5 Gig', '10 Gig'])
+    .withMessage('Invalid speed tier'),
+  body('equipment')
+    .optional()
+    .isArray({ max: 20 })
+    .withMessage('Equipment list cannot exceed 20 items'),
+  body('honeypot')
+    .optional()
+    .isEmpty()
+    .withMessage('Bot detection triggered')
+];
+
+router.post('/create', quoteRateLimit, validateQuote, async (req, res) => {
+  // Check validation errors
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ 
+      error: 'Validation failed', 
+      details: errors.array().map(err => err.msg)
+    });
+  }
+
   const { customer, packageOption, discount, runs, services, includeSurvey, speedTier, equipment } = req.body;
   const clientIP = getClientIP(req);
 
-  // Basic validation
-  if (!customer?.name || !customer?.email || !packageOption) {
-    return res.status(400).json({ error: 'Missing customer name, email or package.' });
+  // Sanitize customer data
+  const sanitizedCustomer = {
+    name: sanitizeString(customer.name),
+    email: customer.email.toLowerCase() // already validated by express-validator
+  };
+
+  // Additional business logic validation
+  const totalRuns = (runs?.coax || 0) + (runs?.cat6 || 0);
+  if (totalRuns === 0 && (!services || Object.values(services).every(val => val === 0))) {
+    return res.status(400).json({ error: 'At least one service or cable run must be selected.' });
   }
 
-  if (!['Basic', 'Premium'].includes(packageOption)) {
-    return res.status(400).json({ error: 'Invalid package option.' });
-  }
-
-  // Validate speed tier if provided
-  if (speedTier && !['1 Gig', '5 Gig', '10 Gig'].includes(speedTier)) {
-    return res.status(400).json({ error: 'Invalid speed tier option.' });
-  }
-
-  // Validate equipment array if provided
-  if (equipment && !Array.isArray(equipment)) {
-    return res.status(400).json({ error: 'Equipment must be an array.' });
+  // Check for suspicious patterns
+  if (equipment && equipment.length > 0) {
+    const totalEquipmentCost = equipment.reduce((total, item) => total + (item.price * item.quantity), 0);
+    if (totalEquipmentCost > 50000) { // Reasonable upper limit
+      return res.status(400).json({ error: 'Equipment total exceeds reasonable limits.' });
+    }
   }
 
   try {
     // Calculate pricing with equipment
     const pricing = calculatePricing(packageOption, runs, services, includeSurvey, equipment || [], discount);
 
+    // Check for recent quotes from same email (additional spam protection)
+    const recentQuote = await Quote.findOne({
+      'customer.email': sanitizedCustomer.email,
+      createdAt: { $gte: new Date(Date.now() - 10 * 60 * 1000) } // 10 minutes
+    });
+    
+    if (recentQuote) {
+      return res.status(429).json({ error: 'Please wait 10 minutes between quote requests.' });
+    }
+
     // 1) Save to Mongo
     const newQuote = new Quote({
-      customer,
+      customer: sanitizedCustomer,
       packageOption,
       includeSurvey,
       speedTier,
@@ -164,7 +304,8 @@ router.post('/create', async (req, res) => {
       services,
       equipment: equipment || [],
       pricing,
-      ip: clientIP
+      ip: clientIP,
+      userAgent: req.get('User-Agent')?.substring(0, 200) || 'Unknown'
     });
     await newQuote.save();
 
@@ -180,8 +321,8 @@ router.post('/create', async (req, res) => {
     const mailLines = [
       `New Quote Submission`,
       `--------------------`,
-      `Name: ${customer.name}`,
-      `Email: ${customer.email}`,
+      `Name: ${sanitizedCustomer.name}`,
+      `Email: ${sanitizedCustomer.email}`,
       `Package: ${packageOption}${includeSurvey ? ' + Survey' : ''}`,
       speedTier ? `Speed Tier: ${speedTier}` : '',
       `Discount: ${discount}%`,
@@ -200,7 +341,9 @@ router.post('/create', async (req, res) => {
         : `Estimated Total: $${pricing.estimatedTotal}`,
       includeSurvey ? `Survey Fee: $${pricing.surveyFee}` : '',
       pricing.equipmentTotal > 0 ? `Equipment Total: $${pricing.equipmentTotal}` : '',
-      `IP Address: ${clientIP}`
+      `IP Address: ${clientIP}`,
+      `User Agent: ${req.get('User-Agent')?.substring(0, 100) || 'Unknown'}`,
+      `Timestamp: ${new Date().toISOString()}`
     ].filter(line => line !== '');
 
     await transporter.sendMail({

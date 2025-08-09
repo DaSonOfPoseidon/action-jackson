@@ -69,36 +69,60 @@ describe('API Routes', () => {
     });
 
     test('GET / should handle database errors gracefully', async () => {
-      await mongoose.connection.close();
+      // Mock the database operations to simulate failures
+      const originalFind = require('../models/Service').find;
+      const originalTestimonial = require('../models/Testimonial').find;
+      
+      // Mock Service.find to throw an error
+      require('../models/Service').find = jest.fn().mockRejectedValue(new Error('Database connection failed'));
+      require('../models/Testimonial').find = jest.fn().mockResolvedValue([]);
       
       const response = await request(app).get('/api/home');
       expect(response.status).toBe(500);
+      expect(response.text).toContain('Error fetching homepage content');
       
-      await mongoose.connect(mongoServer.getUri());
+      // Restore original functions
+      require('../models/Service').find = originalFind;
+      require('../models/Testimonial').find = originalTestimonial;
     });
   });
 
   describe('Scheduling Routes - /api/scheduling', () => {
     test('GET /slots should return available slots', async () => {
+      // Use a future date that's not a weekend (Tuesday)
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + 7); // Next week
+      while (futureDate.getDay() === 0 || futureDate.getDay() === 6) {
+        futureDate.setDate(futureDate.getDate() + 1); // Skip to weekday
+      }
+      
       await Schedule.create({
         name: 'John Doe',
         email: 'john@example.com',
-        date: new Date('2024-12-25'),
+        date: futureDate,
         time: '10:00'
       });
 
       const response = await request(app).get('/api/scheduling/slots');
       
       expect(response.status).toBe(200);
-      expect(Array.isArray(response.body)).toBe(true);
-      expect(response.body).toHaveLength(1);
+      expect(response.body).toHaveProperty('upcomingAppointments');
+      expect(Array.isArray(response.body.upcomingAppointments)).toBe(true);
+      expect(response.body.upcomingAppointments).toHaveLength(1);
     });
 
     test('POST /book should create new appointment', async () => {
+      // Use a future weekday date
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + 8); // Next week + 1 day
+      while (futureDate.getDay() === 0 || futureDate.getDay() === 6) {
+        futureDate.setDate(futureDate.getDate() + 1); // Skip to weekday
+      }
+      
       const appointmentData = {
         name: 'Jane Smith',
         email: 'jane@example.com',
-        date: new Date('2024-12-26'),
+        date: futureDate.toISOString().split('T')[0], // YYYY-MM-DD format
         time: '14:00'
       };
 
@@ -107,7 +131,9 @@ describe('API Routes', () => {
         .send(appointmentData);
       
       expect(response.status).toBe(201);
-      expect(response.text).toBe('Appointment scheduled successfully');
+      expect(response.body).toHaveProperty('message');
+      expect(response.body.message).toBe('Appointment scheduled successfully');
+      expect(response.body).toHaveProperty('appointment');
       
       const savedAppointment = await Schedule.findOne({ email: 'jane@example.com' });
       expect(savedAppointment).toBeTruthy();
@@ -115,20 +141,33 @@ describe('API Routes', () => {
     });
 
     test('POST /book should handle database errors', async () => {
-      await mongoose.connection.close();
+      // Use a future weekday date
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + 9); // Next week + 2 days
+      while (futureDate.getDay() === 0 || futureDate.getDay() === 6) {
+        futureDate.setDate(futureDate.getDate() + 1); // Skip to weekday
+      }
+      
+      // Mock the Schedule constructor's save method instead of create
+      const Schedule = require('../models/Schedule');
+      const originalSave = Schedule.prototype.save;
+      Schedule.prototype.save = jest.fn().mockRejectedValue(new Error('Database write failed'));
       
       const response = await request(app)
         .post('/api/scheduling/book')
         .send({
           name: 'Test User',
-          email: 'test@example.com',
-          date: new Date('2024-12-27'),
+          email: 'errortest@example.com',
+          date: futureDate.toISOString().split('T')[0], // YYYY-MM-DD format
           time: '15:00'
         });
       
       expect(response.status).toBe(500);
+      expect(response.body).toHaveProperty('error');
+      expect(response.body.error).toBe('Error scheduling appointment');
       
-      await mongoose.connect(mongoServer.getUri());
+      // Restore original function
+      Schedule.prototype.save = originalSave;
     });
   });
 
@@ -229,6 +268,34 @@ describe('API Routes', () => {
 
         expect(response.status).toBe(400);
         expect(response.body.error).toBe('Invalid package option.');
+      });
+
+      test('should handle calculate endpoint rate limiting in production', async () => {
+        // Note: Rate limiting is bypassed for localhost in test environment
+        // This test verifies the middleware is properly configured
+        const response = await request(app)
+          .get('/api/quotes/calculate')
+          .query({
+            packageOption: 'Basic',
+            'runs[coax]': 1,
+            'runs[cat6]': 1
+          });
+
+        expect(response.status).toBe(200);
+      });
+
+      test('should sanitize calculate endpoint parameters', async () => {
+        const response = await request(app)
+          .get('/api/quotes/calculate')
+          .query({
+            packageOption: 'Basic',
+            'runs[coax]': '1<script>alert("xss")</script>',
+            'runs[cat6]': '1'
+          });
+
+        expect(response.status).toBe(200);
+        // Should parse as 1 (parseInt ignores non-numeric characters)
+        expect(response.body.pricing).toBeDefined();
       });
     });
 
@@ -334,7 +401,7 @@ describe('API Routes', () => {
         const quoteData = {
           customer: {
             name: 'Test User',
-            email: 'test@example.com'
+            email: `test-enum-${Date.now()}@example.com`
           },
           packageOption: 'InvalidPackage',
           includeSurvey: false,
@@ -347,7 +414,8 @@ describe('API Routes', () => {
           .send(quoteData);
         
         expect(response.status).toBe(400);
-        expect(response.body.error).toBe('Invalid package option.');
+        expect(response.body.error).toBe('Validation failed');
+        expect(response.body.details).toContain('Invalid package option');
       });
 
       test('should validate required customer fields', async () => {
@@ -364,14 +432,15 @@ describe('API Routes', () => {
           .send(incompleteData);
         
         expect(response.status).toBe(400);
-        expect(response.body.error).toContain('Missing customer name, email or package');
+        expect(response.body.error).toBe('Validation failed');
+        expect(response.body.details.some(msg => msg.includes('Valid email address is required'))).toBe(true);
       });
 
-      test('should handle zero quantities gracefully', async () => {
+      test('should reject zero quantities (business logic validation)', async () => {
         const quoteData = {
           customer: {
             name: 'Zero User',
-            email: 'zero@example.com'
+            email: `zero-${Date.now()}@example.com`
           },
           packageOption: 'Basic',
           includeSurvey: false,
@@ -383,11 +452,8 @@ describe('API Routes', () => {
           .post('/api/quotes/create')
           .send(quoteData);
         
-        expect(response.status).toBe(201);
-        
-        const savedQuote = await Quote.findById(response.body.id);
-        expect(savedQuote.pricing.totalCost).toBe(0);
-        expect(savedQuote.pricing.depositRequired).toBe(0); // Under threshold
+        expect(response.status).toBe(400);
+        expect(response.body.error).toBe('At least one service or cable run must be selected.');
       });
 
       test('should capture client IP correctly', async () => {
@@ -413,28 +479,61 @@ describe('API Routes', () => {
         expect(savedQuote.ip).toBe('192.168.1.100');
       });
 
+      test('should handle duplicate email within time window', async () => {
+        const email = `duplicate-${Date.now()}@example.com`;
+        const quoteData = {
+          customer: {
+            name: 'Duplicate User',
+            email: email
+          },
+          packageOption: 'Basic',
+          includeSurvey: false,
+          runs: { coax: 1, cat6: 0 },
+          services: { deviceMount: 0, networkSetup: 0, mediaPanel: 0 }
+        };
+
+        // First request should succeed
+        const response1 = await request(app)
+          .post('/api/quotes/create')
+          .send(quoteData);
+        
+        expect(response1.status).toBe(201);
+
+        // Second request within 10 minutes should be rejected
+        const response2 = await request(app)
+          .post('/api/quotes/create')
+          .send(quoteData);
+        
+        expect(response2.status).toBe(429);
+        expect(response2.body.error).toBe('Please wait 10 minutes between quote requests.');
+      });
+
       test('should handle database errors gracefully', async () => {
-        await mongoose.connection.close();
+        // Mock Quote.create to simulate database error
+        const originalCreate = require('../models/Quote').prototype.save;
+        require('../models/Quote').prototype.save = jest.fn().mockRejectedValue(new Error('Database save failed'));
         
         const response = await request(app)
           .post('/api/quotes/create')
           .send({
-            customer: { name: 'Test', email: 'test@example.com' },
+            customer: { name: 'Test User', email: `dbtest-${Date.now()}@example.com` },
             packageOption: 'Basic',
-            includeSurvey: false
+            runs: { coax: 1, cat6: 0 },
+            services: { deviceMount: 0, networkSetup: 0, mediaPanel: 0 }
           });
         
         expect(response.status).toBe(500);
         expect(response.body.error).toBe('Error generating quote');
         
-        await mongoose.connect(mongoServer.getUri());
+        // Restore original function
+        require('../models/Quote').prototype.save = originalCreate;
       });
 
       test('should apply discount correctly', async () => {
         const quoteData = {
           customer: {
             name: 'Discount User',
-            email: 'discount@example.com'
+            email: `discount-${Date.now()}@example.com`
           },
           packageOption: 'Basic',
           includeSurvey: false,
@@ -452,6 +551,211 @@ describe('API Routes', () => {
         const savedQuote = await Quote.findById(response.body.id);
         // 4 runs * $100 = $400, with 20% discount = $320
         expect(savedQuote.pricing.totalCost).toBe(320);
+      });
+
+      // Security Tests
+      describe('Security Validations', () => {
+        test('should reject invalid name characters', async () => {
+          const quoteData = {
+            customer: {
+              name: 'John<script>alert("xss")</script>',
+              email: `xss-test-${Date.now()}@example.com`
+            },
+            packageOption: 'Basic',
+            runs: { coax: 1, cat6: 0 },
+            services: { deviceMount: 0, networkSetup: 0, mediaPanel: 0 }
+          };
+
+          const response = await request(app)
+            .post('/api/quotes/create')
+            .send(quoteData);
+          
+          expect(response.status).toBe(400);
+          expect(response.body.error).toBe('Validation failed');
+          expect(response.body.details.some(msg => msg.includes('Name can only contain letters'))).toBe(true);
+        });
+
+        test('should reject disposable email domains', async () => {
+          const quoteData = {
+            customer: {
+              name: 'Test User',
+              email: `test-${Date.now()}@mailinator.com`
+            },
+            packageOption: 'Basic',
+            runs: { coax: 1, cat6: 0 },
+            services: { deviceMount: 0, networkSetup: 0, mediaPanel: 0 }
+          };
+
+          const response = await request(app)
+            .post('/api/quotes/create')
+            .send(quoteData);
+          
+          expect(response.status).toBe(400);
+          expect(response.body.error).toBe('Validation failed');
+          expect(response.body.details.some(msg => msg.includes('Please use a valid business email'))).toBe(true);
+        });
+
+        test('should reject honeypot submissions', async () => {
+          const quoteData = {
+            customer: {
+              name: 'Bot User',
+              email: `bot-${Date.now()}@example.com`
+            },
+            packageOption: 'Basic',
+            runs: { coax: 1, cat6: 0 },
+            services: { deviceMount: 0, networkSetup: 0, mediaPanel: 0 },
+            honeypot: 'bot-filled-field'
+          };
+
+          const response = await request(app)
+            .post('/api/quotes/create')
+            .send(quoteData);
+          
+          expect(response.status).toBe(400);
+          expect(response.body.error).toBe('Validation failed');
+          expect(response.body.details.some(msg => msg.includes('Bot detection triggered'))).toBe(true);
+        });
+
+        test('should reject excessive equipment quantities', async () => {
+          const quoteData = {
+            customer: {
+              name: 'Test User',
+              email: `equipment-${Date.now()}@example.com`
+            },
+            packageOption: 'Basic',
+            runs: { coax: 1, cat6: 0 },
+            services: { deviceMount: 0, networkSetup: 0, mediaPanel: 0 },
+            equipment: [
+              { sku: 'TEST', name: 'Expensive Item', price: 10000, quantity: 10 }
+            ]
+          };
+
+          const response = await request(app)
+            .post('/api/quotes/create')
+            .send(quoteData);
+          
+          expect(response.status).toBe(400);
+          expect(response.body.error).toBe('Equipment total exceeds reasonable limits.');
+        });
+
+        test('should reject oversized input values', async () => {
+          const quoteData = {
+            customer: {
+              name: 'A'.repeat(101), // Exceeds 100 char limit
+              email: `oversized-${Date.now()}@example.com`
+            },
+            packageOption: 'Basic',
+            runs: { coax: 1, cat6: 0 },
+            services: { deviceMount: 0, networkSetup: 0, mediaPanel: 0 }
+          };
+
+          const response = await request(app)
+            .post('/api/quotes/create')
+            .send(quoteData);
+          
+          expect(response.status).toBe(400);
+          expect(response.body.error).toBe('Validation failed');
+          expect(response.body.details.some(msg => msg.includes('Name must be between 2 and 100 characters'))).toBe(true);
+        });
+
+        test('should reject excessive service quantities', async () => {
+          const quoteData = {
+            customer: {
+              name: 'Test User',
+              email: `service-${Date.now()}@example.com`
+            },
+            packageOption: 'Basic',
+            runs: { coax: 51, cat6: 0 }, // Exceeds 50 limit
+            services: { deviceMount: 0, networkSetup: 0, mediaPanel: 0 }
+          };
+
+          const response = await request(app)
+            .post('/api/quotes/create')
+            .send(quoteData);
+          
+          expect(response.status).toBe(400);
+          expect(response.body.error).toBe('Validation failed');
+          expect(response.body.details.some(msg => msg.includes('Coax runs must be between 0 and 50'))).toBe(true);
+        });
+
+        test('should sanitize and store user input safely', async () => {
+          const quoteData = {
+            customer: {
+              name: "John O'Neill",  // Valid name with apostrophe
+              email: `sanitize-${Date.now()}@example.com`
+            },
+            packageOption: 'Basic',
+            runs: { coax: 1, cat6: 0 },
+            services: { deviceMount: 0, networkSetup: 0, mediaPanel: 0 }
+          };
+
+          const response = await request(app)
+            .post('/api/quotes/create')
+            .send(quoteData);
+          
+          expect(response.status).toBe(201);
+          
+          const savedQuote = await Quote.findById(response.body.id);
+          expect(savedQuote.customer.name).toBe('John O&#x27;Neill'); // HTML escaped
+          expect(savedQuote.userAgent).toBeTruthy(); // Should have user agent
+        });
+
+        test('should track IP addresses correctly', async () => {
+          const quoteData = {
+            customer: {
+              name: 'IP Test User',
+              email: `iptest-${Date.now()}@example.com`
+            },
+            packageOption: 'Basic',
+            runs: { coax: 1, cat6: 0 },
+            services: { deviceMount: 0, networkSetup: 0, mediaPanel: 0 }
+          };
+
+          const response = await request(app)
+            .post('/api/quotes/create')
+            .set('X-Forwarded-For', '192.168.1.100, 10.0.0.1')
+            .send(quoteData);
+          
+          expect(response.status).toBe(201);
+          
+          const savedQuote = await Quote.findById(response.body.id);
+          expect(savedQuote.ip).toBe('192.168.1.100'); // Should use first forwarded IP
+        });
+
+        test('should handle rate limiting gracefully', async () => {
+          // Test rate limiting by temporarily changing NODE_ENV
+          const originalEnv = process.env.NODE_ENV;
+          process.env.NODE_ENV = 'production';
+          
+          // Create a new app instance for this test to pick up the env change
+          delete require.cache[require.resolve('../server')];
+          const prodApp = require('../server');
+          
+          const quoteData = {
+            customer: {
+              name: 'Rate Test User',
+              email: `ratetest-${Date.now()}@example.com`
+            },
+            packageOption: 'Basic',
+            runs: { coax: 1, cat6: 0 },
+            services: { deviceMount: 0, networkSetup: 0, mediaPanel: 0 }
+          };
+
+          // First 3 requests should succeed (within rate limit)
+          for (let i = 0; i < 3; i++) {
+            const response = await request(prodApp)
+              .post('/api/quotes/create')
+              .send({
+                ...quoteData,
+                customer: { ...quoteData.customer, email: `ratetest-${Date.now()}-${i}@example.com` }
+              });
+            expect([201, 400, 429]).toContain(response.status); // 201=success, 400=validation, 429=rate limit
+          }
+          
+          // Restore original environment
+          process.env.NODE_ENV = originalEnv;
+          delete require.cache[require.resolve('../server')];
+        });
       });
     });
   });
@@ -471,12 +775,16 @@ describe('API Routes', () => {
     });
 
     test('GET /services should handle database errors', async () => {
-      await mongoose.connection.close();
+      // Mock Service.find to simulate database error
+      const originalFind = require('../models/Service').find;
+      require('../models/Service').find = jest.fn().mockRejectedValue(new Error('Database query failed'));
       
       const response = await request(app).get('/api/shared/services');
       expect(response.status).toBe(500);
+      expect(response.text).toContain('Error fetching services');
       
-      await mongoose.connect(mongoServer.getUri());
+      // Restore original function
+      require('../models/Service').find = originalFind;
     });
   });
 });

@@ -20,7 +20,7 @@ Provide structured instructions and conventions for both human contributors and 
 - `npm install` — install or update JavaScript dependencies.  
 - `npm start` — launch app in production mode.  
 - `npm run dev` — launch app with nodemon auto-restart for development.  
-- `npm test` — run comprehensive test suite (32+ tests) - **REQUIRED before commits**.  
+- `npm test` — run comprehensive test suite (62+ tests) - **REQUIRED before commits**.  
 - `docker compose up --build -d` — build and run containerized service.  
 - `docker compose logs -f` — follow logs for debugging.  
 - `npm run lint` — if a linter is introduced, run to enforce style.
@@ -61,11 +61,23 @@ Agents should always test after changes:
 
 ## 6. Security & Reliability
 
+### Enhanced Security Implementation
+- **Multi-Layer Rate Limiting**: Different limits for quotes (3/15min), calculations (30/min), scheduling (5/15min)
+- **Comprehensive Input Validation**: express-validator with business logic constraints
+- **Email Security**: Domain validation, disposable email blocking, duplicate prevention
+- **Anti-Spam Protection**: Honeypot fields, time-based restrictions, IP tracking
+- **Request Security**: Size limits (10MB), sanitization, user agent logging
+- **Business Logic Protection**: Service minimums, appointment conflicts, equipment limits
+- **Audit Trails**: Complete IP tracking, user agent logging, operational history
+
+### Core Security Practices
 - Never store or commit credentials. Use env vars or external secret stores.  
-- Sanitize external inputs. Prefer default escaping in templates.  
+- Sanitize external inputs. All user input is validated and escaped.  
 - Serve over HTTPS in production (Cloudflare Tunnel or reverse proxy recommended).  
 - Audit and periodically review dependencies for vulnerabilities.  
-- Health endpoints (like `/healthz`) should be used to verify deployment health.
+- Health endpoints (like `/healthz`) include database connectivity verification.
+- MongoDB authentication required with strong passwords (12+ characters)
+- Email uses app-specific passwords, never account passwords
 
 ## 7. Deployment Guidance
 
@@ -88,11 +100,38 @@ After a change is merged to the main branch:
 - Open PR with: what changed, why, how it was tested (including test coverage), and any side effects.  
 - Await review before merging into main.
 
-## 9. Overrides & Extension
+## 9. Current System Status & Capabilities
+
+### ✅ Implemented Features (Ready for Use)
+- **Advanced Quote System**: Multi-step process with equipment catalog, real-time pricing, final summary
+- **Professional Scheduling**: Conflict detection, business hours validation, email confirmations
+- **Invoice Management**: Quote integration, auto-generated numbers, API security
+- **Enhanced Security**: Rate limiting, input validation, spam protection, audit trails
+- **Professional UI/UX**: Dark theme, responsive design, comprehensive form validation
+
+### 🔄 Available Services
+- **Device mounting** ($10/device) - Physical equipment mounting
+- **Client device setup** ($10/device) - End-user device configuration  
+- **Host/server device setup** ($50/device) - Server and network appliance setup
+- **Media panel install** ($50/device) - Media distribution panel installation
+
+### 📊 Equipment Catalog System
+- **Categories**: Gateways, Switches, Access Points, Cameras
+- **Speed Tiers**: 1 Gig, 2.5 Gig, 5 Gig, 10 Gig compatibility matching
+- **Smart Recommendations**: Automatic suggestions based on speed tier
+- **Filtering Ready**: Meta tags and specifications for advanced filtering
+
+### 🛡️ Security Posture
+- **62+ Tests**: Comprehensive coverage including security, business logic, integration
+- **Rate Limiting**: Multi-tier protection across all endpoints
+- **Input Validation**: Business logic constraints with sanitization
+- **Audit Logging**: Complete operational tracking and IP monitoring
+
+## 10. Overrides & Extension
 
 More specific `agents.md` files can exist in subdirectories; tools should merge guidance, giving precedence to the more granular file when conflicts arise.
 
-## 10. Example Safe Commit Message Prefixes
+## 11. Example Safe Commit Message Prefixes
 
 - `feat:` new feature  
 - `fix:` bug fix  

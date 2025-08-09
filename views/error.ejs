@@ -28,12 +28,12 @@
         </a>
         
         <% if (variant === 'portfolio') { %>
-          <a href="https://github.com/DaSonOfPoseidon" class="error-btn-secondary" target="_blank" rel="noopener">
+          <a href="https://github.com/DaSonOfPoseidon/action-jackson/issues" class="error-btn-secondary" target="_blank" rel="noopener">
             <i class="fab fa-github"></i>
             Report Issue
           </a>
         <% } else { %>
-          <button onclick="history.back()" class="error-btn-secondary">
+          <button id="goBackBtn" class="error-btn-secondary">
             <i class="fas fa-arrow-left"></i>
             Go Back
           </button>
@@ -124,20 +124,61 @@
 </main>
 
 <script>
-  // Populate technical details
-  document.getElementById('errorTime').textContent = new Date().toLocaleString();
-  document.getElementById('errorPath').textContent = window.location.pathname;
-  <% if (variant === 'portfolio') { %>
-    const userAgent = navigator.userAgent;
-    document.getElementById('userAgent').textContent = userAgent.length > 80 ? 
-      userAgent.substring(0, 80) + '...' : userAgent;
+  // Populate technical details when DOM is ready
+  document.addEventListener('DOMContentLoaded', function() {
+    // Populate error time
+    const errorTimeEl = document.getElementById('errorTime');
+    if (errorTimeEl) {
+      errorTimeEl.textContent = new Date().toLocaleString();
+    }
+    
+    // Populate error path
+    const errorPathEl = document.getElementById('errorPath');
+    if (errorPathEl) {
+      errorPathEl.textContent = window.location.pathname;
+    }
+    
+    <% if (variant === 'portfolio') { %>
+      // Populate user agent for portfolio variant
+      const userAgentEl = document.getElementById('userAgent');
+      if (userAgentEl) {
+        const userAgent = navigator.userAgent;
+        userAgentEl.textContent = userAgent.length > 80 ? 
+          userAgent.substring(0, 80) + '...' : userAgent;
+      }
     <% } %>
+  });
   
-  // Add refresh functionality
+  // Add keyboard refresh functionality
   document.addEventListener('keydown', function(e) {
     if (e.key === 'r' && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
       window.location.reload();
+    }
+  });
+  
+  // Add click refresh functionality to refresh card
+  document.addEventListener('DOMContentLoaded', function() {
+    const refreshCard = document.querySelector('.help-card:first-child');
+    if (refreshCard) {
+      refreshCard.style.cursor = 'pointer';
+      refreshCard.addEventListener('click', function() {
+        window.location.reload();
+      });
+    }
+    
+    // Add go back functionality
+    const goBackBtn = document.getElementById('goBackBtn');
+    if (goBackBtn) {
+      goBackBtn.addEventListener('click', function() {
+        // Check if there's history to go back to
+        if (window.history.length > 1) {
+          window.history.back();
+        } else {
+          // If no history, go to home page
+          window.location.href = '/';
+        }
+      });
     }
   });
 </script>

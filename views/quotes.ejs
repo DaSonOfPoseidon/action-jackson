@@ -1,29 +1,27 @@
 <%- include('partials/header', { title: 'Request a Quote' }) %>
 
   <main class="container">
-    <h1>Request a Quote</h1>
-
-    <!-- Package Selection Cards -->
-    <section class="package-selection">
-      <h2>Select Your Package</h2>
+    <!-- Step 1: Package Selection -->
+    <section id="step-1-package">
+      <h2>Step 1: Select Your Package</h2>
       <div class="package-cards grid">
         
         <article class="card package-card" data-package="Basic">
           <h3>Basic</h3>
-          <p class="package-price">$50 per drop + $50 install fee</p>
+          <p class="package-price" data-price="basic"></p>
           <ul class="package-features">
             <li>Install lines A to B</li>
             <li>Standard termination (RJ45/11 or punch down)</li>
             <li>Testing and verification</li>
             <li>Low-voltage box, plate, keystone included</li>
           </ul>
-          <p class="package-deposit">$20 deposit on quotes over $100</p>
+          <p class="package-deposit" data-deposit="basic"></p>
           <button type="button" class="package-select-btn" data-package="Basic">Select Basic</button>
         </article>
 
         <article class="card package-card" data-package="Premium">
           <h3>Premium</h3>
-          <p class="package-price">$50/hr (Est. 3-5 hours)</p>
+          <p class="package-price" data-price="premium"></p>
           <ul class="package-features">
             <li>Everything in Basic</li>
             <li>All labor included</li>
@@ -40,7 +38,7 @@
       <div class="survey-option">
         <article class="card survey-card">
           <h3>Site Survey Add-on</h3>
-          <p class="survey-price">$100 (≈2 hrs) due up front</p>
+          <p class="survey-price" data-price="survey"></p>
           <ul class="survey-features">
             <li>On-site walk-through and discussion of goals & budget</li>
             <li>Advise on placements and specs</li>
@@ -57,9 +55,165 @@
       </div>
     </section>
 
-    <!-- Speed Tier & Equipment Selection -->
-    <section id="equipmentSection" style="display: none;">
-      <h2>Equipment Selection</h2>
+    <!-- Step 2: Drop Info and Pricing -->
+    <section id="step-2-drop-info" style="display: none;">
+      <h2>Step 2: Cable Runs & Services</h2>
+      
+      <div id="selectedPackageDisplay">
+        <strong>Selected Package: <span id="packageDisplayName"></span></strong>
+        <button type="button" id="changePackageBtn" style="margin-left: 1rem; font-size: 0.9rem;">Change Package</button>
+      </div>
+
+      <!-- Cable Runs -->
+      <fieldset id="runsSection">
+        <legend>Cable Runs</legend>
+
+        <label for="coaxRuns">
+          <span class="cable-label" data-cable="coax">Coaxial runs</span>:
+          <input
+            type="number"
+            id="coaxRuns"
+            name="coaxRuns"
+            min="0"
+            value="0"
+          />
+        </label>
+
+        <label for="cat6Runs">
+          <span class="cable-label" data-cable="cat6">Cat6 Ethernet runs</span>:
+          <input
+            type="number"
+            id="cat6Runs"
+            name="cat6Runs"
+            min="0"
+            value="0"
+          />
+        </label>
+      </fieldset>
+
+      <!-- Security Options -->
+      <fieldset id="securitySection">
+        <legend>Security Options</legend>
+
+        <label>
+          <input type="checkbox" id="securityCameras" name="securityCameras"> Security Cameras
+        </label>
+        
+        <div id="cameraSubsections" class="security-subsections" style="display: none;">
+          <div class="subsection-group">
+            <label>
+              <input type="checkbox" id="internalCameras" name="internalCameras"> Internal Cameras
+            </label>
+            <label>
+              <input type="checkbox" id="externalCameras" name="externalCameras"> External Cameras
+            </label>
+            <label>
+              <input type="checkbox" id="doorbellCameras" name="doorbellCameras"> Doorbell Cameras
+            </label>
+          </div>
+        </div>
+
+        <label>
+          <input type="checkbox" id="doorAccess" name="doorAccess"> Door Access Control
+        </label>
+
+        <label>
+          <input type="checkbox" id="remoteInstallation" name="remoteInstallation"> Remote Installation
+        </label>
+        
+        <div id="remoteSubsections" class="security-subsections" style="display: none;">
+          <div class="subsection-group">
+            <label>
+              <input type="checkbox" id="gateInstallation" name="gateInstallation"> Gate Installation
+            </label>
+            <label>
+              <input type="checkbox" id="guardShackInstallation" name="guardShackInstallation"> Guard Shack Installation
+            </label>
+            <label>
+              <input type="checkbox" id="externalBuildingInstallation" name="externalBuildingInstallation"> External Building Installation
+            </label>
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- Additional Services with quantities -->
+      <fieldset id="servicesSection">
+        <legend>Additional Services</legend>
+
+        <label for="deviceMountQty">
+          <span class="service-label" data-service="deviceMount">Device mounting</span>:
+          <input
+            type="number"
+            id="deviceMountQty"
+            name="deviceMountQty"
+            min="0"
+            value="0"
+          />
+        </label>
+
+        <label for="clientDeviceQty">
+          <span class="service-label" data-service="clientDevice">Client device setup</span>:
+          <input
+            type="number"
+            id="clientDeviceQty"
+            name="clientDeviceQty"
+            min="0"
+            value="0"
+          />
+        </label>
+
+        <label for="serverDeviceQty">
+          <span class="service-label" data-service="serverDevice">Host/server device setup</span>:
+          <input
+            type="number"
+            id="serverDeviceQty"
+            name="serverDeviceQty"
+            min="0"
+            value="0"
+          />
+        </label>
+
+        <label for="mediaPanelQty">
+          <span class="service-label" data-service="mediaPanel">Media panel install</span>:
+          <input
+            type="number"
+            id="mediaPanelQty"
+            name="mediaPanelQty"
+            min="0"
+            value="0"
+          />
+        </label>
+      </fieldset>
+
+      <!-- Dynamic Pricing Display -->
+      <fieldset id="pricingSection">
+        <legend>Estimated Pricing</legend>
+        
+        <div id="basicPricing" style="display: none;">
+          <p><strong>Total Cost: $<span id="totalCost">0</span></strong></p>
+          <p id="equipmentCostBasic" style="display: none;">Equipment: $<span id="equipmentCostBasicAmount">0</span></p>
+          <p id="depositInfo">Deposit Required: $<span id="depositAmount">0</span></p>
+          <p id="surveyFeeInfo" style="display: none;">Site Survey Fee: $<span id="surveyFee">0</span></p>
+        </div>
+        
+        <div id="premiumPricing" style="display: none;">
+          <p><strong>Estimated Hours: <span id="estimatedHours">0</span> hrs @ $<span id="laborRate">50</span>/hr</strong></p>
+          <p><strong>Estimated Total: $<span id="estimatedTotal">0</span></strong></p>
+          <p id="equipmentCostPremium" style="display: none;">Equipment: $<span id="equipmentCostPremiumAmount">0</span></p>
+          <p id="premiumSurveyFeeInfo" style="display: none;">Site Survey Fee: $<span id="premiumSurveyFee">0</span></p>
+        </div>
+        
+        <p><em>Note: Final pricing may vary based on site conditions and specific requirements.</em></p>
+      </fieldset>
+
+      <div class="step-nav">
+        <button type="button" id="to-step-3">Next: Equipment</button>
+      </div>
+    </section>
+
+    <!-- Step 3: Equipment Selection -->
+    <section id="step-3-equipment" style="display: none;">
+      <h2>Step 3: Equipment Selection</h2>
       <p>Select your target speed tier to see compatible equipment options:</p>
       
       <!-- Speed Tier Selection -->
@@ -99,131 +253,920 @@
           <strong>Equipment Total: $<span id="equipmentTotal">0</span></strong>
         </div>
       </div>
+
+      <div class="step-nav">
+        <button type="button" id="back-to-step-2">Back</button>
+        <button type="button" id="to-step-4">Next: Contact</button>
+      </div>
     </section>
 
-    <!-- Additional Services -->
-    <section>
-      <h2>Additional Services</h2>
-      <ul>
-        <li>Device mounting: $10/item</li>
-        <li>Network setup: $20</li>
-        <li>Media panel install (panel not included): $50</li>
-      </ul>
-    </section>
+    <!-- Step 4: Contact Information -->
+    <section id="step-4-contact" style="display: none;">
+      <h2>Step 4: Contact Information & Final Quote</h2>
+      
+      <!-- Final Quote Summary -->
+      <div id="finalQuoteSummary">
+        <h3>Quote Summary</h3>
+        
+        <div class="quote-summary-section">
+          <h4>Selected Package</h4>
+          <div id="summaryPackage">
+            <span id="summaryPackageName">-</span>
+            <span id="summaryPackagePrice">-</span>
+          </div>
+        </div>
 
-    <!-- Quote Request Form -->
-    <form id="quoteForm">
-      <fieldset>
-        <legend>Contact Information</legend>
-        <label for="name">Name</label>
-        <input id="name" name="name" required />
+        <div class="quote-summary-section" id="summaryCableRuns" style="display: none;">
+          <h4>Cable Runs</h4>
+          <div id="summaryRuns">
+            <!-- Will be populated by JavaScript -->
+          </div>
+        </div>
 
-        <label for="email">Email</label>
-        <input id="email" name="email" type="email" required />
-      </fieldset>
+        <div class="quote-summary-section" id="summaryServices" style="display: none;">
+          <h4>Additional Services</h4>
+          <div id="summaryServicesList">
+            <!-- Will be populated by JavaScript -->
+          </div>
+        </div>
 
-      <fieldset>
-        <legend>Quote Details</legend>
+        <div class="quote-summary-section" id="summaryEquipment" style="display: none;">
+          <h4>Equipment</h4>
+          <div id="summaryEquipmentList">
+            <!-- Will be populated by JavaScript -->
+          </div>
+        </div>
+
+        <div class="quote-summary-section" id="summarySurvey" style="display: none;">
+          <h4>Add-ons</h4>
+          <div class="summary-item">
+            <span>Site Survey</span>
+            <span class="summary-price">$100</span>
+          </div>
+        </div>
+
+        <div class="quote-summary-total">
+          <div class="total-line" id="summarySubtotal" style="display: none;">
+            <span>Subtotal:</span>
+            <span id="summarySubtotalAmount">$0</span>
+          </div>
+          <div class="total-line" id="summaryEquipmentTotal" style="display: none;">
+            <span>Equipment Total:</span>
+            <span id="summaryEquipmentAmount">$0</span>
+          </div>
+          <div class="total-line final-total">
+            <span>Final Quote Total:</span>
+            <span id="summaryFinalTotal">$0</span>
+          </div>
+          <div class="total-note" id="summaryNote">
+            <em>Final pricing may vary based on site conditions and specific requirements.</em>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Quote Request Form -->
+      <form id="quoteForm">
+        <!-- Honeypot field - hidden from users but visible to bots -->
+        <input type="text" name="honeypot" style="display:none !important;" tabindex="-1" autocomplete="off" />
+        
+        <fieldset>
+          <legend>Contact Information</legend>
+          <label for="name">Name</label>
+          <input id="name" name="name" required maxlength="100" />
+
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" required maxlength="254" />
+        </fieldset>
 
         <!-- Hidden inputs for selected package -->
         <input type="hidden" id="selectedPackage" name="package" required />
-        
-        <div id="selectedPackageDisplay" style="display: none; margin-bottom: 1rem;">
-          <strong>Selected Package: <span id="packageDisplayName"></span></strong>
-          <button type="button" id="changePackageBtn" style="margin-left: 1rem; font-size: 0.9rem;">Change Package</button>
+
+        <div class="step-nav">
+          <button type="button" id="back-to-step-3">Back</button>
+          <button type="submit" id="submitBtn">Submit Quote Request</button>
         </div>
+      </form>
+      <p id="quoteStatus"></p>
+    </section>
 
-        <!-- Cable Runs -->
-        <fieldset id="runsSection">
-          <legend>Cable Runs</legend>
-
-          <label for="coaxRuns">
-            Coax runs:
-            <input
-              type="number"
-              id="coaxRuns"
-              name="coaxRuns"
-              min="0"
-              value="0"
-            />
-          </label>
-
-          <label for="cat6Runs">
-            Cat6 runs:
-            <input
-              type="number"
-              id="cat6Runs"
-              name="cat6Runs"
-              min="0"
-              value="0"
-            />
-          </label>
-        </fieldset>
-
-        <!-- Additional Services with quantities -->
-        <fieldset id="servicesSection">
-          <legend>Additional Services</legend>
-
-          <label for="deviceMountQty">
-            Device mounting ($10/item):
-            <input
-              type="number"
-              id="deviceMountQty"
-              name="deviceMountQty"
-              min="0"
-              value="0"
-            />
-          </label>
-
-          <label for="networkSetupQty">
-            Network setup ($20):
-            <input
-              type="number"
-              id="networkSetupQty"
-              name="networkSetupQty"
-              min="0"
-              value="0"
-            />
-          </label>
-
-          <label for="mediaPanelQty">
-            Media panel install ($50):
-            <input
-              type="number"
-              id="mediaPanelQty"
-              name="mediaPanelQty"
-              min="0"
-              value="0"
-            />
-          </label>
-        </fieldset>
-
-        <!-- Dynamic Pricing Display -->
-        <fieldset id="pricingSection" style="display: none;">
-          <legend>Estimated Pricing</legend>
-          
-          <div id="basicPricing" style="display: none;">
-            <p><strong>Total Cost: $<span id="totalCost">0</span></strong></p>
-            <p id="equipmentCostBasic" style="display: none;">Equipment: $<span id="equipmentCostBasicAmount">0</span></p>
-            <p id="depositInfo">Deposit Required: $<span id="depositAmount">0</span></p>
-            <p id="surveyFeeInfo" style="display: none;">Site Survey Fee: $<span id="surveyFee">0</span></p>
-          </div>
-          
-          <div id="premiumPricing" style="display: none;">
-            <p><strong>Estimated Hours: <span id="estimatedHours">0</span> hrs @ $<span id="laborRate">50</span>/hr</strong></p>
-            <p><strong>Estimated Total: $<span id="estimatedTotal">0</span></strong></p>
-            <p id="equipmentCostPremium" style="display: none;">Equipment: $<span id="equipmentCostPremiumAmount">0</span></p>
-            <p id="premiumSurveyFeeInfo" style="display: none;">Site Survey Fee: $<span id="premiumSurveyFee">0</span></p>
-          </div>
-          
-          <p><em>Note: Final pricing may vary based on site conditions and specific requirements.</em></p>
-        </fieldset>
-      </fieldset>
-
-      <button type="submit" id="submitBtn" disabled>Request Quote</button>
-    </form>
-    <p id="quoteStatus"></p>
   </main>
+
+  <style>
+    .hidden { display: none; }
+
+    /* Package Cards */
+    .package-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      margin: 2rem 0;
+    }
+
+    .package-card {
+      background: var(--surface);
+      border: 2px solid transparent;
+      border-radius: var(--radius);
+      padding: 2rem;
+      transition: var(--transition);
+      cursor: pointer;
+    }
+
+    .package-card:hover {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .package-card.selected {
+      border-color: var(--accent);
+      background: var(--surface-light);
+    }
+
+    .package-card h3 {
+      color: var(--primary);
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .package-price {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 1rem;
+    }
+
+    .package-features {
+      list-style: none;
+      padding: 0;
+      margin: 1rem 0;
+    }
+
+    .package-features li {
+      padding: 0.5rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .package-features li:before {
+      content: "✓";
+      color: var(--accent);
+      font-weight: bold;
+      margin-right: 0.5rem;
+    }
+
+    .package-deposit, .package-note {
+      font-style: italic;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin: 1rem 0;
+    }
+
+    .package-select-btn {
+      background: var(--primary-dark);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: var(--radius);
+      font-weight: 500;
+      cursor: pointer;
+      width: 100%;
+      transition: var(--transition);
+    }
+
+    .package-select-btn:hover {
+      background: var(--accent-dark);
+      transform: translateY(-2px);
+    }
+
+    /* Survey Card */
+    .survey-card {
+      background: var(--surface);
+      border: 2px solid var(--secondary);
+      border-radius: var(--radius);
+      padding: 2rem;
+      margin-top: 2rem;
+    }
+
+    .survey-card h3 {
+      color: var(--secondary);
+      margin-bottom: 1rem;
+    }
+
+    .survey-price {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--secondary);
+      margin-bottom: 1rem;
+    }
+
+    .survey-features {
+      list-style: none;
+      padding: 0;
+      margin: 1rem 0;
+    }
+
+    .survey-features li {
+      padding: 0.5rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .survey-features li:before {
+      content: "★";
+      color: var(--secondary);
+      font-weight: bold;
+      margin-right: 0.5rem;
+    }
+
+    .survey-note {
+      font-style: italic;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin: 1rem 0;
+    }
+
+    .survey-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      cursor: pointer;
+      font-weight: 500;
+      color: var(--secondary);
+    }
+
+    .survey-checkbox input[type="checkbox"] {
+      width: auto;
+      margin: 0;
+    }
+
+    /* Step Navigation */
+    .step-nav {
+      text-align: center;
+      margin: 2rem 0;
+    }
+
+    .step-nav button {
+      margin: 0 0.5rem;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: var(--transition);
+      font-weight: 500;
+    }
+
+    .step-nav button[type="button"] {
+      background: var(--surface-light);
+      color: var(--text);
+      border: 1px solid var(--primary);
+    }
+
+    .step-nav button[type="submit"] {
+      background: var(--primary-dark);
+      color: white;
+    }
+
+    .step-nav button:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .step-nav button:disabled {
+      background: var(--surface);
+      color: var(--text-muted);
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* Selected Package Display */
+    #selectedPackageDisplay {
+      margin-bottom: 1rem;
+      padding: 1rem;
+      background: var(--surface);
+      border-radius: var(--radius);
+      border-left: 4px solid var(--accent);
+      color: var(--text);
+    }
+
+    #changePackageBtn {
+      background: var(--surface-light);
+      color: var(--primary);
+      border: 1px solid var(--primary);
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: var(--transition);
+    }
+
+    #changePackageBtn:hover {
+      background: var(--primary);
+      color: white;
+    }
+
+    /* Form Fieldsets */
+    fieldset {
+      background: var(--surface);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: var(--radius);
+      padding: 2rem;
+      margin: 2rem 0;
+    }
+
+    legend {
+      background: var(--primary-dark);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius);
+      font-weight: 600;
+    }
+
+    /* Form Labels and Inputs */
+    label {
+      display: block;
+      margin-bottom: 1rem;
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    input[type="number"] {
+      background: var(--surface-light);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: var(--radius);
+      padding: 0.75rem;
+      color: var(--text);
+      width: 100px;
+      margin-left: 1rem;
+    }
+
+    input[type="number"]:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.3);
+      outline: none;
+    }
+
+    /* Pricing Section */
+    #pricingSection {
+      background: var(--surface-light);
+      border: 2px solid var(--accent);
+    }
+
+    #basicPricing p, #premiumPricing p {
+      font-size: 1.1rem;
+      margin: 0.5rem 0;
+    }
+
+    #basicPricing p strong, #premiumPricing p strong {
+      color: var(--accent);
+    }
+
+    /* Speed Tier Selection */
+    .speed-tier-options {
+      display: flex;
+      gap: 1rem;
+      margin: 1rem 0;
+      flex-wrap: wrap;
+    }
+
+    .speed-tier-option {
+      background: var(--surface);
+      border: 2px solid transparent;
+      border-radius: var(--radius);
+      padding: 1rem;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .speed-tier-option:hover {
+      border-color: var(--primary);
+    }
+
+    .speed-tier-option input[type="radio"]:checked + .speed-tier-label {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .speed-tier-option:has(input:checked) {
+      border-color: var(--accent);
+      background: var(--surface-light);
+    }
+
+    .speed-tier-label {
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    /* Equipment Grid */
+    .equipment-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      margin: 2rem 0;
+    }
+
+    /* Equipment Recommendations */
+    .equipment-recommendations {
+      background: var(--surface-light);
+      border: 2px solid var(--secondary);
+      border-radius: var(--radius);
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .equipment-recommendations h4 {
+      color: var(--secondary);
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .recommendations-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .recommendation-card {
+      background: var(--surface);
+      border: 2px solid var(--secondary);
+      border-radius: var(--radius);
+      padding: 1rem;
+      position: relative;
+      transition: var(--transition);
+    }
+
+    .recommendation-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .rec-badge {
+      position: absolute;
+      top: -10px;
+      right: 10px;
+      background: var(--secondary);
+      color: var(--background);
+      padding: 0.25rem 0.75rem;
+      border-radius: var(--radius);
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .rec-price {
+      color: var(--accent);
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 0.5rem 0;
+    }
+
+    .rec-description {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+
+    /* Equipment Category Sections */
+    .equipment-category-section {
+      margin-bottom: 3rem;
+    }
+
+    .equipment-category-header {
+      color: var(--primary);
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--primary);
+    }
+
+    .equipment-category-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+
+    /* Enhanced Equipment Cards */
+    .equipment-card {
+      background: var(--surface);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: var(--transition);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .equipment-card:hover {
+      border-color: var(--primary);
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .equipment-card .card-header {
+      padding: 1.5rem 1.5rem 1rem 1.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .equipment-card .card-header h4 {
+      margin-bottom: 0.5rem;
+      color: var(--text);
+    }
+
+    .equipment-subcategory {
+      color: var(--primary);
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+      font-weight: 500;
+    }
+
+    .feature-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .feature-tag {
+      background: var(--primary-dark);
+      color: white;
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 12px;
+      font-weight: 500;
+    }
+
+    .equipment-card .card-body {
+      padding: 1rem 1.5rem;
+      flex-grow: 1;
+    }
+
+    .equipment-description {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      line-height: 1.4;
+      margin-bottom: 1rem;
+    }
+
+    .key-features {
+      list-style: none;
+      padding: 0;
+      margin: 1rem 0;
+    }
+
+    .key-features li {
+      color: var(--text);
+      font-size: 0.9rem;
+      padding: 0.25rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .key-features li:before {
+      content: "▸";
+      color: var(--accent);
+      font-weight: bold;
+      margin-right: 0.5rem;
+    }
+
+    .equipment-specs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .spec {
+      background: var(--surface-light);
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: var(--radius);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .equipment-card .card-footer {
+      padding: 1rem 1.5rem 1.5rem 1.5rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      background: var(--surface-light);
+    }
+
+    .equipment-price {
+      color: var(--accent);
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .equipment-sku {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-bottom: 1rem;
+    }
+
+    /* Cart Items */
+    #equipmentCart {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 2rem;
+      margin: 2rem 0;
+    }
+
+    .cart-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .cart-item:last-child {
+      border-bottom: none;
+    }
+
+    .cart-item-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .quantity-input {
+      width: 60px;
+      text-align: center;
+      background: var(--surface-light);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: var(--text);
+      padding: 0.5rem;
+      border-radius: var(--radius);
+    }
+
+    .remove-btn {
+      background: var(--error);
+      color: white;
+      border: none;
+      padding: 0.25rem 0.5rem;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: var(--transition);
+    }
+
+    .remove-btn:hover {
+      opacity: 0.8;
+    }
+
+    .add-to-cart-btn {
+      background: var(--accent-dark);
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-weight: 500;
+      transition: var(--transition);
+    }
+
+    .add-to-cart-btn:hover {
+      background: var(--accent);
+      transform: translateY(-1px);
+    }
+
+    .cart-total {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: var(--surface-light);
+      border-radius: var(--radius);
+      text-align: right;
+      border: 2px solid var(--accent);
+    }
+
+    .cart-total strong {
+      color: var(--accent);
+      font-size: 1.25rem;
+    }
+
+    /* Contact Form */
+    #quoteForm fieldset {
+      background: var(--surface);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    #quoteForm input {
+      background: var(--surface-light);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: var(--radius);
+      padding: 0.75rem;
+      color: var(--text);
+      width: 100%;
+    }
+
+    #quoteForm input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.3);
+      outline: none;
+    }
+
+    /* Status Messages */
+    #quoteStatus {
+      text-align: center;
+      margin-top: 1rem;
+      padding: 1rem;
+      border-radius: var(--radius);
+    }
+
+    #quoteStatus.success {
+      background: var(--accent);
+      color: white;
+    }
+
+    #quoteStatus.error {
+      background: var(--error);
+      color: white;
+    }
+
+    /* Final Quote Summary */
+    #finalQuoteSummary {
+      background: var(--surface);
+      border: 2px solid var(--primary);
+      border-radius: var(--radius);
+      padding: 2rem;
+      margin: 2rem 0;
+    }
+
+    #finalQuoteSummary h3 {
+      color: var(--primary);
+      margin-bottom: 1.5rem;
+      text-align: center;
+      font-size: 1.5rem;
+    }
+
+    .quote-summary-section {
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .quote-summary-section:last-of-type {
+      border-bottom: none;
+    }
+
+    .quote-summary-section h4 {
+      color: var(--accent);
+      margin-bottom: 0.75rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .summary-item, #summaryPackage {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .summary-item:last-child {
+      border-bottom: none;
+    }
+
+    .summary-price, #summaryPackagePrice {
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .quote-summary-total {
+      background: var(--surface-light);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-top: 1.5rem;
+      border: 1px solid var(--accent);
+    }
+
+    .total-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0;
+      font-size: 1.1rem;
+    }
+
+    .final-total {
+      border-top: 2px solid var(--accent);
+      margin-top: 1rem;
+      padding-top: 1rem;
+      font-weight: 700;
+      font-size: 1.25rem;
+      color: var(--accent);
+    }
+
+    .final-total span:last-child {
+      font-size: 1.5rem;
+      color: var(--accent);
+    }
+
+    .total-note {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      text-align: center;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    /* Summary item styling for runs and services */
+    .summary-run-item, .summary-service-item, .summary-equipment-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.4rem 0;
+      font-size: 0.95rem;
+    }
+
+    .summary-run-item span:first-child,
+    .summary-service-item span:first-child,
+    .summary-equipment-item span:first-child {
+      color: var(--text);
+    }
+
+    .summary-run-item span:last-child,
+    .summary-service-item span:last-child,
+    .summary-equipment-item span:last-child {
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    /* Security section styling */
+    #securitySection label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    #securitySection input[type="checkbox"] {
+      width: auto;
+      margin: 0;
+      flex-shrink: 0;
+    }
+
+    /* Security subsections styling */
+    .security-subsections {
+      margin-top: 1rem;
+      margin-left: 1.5rem;
+      padding: 1rem;
+      background: var(--surface-light);
+      border-radius: var(--radius);
+      border-left: 3px solid var(--primary);
+    }
+
+    .subsection-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .subsection-group label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0;
+      cursor: pointer;
+      font-weight: 400;
+    }
+
+    .subsection-group input[type="checkbox"] {
+      width: auto;
+      margin: 0;
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      .package-cards {
+        grid-template-columns: 1fr;
+      }
+      
+      .speed-tier-options {
+        flex-direction: column;
+      }
+      
+      .step-nav button {
+        margin: 0.25rem;
+        width: 100%;
+        max-width: 200px;
+      }
+
+      #finalQuoteSummary {
+        padding: 1.5rem;
+        margin: 1rem 0;
+      }
+
+      .final-total span:last-child {
+        font-size: 1.25rem;
+      }
+    }
+  </style>
 
   <script src="/scripts/quotes.js"></script>
   <%- include('partials/footer') %>

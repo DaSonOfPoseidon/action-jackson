@@ -42,16 +42,39 @@ This repository powers the Action Jackson web presence: a combined business/bran
 
 ## Features
 
-- RESTful APIs for services, scheduling, quotes, invoices, and shared data
-- EJS-rendered pages: home, portfolio, scheduling, quotes, about, etc.
-- MongoDB persistence with flexible connection (remote or local)
-- Subdomain/variant detection (business vs. portfolio)
-- Security and utility middleware (Helmet, compression, cookie-parser)
-- Quote submission with admin notification
-- Health check endpoint (`/healthz`)
-- Comprehensive test suite with 32+ tests
-- Dockerized for consistent environments
-- Easy content editing via templates
+### Core Application
+- **Dual-Domain Support**: Business site and developer portfolio with shared infrastructure
+- **Professional Theming**: Dark theme with business-grade UI/UX design
+- **MongoDB Persistence**: Flexible connection with authentication support
+- **Comprehensive Testing**: 62+ tests covering security, functionality, and integrations
+- **Docker Deployment**: Containerized for consistent development and production environments
+
+### Advanced Quote System
+- **Multi-Step Quote Process**: Package selection → Services → Equipment → Contact & Summary
+- **Professional Equipment Catalog**: Detailed specifications, smart recommendations, filtering
+- **Real-Time Pricing**: Instant calculations with comprehensive validation
+- **Final Quote Summary**: Professional breakdown before submission
+- **Enhanced Security**: Rate limiting, input validation, spam protection, audit trails
+
+### Professional Scheduling System
+- **Advanced Conflict Detection**: 1-hour buffers with real-time checking
+- **Business Hours Enforcement**: Monday-Friday, 8 AM - 6 PM, 30-minute intervals
+- **Automated Email Confirmations**: Customer and admin notifications
+- **Comprehensive Validation**: Date constraints, duplicate prevention, business logic
+- **Audit Trail System**: IP tracking, user agent logging, appointment history
+
+### Invoice Management System
+- **Quote Integration**: Seamless conversion from quotes to invoices
+- **Auto-Generated Numbers**: Format INV-YYYY-NNNN with collision protection
+- **API Security**: Optional API key authentication for external access
+- **Complete CRUD Operations**: Create, read, update, delete with proper validation
+
+### Enhanced Security Features
+- **Multi-Layer Rate Limiting**: Different limits for quotes, calculations, scheduling
+- **Comprehensive Input Validation**: Business logic constraints and sanitization
+- **Email Security**: Domain validation, disposable email blocking
+- **Anti-Spam Protection**: Honeypot fields, time-based restrictions
+- **Request Security**: Size limits, user agent logging, IP tracking
 
 ## Prerequisites
 
@@ -98,20 +121,30 @@ npm test -- --coverage
 ```
 
 The test suite includes:
-- **Server tests** - Middleware, routing, error handling
-- **API route tests** - All endpoints with database mocking
-- **Model tests** - Data validation and schema testing
-- **Integration tests** - End-to-end functionality
+- **Server Tests**: Middleware, routing, error handling, health checks
+- **API Route Tests**: All endpoints with comprehensive database mocking
+- **Model Tests**: Enhanced validation, scheduling constraints, quote integration
+- **Security Tests**: XSS prevention, spam protection, rate limiting enforcement  
+- **Business Logic Tests**: Appointment conflicts, service requirements, equipment limits
+- **Integration Tests**: Email confirmations, quote-to-invoice conversion, audit logging
 
 ### Environment Variables
 
 Create a `.env` file in the project root with the following variables:
 
 ```env
-MONGO_URI=mongodb://<user>:<pass>@host:port/db
-EMAIL_USER=your_email@example.com
-EMAIL_PASS=your_email_password
-ADMIN_EMAIL=admin@example.com
+# Database Configuration
+MONGO_URI=mongodb://username:password@host:port/database?authSource=admin
+
+# Email Configuration (for confirmations and notifications)
+EMAIL_USER=your-gmail@gmail.com
+EMAIL_PASS=your-app-password  # Use app-specific passwords, not account password
+ADMIN_EMAIL=admin@actionjacksoninstalls.com
+
+# Security Configuration
+INVOICE_API_KEY=your-secure-api-key-for-invoices  # Optional but recommended
+
+# Server Configuration  
 PORT=3000  # optional, defaults to 3000
 NODE_ENV=development
 ```
@@ -135,18 +168,22 @@ docker compose down
 
 ## API Overview
 
-| Method | Endpoint                   | Description                                    |
-|--------|----------------------------|------------------------------------------------|
-| GET    | `/api/home`                | Fetch services, testimonials, and landing data |
-| GET    | `/api/scheduling/slots`    | List available scheduling time slots          |
-| POST   | `/api/scheduling/book`     | Book a time slot / create schedule entry      |
-| POST   | `/api/quotes/create`       | Submit a quote and notify admin                |
-| GET    | `/api/shared/services`     | Retrieve shared service definitions            |
-| GET    | `/api/invoices`            | List all invoices                              |
-| POST   | `/api/invoices`            | Create a new invoice                           |
-| PUT    | `/api/invoices/:id`        | Update an existing invoice                     |
-| DELETE | `/api/invoices/:id`        | Delete an invoice                              |
-| GET    | `/healthz`                 | Health check endpoint                          |
+| Method | Endpoint                      | Description                                    |
+|--------|-------------------------------|------------------------------------------------|
+| GET    | `/api/home`                   | Fetch services, testimonials, and landing data |
+| GET    | `/api/scheduling/slots`       | List available scheduling time slots with conflict checking |
+| POST   | `/api/scheduling/book`        | Book appointment with validation and email confirmations |
+| GET    | `/api/scheduling/appointment/:id` | Get appointment details for verification |
+| DELETE | `/api/scheduling/appointment/:id` | Cancel/delete an appointment |
+| GET    | `/api/quotes/calculate`       | Real-time quote calculation with equipment pricing |
+| POST   | `/api/quotes/create`          | Submit comprehensive quote with equipment and validation |
+| GET    | `/api/shared/services`        | Retrieve shared service definitions |
+| GET    | `/api/invoices`               | List invoices with pagination and optional authentication |
+| POST   | `/api/invoices`               | Create new invoice with validation |
+| POST   | `/api/invoices/from-quote/:quoteId` | Convert quote to invoice seamlessly |
+| PUT    | `/api/invoices/:id`           | Update existing invoice |
+| DELETE | `/api/invoices/:id`           | Delete invoice |
+| GET    | `/healthz`                    | Health check with database connectivity test |
 
 ## Dual-Domain Semantics
 
@@ -189,16 +226,41 @@ The application is designed for easy content customization:
 5. Open a pull request with rationale, test steps, and potential impacts
 6. After merge, deployment hooks should rebuild and refresh the live site
 
+## Recent Major Updates
+
+### ✅ Enhanced Services System (Latest)
+- Updated service options with client device setup and host/server device setup
+- Improved pricing structure for different device types
+- Enhanced final quote summary with detailed service breakdowns
+
+### ✅ Advanced Equipment Catalog System  
+- Comprehensive equipment database with detailed specifications
+- Smart recommendations based on speed tier selection
+- Professional categorization and filtering capabilities
+- Enhanced equipment cards with features and pricing
+
+### ✅ Professional Scheduling System
+- Advanced conflict detection with 1-hour buffers
+- Business hours enforcement and validation
+- Automated email confirmations for customers and admins
+- Comprehensive audit trail system
+
+### ✅ Enhanced Security & Validation
+- Multi-layer rate limiting across all endpoints
+- Comprehensive input validation and sanitization
+- Business logic protection against abuse
+- Professional audit logging and IP tracking
+
 ## Future Enhancements
 
-- Introduce optional authentication/login system
-- Dynamically surface recent work (e.g., GitHub activity integration)
-- Improve accessibility and responsive design
-- Add GitHub Actions for linting, testing, and automated deployments
-- Enhance portfolio with interactive elements (live metrics, project filters)
-- Implement caching strategies for better performance
-- Add invoice management UI components
-- Integrate real-time scheduling conflicts detection
+- **Database Optimizations**: Connection pooling and query optimization
+- **Advanced Filtering**: Equipment filtering UI with dynamic criteria
+- **Enhanced Monitoring**: Comprehensive logging and error tracking
+- **Performance Improvements**: Caching strategies and CDN integration
+- **Mobile App**: React Native app for appointment scheduling
+- **Analytics Dashboard**: Business intelligence and reporting features
+- **Advanced Authentication**: Role-based access control system
+- **API Versioning**: Support for multiple API versions
 
 ## License
 

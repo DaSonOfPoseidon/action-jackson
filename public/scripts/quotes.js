@@ -5,34 +5,465 @@ let includeSurvey = false;
 let selectedSpeedTier = null;
 let equipmentCart = [];
 
-// Equipment catalog organized by speed tier
+// Base pricing configuration
+const pricing = {
+  cables: {
+    coax: { cost: 50, time: 1.0 },
+    cat6: { cost: 50, time: 1.0 }
+  },
+  services: {
+    deviceMount: { cost: 10, time: 0.25 },
+    clientDevice: { cost: 10, time: 0.25 },
+    serverDevice: { cost: 50, time: 1.0 },
+    mediaPanel: { cost: 100, time: 1.0 }
+  },
+  packages: {
+    basic: {
+      installFee: 50,
+      depositThreshold: 100,
+      depositAmount: 20
+    },
+    premium: {
+      hourlyRate: 50,
+      estimatedHours: { min: 2, max: 5 }  // Just for Step 1 display
+    },
+    survey: {
+      cost: 100,
+      estimatedHours: 2
+    }
+  }
+};
+
+// Legacy aliases for backward compatibility (will be updated throughout the code)
+const cablePricing = pricing.cables;
+cablePricing.installFee = pricing.packages.basic.installFee;
+const servicePricing = pricing.services;
+const packagePricing = pricing.packages;
+
+// Equipment catalog with detailed meta tags for filtering and recommendations
 const equipmentCatalog = {
-  '1 Gig': [
-    { sku: 'UDM-BASE', name: 'UniFi Dream Machine', price: 399, category: 'Gateway' },
-    { sku: 'USW-24', name: 'UniFi Switch 24', price: 199, category: 'Switch' },
-    { sku: 'U6-LITE', name: 'UniFi 6 Lite', price: 99, category: 'Access Point' },
-    { sku: 'UCK-G2-PLUS', name: 'CloudKey Gen2 Plus', price: 199, category: 'Controller' }
+  gateways: [
+    { 
+      sku: 'UCG-Max-NS', 
+      name: 'UniFi Cloud Gateway Max', 
+      price: 199,
+      subCategory: 'Media Panel',
+      speedTiers: ['1 Gig', '2.5 Gig'],
+      features: {
+        PoE: false,
+        sfp: false,
+        portSpeeds: [2.5],
+        uplinkSpeeds: [2.5],
+        maxThroughput: 2500,
+        managedPorts: 1,
+        wanPorts: 1
+      },
+      tags: ['entry-level', 'small-office', 'home-use', 'budget-friendly'],
+      recommended: ['1 Gig'],
+      description: 'Entry-level cloud gateway perfect for small offices and home networks'
+    },
+    { 
+      sku: 'UCG-Fiber', 
+      name: 'UniFi Cloud Gateway Fiber', 
+      price: 279,
+      subCategory: 'Media Panel',
+      speedTiers: ['2.5 Gig', '10 Gig'],
+      features: {
+        PoE: true,
+        sfp: true,
+        portSpeeds: [2.5, 10],
+        uplinkSpeeds: [10],
+        maxThroughput: 10000,
+        managedPorts: 4,
+        wanPorts: 1
+      },
+      tags: ['mid-range', 'fiber-ready', 'poe-capable', 'scalable'],
+      recommended: ['5 Gig'],
+      description: 'Fiber-ready gateway with PoE support for growing networks'
+    },
+    { 
+      sku: 'UDM-SE', 
+      name: 'UniFi Dream Machine Special Edition', 
+      price: 499,
+      subCategory: 'Server Rack',
+      speedTiers: ['5 Gig', '10 Gig'],
+      features: {
+        PoE: true,
+        sfp: true,
+        portSpeeds: [1, 2.5, 10],
+        uplinkSpeeds: [10],
+        maxThroughput: 10000,
+        managedPorts: 8,
+        wanPorts: 2
+      },
+      tags: ['high-performance', 'all-in-one', 'enterprise-grade', 'redundant-wan'],
+      recommended: ['10 Gig'],
+      description: 'High-performance all-in-one solution with built-in controller and redundant WAN'
+    },
   ],
-  '5 Gig': [
-    { sku: 'UDM-PRO', name: 'UniFi Dream Machine Pro', price: 599, category: 'Gateway' },
-    { sku: 'USW-PRO-24', name: 'UniFi Pro Switch 24', price: 399, category: 'Switch' },
-    { sku: 'U6-PRO', name: 'UniFi 6 Pro', price: 149, category: 'Access Point' },
-    { sku: 'UAS-XG', name: 'UniFi Aggregation Switch XG', price: 549, category: 'Aggregation' }
+  switches: [ 
+    { 
+      sku: 'USW-Flex-Mini', 
+      name: 'UniFi Switch Flex Mini', 
+      price: 29,
+      speedTiers: ['1 Gig'],
+      features: {
+        sfp: false,
+        PoE: false,
+        numPorts: 5,
+        portSpeeds: [1],
+        uplinkSpeeds: [1],
+        maxThroughput: 5000,
+        powerConsumption: 5
+      },
+      tags: ['compact', 'desktop', 'budget', 'plug-and-play'],
+      recommended: ['1 Gig'],
+      description: 'Compact 5-port desktop switch for simple expansion'
+    },
+    { 
+      sku: 'USW-Flex-2.5G-8-PoE', 
+      name: 'UniFi Switch Flex 2.5G PoE', 
+      price: 199,
+      speedTiers: ['2.5 Gig', '5 Gig'],
+      features: {
+        sfp: true,
+        PoE: true,
+        numPorts: 8,
+        portSpeeds: [2.5],
+        uplinkSpeeds: [10],
+        maxThroughput: 60000,
+        poeWattage: 120
+      },
+      tags: ['2.5g-capable', 'poe-plus', 'rack-mountable', 'high-speed'],
+      recommended: ['5 Gig'],
+      description: '8-port 2.5G PoE+ switch with SFP+ uplink for high-speed networks'
+    },
+    { 
+      sku: 'USW-Pro-XG-8-PoE', 
+      name: 'UniFi Switch Pro XG 8 PoE', 
+      price: 499,
+      speedTiers: ['10 Gig'],
+      features: {
+        sfp: true,
+        PoE: true,
+        numPorts: 8,
+        portSpeeds: [10],
+        uplinkSpeeds: [10],
+        maxThroughput: 200000,
+        poeWattage: 400
+      },
+      tags: ['10g-capable', 'high-power-poe', 'enterprise-grade', 'fiber-ready'],
+      recommended: ['10 Gig'],
+      description: '8-port 10G PoE++ switch for high-performance enterprise networks'
+    }
   ],
-  '10 Gig': [
-    { sku: 'UDM-PRO-MAX', name: 'UniFi Dream Machine Pro Max', price: 899, category: 'Gateway' },
-    { sku: 'USW-ENT-24', name: 'UniFi Enterprise Switch 24', price: 799, category: 'Switch' },
-    { sku: 'U6-ENTERPRISE', name: 'UniFi 6 Enterprise', price: 249, category: 'Access Point' },
-    { sku: 'USW-XG-6POE', name: 'UniFi Switch XG 6 PoE', price: 449, category: 'PoE Switch' }
+  accessPoints: [
+    { 
+      sku: 'U6-LITE', 
+      name: 'UniFi 6 Lite', 
+      price: 99,
+      speedTiers: ['1 Gig', '2.5 Gig'],
+      features: {
+        wifiStandard: 'WiFi 6',
+        maxSpeed: 1500,
+        bands: ['2.4GHz', '5GHz'],
+        mimo: '2x2',
+        powerConsumption: 12,
+        mountType: 'ceiling'
+      },
+      tags: ['budget-friendly', 'wifi6', 'indoor', 'low-power'],
+      recommended: ['1 Gig'],
+      description: 'Entry-level WiFi 6 access point for small to medium spaces'
+    },
+    { 
+      sku: 'U6-PRO', 
+      name: 'UniFi 6 Pro', 
+      price: 149,
+      speedTiers: ['2.5 Gig', '5 Gig'],
+      features: {
+        wifiStandard: 'WiFi 6',
+        maxSpeed: 4800,
+        bands: ['2.4GHz', '5GHz'],
+        mimo: '4x4',
+        powerConsumption: 16,
+        mountType: 'ceiling'
+      },
+      tags: ['high-performance', 'wifi6', 'indoor', '2.5g-uplink'],
+      recommended: ['5 Gig'],
+      description: 'High-performance WiFi 6 access point with 2.5G uplink'
+    },
+    { 
+      sku: 'U7-PRO', 
+      name: 'UniFi 7 Pro', 
+      price: 189,
+      speedTiers: ['5 Gig', '10 Gig'],
+      features: {
+        wifiStandard: 'WiFi 7',
+        maxSpeed: 6600,
+        bands: ['2.4GHz', '5GHz', '6GHz'],
+        mimo: '4x4',
+        powerConsumption: 25,
+        mountType: 'ceiling'
+      },
+      tags: ['cutting-edge', 'wifi7', 'tri-band', 'future-proof'],
+      recommended: ['10 Gig'],
+      description: 'Latest WiFi 7 access point with tri-band support and maximum performance'
+    },
+    { 
+      sku: 'U6-IW', 
+      name: 'UniFi 6 In-Wall', 
+      price: 179,
+      speedTiers: ['1 Gig', '2.5 Gig'],
+      features: {
+        wifiStandard: 'WiFi 6',
+        maxSpeed: 1500,
+        bands: ['2.4GHz', '5GHz'],
+        mimo: '2x2',
+        powerConsumption: 15,
+        mountType: 'wall',
+        additionalPorts: 1
+      },
+      tags: ['in-wall', 'wifi6', 'hotel-style', 'integrated-switch'],
+      recommended: ['1 Gig'],
+      description: 'In-wall WiFi 6 access point with additional Ethernet port'
+    }
+  ],
+  cameras: [
+    { 
+      sku: 'UVC-G4-BULLET', 
+      name: 'UniFi Protect G4 Bullet', 
+      price: 199,
+      subCategory: 'Bullet Camera',
+      speedTiers: ['all'],
+      securityTypes: ['externalCameras'],
+      features: {
+        resolution: '4K',
+        nightVision: true,
+        weatherRating: 'IP67',
+        powerType: 'PoE',
+        storageType: 'network',
+        fieldOfView: 80
+      },
+      tags: ['4k', 'outdoor', 'bullet', 'night-vision', 'weatherproof'],
+      recommended: ['1 Gig', '2.5 Gig', '5 Gig', '10 Gig'],
+      description: '4K bullet camera with excellent night vision for outdoor surveillance'
+    },
+    { 
+      sku: 'UVC-G4-DOME', 
+      name: 'UniFi Protect G4 Dome', 
+      price: 179,
+      subCategory: 'Dome Camera',
+      speedTiers: ['all'],
+      securityTypes: ['internalCameras', 'externalCameras'],
+      features: {
+        resolution: '4K',
+        nightVision: true,
+        weatherRating: 'IP54',
+        powerType: 'PoE',
+        storageType: 'network',
+        fieldOfView: 87
+      },
+      tags: ['4k', 'dome', 'vandal-resistant', 'low-profile'],
+      recommended: ['1 Gig', '2.5 Gig', '5 Gig', '10 Gig'],
+      description: '4K dome camera with vandal-resistant design for discreet monitoring'
+    },
+    { 
+      sku: 'UVC-G4-DOORBELL', 
+      name: 'UniFi Protect G4 Doorbell', 
+      price: 149,
+      subCategory: 'Doorbell Camera',
+      speedTiers: ['all'],
+      securityTypes: ['doorbellCameras'],
+      features: {
+        resolution: '4K',
+        nightVision: true,
+        weatherRating: 'IP54',
+        powerType: 'PoE',
+        storageType: 'network',
+        fieldOfView: 160,
+        twoWayAudio: true
+      },
+      tags: ['4k', 'doorbell', 'two-way-audio', 'motion-detection'],
+      recommended: ['1 Gig', '2.5 Gig', '5 Gig', '10 Gig'],
+      description: '4K doorbell camera with two-way audio and wide field of view'
+    }
+  ],
+  doorAccess: [
+    { 
+      sku: 'UA-G2-PRO', 
+      name: 'UniFi Access G2 Pro', 
+      price: 159,
+      subCategory: 'Access Reader',
+      speedTiers: ['all'],
+      securityTypes: ['doorAccess'],
+      features: {
+        connectivity: 'PoE',
+        cardTypes: ['NFC', 'RFID'],
+        weatherRating: 'IP65',
+        display: 'OLED',
+        keypad: true
+      },
+      tags: ['poe', 'keypad', 'weatherproof', 'oled-display'],
+      recommended: ['1 Gig', '2.5 Gig', '5 Gig', '10 Gig'],
+      description: 'Professional access control reader with keypad and OLED display'
+    },
+    { 
+      sku: 'UA-HUB', 
+      name: 'UniFi Access Hub', 
+      price: 379,
+      subCategory: 'Access Controller',
+      speedTiers: ['all'],
+      securityTypes: ['doorAccess'],
+      features: {
+        connectivity: 'PoE',
+        maxReaders: 4,
+        backup: 'battery',
+        storage: 'local'
+      },
+      tags: ['controller', 'poe', 'battery-backup', 'multi-door'],
+      recommended: ['1 Gig', '2.5 Gig', '5 Gig', '10 Gig'],
+      description: 'Central access control hub supporting up to 4 door readers'
+    }
   ]
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+  initializeStepNavigation();
   initializePackageSelection();
   initializeEquipmentSelection();
   initializeFormHandling();
   setupCalculationListeners();
+  populatePackagePricing();
+  initializeSecurityOptions();
 });
+
+function initializeSecurityOptions() {
+  // Handle Security Cameras subsections
+  const securityCamerasCheckbox = document.getElementById('securityCameras');
+  const cameraSubsections = document.getElementById('cameraSubsections');
+  
+  if (securityCamerasCheckbox && cameraSubsections) {
+    securityCamerasCheckbox.addEventListener('change', (e) => {
+      if (e.target.checked) {
+        cameraSubsections.style.display = 'block';
+      } else {
+        cameraSubsections.style.display = 'none';
+        // Uncheck all camera subsections when main option is unchecked
+        const cameraSubCheckboxes = cameraSubsections.querySelectorAll('input[type="checkbox"]');
+        cameraSubCheckboxes.forEach(checkbox => checkbox.checked = false);
+      }
+    });
+  }
+
+  // Handle Remote Installation subsections
+  const remoteInstallationCheckbox = document.getElementById('remoteInstallation');
+  const remoteSubsections = document.getElementById('remoteSubsections');
+  
+  if (remoteInstallationCheckbox && remoteSubsections) {
+    remoteInstallationCheckbox.addEventListener('change', (e) => {
+      if (e.target.checked) {
+        remoteSubsections.style.display = 'block';
+      } else {
+        remoteSubsections.style.display = 'none';
+        // Uncheck all remote subsections when main option is unchecked
+        const remoteSubCheckboxes = remoteSubsections.querySelectorAll('input[type="checkbox"]');
+        remoteSubCheckboxes.forEach(checkbox => checkbox.checked = false);
+      }
+    });
+  }
+
+  // Add listeners to update equipment display when security options change
+  const allSecurityCheckboxes = document.querySelectorAll('#securitySection input[type="checkbox"]');
+  allSecurityCheckboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', updateSecurityEquipmentDisplay);
+  });
+}
+
+function updateSecurityEquipmentDisplay() {
+  // This function will be called when security options change
+  // It will influence what equipment shows on Step 3
+  
+  // Refresh equipment display if we're on step 3 and have a selected speed tier
+  if (selectedSpeedTier) {
+    showEquipmentOptions();
+  }
+  
+  // Also trigger a pricing recalculation
+  calculatePricing();
+}
+
+function populatePackagePricing() {
+  // Update Basic package pricing - calculate from cable pricing since they should be the same
+  const basicPriceElement = document.querySelector('[data-price="basic"]');
+  if (basicPriceElement) {
+    // Assuming coax and cat6 have the same cost for the "per drop" display
+    const dropPrice = pricing.cables.coax.cost; // or could be Math.min of both cable types
+    basicPriceElement.textContent = `$${dropPrice} per drop + $${pricing.packages.basic.installFee} install fee`;
+  }
+  
+  const basicDepositElement = document.querySelector('[data-deposit="basic"]');
+  if (basicDepositElement) {
+    basicDepositElement.textContent = `$${pricing.packages.basic.depositAmount} deposit on quotes over $${pricing.packages.basic.depositThreshold}`;
+  }
+  
+  // Update Premium package pricing
+  const premiumPriceElement = document.querySelector('[data-price="premium"]');
+  if (premiumPriceElement) {
+    premiumPriceElement.textContent = `$${pricing.packages.premium.hourlyRate}/hr (Est. ${pricing.packages.premium.estimatedHours.min}-${pricing.packages.premium.estimatedHours.max} hours)`;
+  }
+  
+  // Update Survey pricing
+  const surveyPriceElement = document.querySelector('[data-price="survey"]');
+  if (surveyPriceElement) {
+    surveyPriceElement.textContent = `$${pricing.packages.survey.cost} (≈${pricing.packages.survey.estimatedHours} hrs) due up front`;
+  }
+}
+
+// Step Navigation Functions
+function initializeStepNavigation() {
+  const step1 = document.getElementById('step-1-package');
+  const step2 = document.getElementById('step-2-drop-info');
+  const step3 = document.getElementById('step-3-equipment');
+  const step4 = document.getElementById('step-4-contact');
+
+  // Initialize page to show only Step 1
+  if (step1) step1.style.display = 'block';
+  if (step2) step2.style.display = 'none';
+  if (step3) step3.style.display = 'none';
+  if (step4) step4.style.display = 'none';
+
+  const showStep = (step) => {
+    [step1, step2, step3, step4].forEach(s => s.style.display = 'none');
+    step.style.display = 'block';
+    
+    // Smooth scroll to top
+    step.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  // Step navigation buttons
+  const toStep3Btn = document.getElementById('to-step-3');
+  const backToStep2Btn = document.getElementById('back-to-step-2');
+  const toStep4Btn = document.getElementById('to-step-4');
+  const backToStep3Btn = document.getElementById('back-to-step-3');
+
+  if (toStep3Btn) toStep3Btn.onclick = () => showStep(step3);
+  if (backToStep2Btn) backToStep2Btn.onclick = () => showStep(step2);
+  if (toStep4Btn) toStep4Btn.onclick = () => {
+    updateFinalQuoteSummary();
+    showStep(step4);
+  };
+  if (backToStep3Btn) backToStep3Btn.onclick = () => showStep(step3);
+
+  // Change Package button should go back to Step 1
+  const changePackageBtn = document.getElementById('changePackageBtn');
+  if (changePackageBtn) {
+    changePackageBtn.onclick = () => showStep(step1);
+  }
+
+  // Store step navigation function globally for other functions
+  window.showStep = showStep;
+  window.steps = { step1, step2, step3, step4 };
+}
 
 function initializePackageSelection() {
   // Package selection buttons
@@ -80,43 +511,70 @@ function selectPackage(packageType) {
     displayName.textContent = packageType;
   }
 
-  // Show selected package display, hide selection cards
-  hidePackageSelection();
-  showSelectedPackage();
-  
-  // Enable submit button
-  const submitBtn = document.getElementById('submitBtn');
-  if (submitBtn) {
-    submitBtn.disabled = false;
-  }
+  // Update service labels based on package type
+  updateServiceLabels(packageType);
 
-  // Show equipment and pricing sections
-  showEquipmentSection();
-  showPricingSection();
+  // Move to Step 2: Drop Info and Pricing
+  if (window.showStep && window.steps) {
+    window.showStep(window.steps.step2);
+  }
+  
+  // Calculate pricing immediately
   calculatePricing();
 }
 
-function showPackageSelection() {
-  const packageSelection = document.querySelector('.package-selection');
-  const selectedDisplay = document.getElementById('selectedPackageDisplay');
+function updateServiceLabels(packageType) {
+  // Update service labels
+  const serviceLabels = document.querySelectorAll('.service-label');
   
-  if (packageSelection) packageSelection.style.display = 'block';
-  if (selectedDisplay) selectedDisplay.style.display = 'none';
-}
+  // Define the base service names
+  const serviceNames = {
+    deviceMount: 'Device mounting',
+    clientDevice: 'Client device setup',
+    serverDevice: 'Host/server device setup',
+    mediaPanel: 'Media panel install'
+  };
+  
+  serviceLabels.forEach(label => {
+    const serviceType = label.dataset.service;
+    if (servicePricing[serviceType] && serviceNames[serviceType]) {
+      const service = servicePricing[serviceType];
+      const baseName = serviceNames[serviceType];
+      
+      if (packageType === 'Basic') {
+        const unit = serviceType === 'mediaPanel' ? '' : 
+                    serviceType.includes('device') || serviceType.includes('Device') ? '/device' : '/item';
+        label.textContent = `${baseName} ($${service.cost}${unit})`;
+      } else if (packageType === 'Premium') {
+        const timeText = service.time === 1 ? '1 hr' : `${service.time} hrs`;
+        label.textContent = `${baseName} (${timeText} each)`;
+      }
+    }
+  });
 
-function hidePackageSelection() {
-  const packageSelection = document.querySelector('.package-selection');
-  if (packageSelection) packageSelection.style.display = 'none';
-}
-
-function showSelectedPackage() {
-  const selectedDisplay = document.getElementById('selectedPackageDisplay');
-  if (selectedDisplay) selectedDisplay.style.display = 'block';
-}
-
-function showPricingSection() {
-  const pricingSection = document.getElementById('pricingSection');
-  if (pricingSection) pricingSection.style.display = 'block';
+  // Update cable run labels
+  const cableLabels = document.querySelectorAll('.cable-label');
+  
+  // Define the base cable names
+  const cableNames = {
+    coax: 'Coax runs',
+    cat6: 'Cat6 runs'
+  };
+  
+  cableLabels.forEach(label => {
+    const cableType = label.dataset.cable;
+    if (cablePricing[cableType] && cableNames[cableType]) {
+      const cable = cablePricing[cableType];
+      const baseName = cableNames[cableType];
+      
+      if (packageType === 'Basic') {
+        label.textContent = `${baseName} ($${cable.cost}/run)`;
+      } else if (packageType === 'Premium') {
+        const timeText = cable.time === 1 ? '1 hr' : `${cable.time} hrs`;
+        label.textContent = `${baseName} (${timeText} each)`;
+      }
+    }
+  });
 }
 
 function updateSurveyDisplay() {
@@ -132,11 +590,6 @@ function updateSurveyDisplay() {
   }
 }
 
-function showEquipmentSection() {
-  const equipmentSection = document.getElementById('equipmentSection');
-  if (equipmentSection) equipmentSection.style.display = 'block';
-}
-
 function initializeEquipmentSelection() {
   // Speed tier radio buttons
   const speedTierRadios = document.querySelectorAll('input[name="speedTier"]');
@@ -148,6 +601,9 @@ function initializeEquipmentSelection() {
       }
     });
   });
+
+  // Initialize filter controls
+  initializeEquipmentFilters();
 }
 
 function showEquipmentOptions() {
@@ -161,28 +617,219 @@ function showEquipmentOptions() {
   // Clear existing cards
   equipmentCards.innerHTML = '';
   
-  // Get equipment for selected speed tier
-  const equipment = equipmentCatalog[selectedSpeedTier] || [];
+  // Get all equipment that supports the selected speed tier
+  const filteredEquipment = getAllEquipmentForSpeedTier(selectedSpeedTier);
   
-  // Create equipment cards
-  equipment.forEach(item => {
-    const card = createEquipmentCard(item);
-    equipmentCards.appendChild(card);
+  // Group equipment by category
+  const groupedEquipment = groupEquipmentByCategory(filteredEquipment);
+  
+  // Create category sections
+  Object.entries(groupedEquipment).forEach(([category, items]) => {
+    const categorySection = createCategorySection(category, items);
+    equipmentCards.appendChild(categorySection);
   });
   
   // Show the equipment options
   equipmentOptions.style.display = 'block';
+  
+  // Show recommendations
+  showRecommendations(selectedSpeedTier);
+}
+
+function getAllEquipmentForSpeedTier(speedTier) {
+  const allEquipment = [];
+  
+  // Get selected security options
+  const selectedSecurityTypes = getSelectedSecurityTypes();
+  
+  Object.entries(equipmentCatalog).forEach(([categoryKey, categoryItems]) => {
+    const categoryName = getCategoryDisplayName(categoryKey);
+    categoryItems.forEach(item => {
+      // Include item if it matches the speed tier or if it's security equipment (marked with 'all')
+      const speedTierMatch = item.speedTiers.includes(speedTier) || item.speedTiers.includes('all');
+      
+      // For security equipment, only show if the relevant security option is selected
+      let securityMatch = true;
+      if (item.securityTypes) {
+        securityMatch = item.securityTypes.some(secType => selectedSecurityTypes.includes(secType));
+      }
+      
+      if (speedTierMatch && securityMatch) {
+        // Add the category name to the item when we retrieve it
+        allEquipment.push({ ...item, category: categoryName });
+      }
+    });
+  });
+  
+  return allEquipment;
+}
+
+function getSelectedSecurityTypes() {
+  const selectedTypes = [];
+  
+  // Check security cameras subsections
+  if (document.getElementById('internalCameras')?.checked) {
+    selectedTypes.push('internalCameras');
+  }
+  if (document.getElementById('externalCameras')?.checked) {
+    selectedTypes.push('externalCameras');
+  }
+  if (document.getElementById('doorbellCameras')?.checked) {
+    selectedTypes.push('doorbellCameras');
+  }
+  
+  // Check door access
+  if (document.getElementById('doorAccess')?.checked) {
+    selectedTypes.push('doorAccess');
+  }
+  
+  // Check remote installation subsections
+  if (document.getElementById('gateInstallation')?.checked) {
+    selectedTypes.push('gateInstallation');
+  }
+  if (document.getElementById('guardShackInstallation')?.checked) {
+    selectedTypes.push('guardShackInstallation');
+  }
+  if (document.getElementById('externalBuildingInstallation')?.checked) {
+    selectedTypes.push('externalBuildingInstallation');
+  }
+  
+  return selectedTypes;
+}
+
+function getCategoryDisplayName(categoryKey) {
+  const categoryNames = {
+    'gateways': 'Gateway',
+    'switches': 'Switch', 
+    'accessPoints': 'Access Point',
+    'cameras': 'Camera',
+    'doorAccess': 'Door Access'
+  };
+  return categoryNames[categoryKey] || categoryKey;
+}
+
+function groupEquipmentByCategory(equipment) {
+  return equipment.reduce((groups, item) => {
+    if (!groups[item.category]) {
+      groups[item.category] = [];
+    }
+    groups[item.category].push(item);
+    return groups;
+  }, {});
+}
+
+function createCategorySection(category, items) {
+  const section = document.createElement('div');
+  section.className = 'equipment-category-section';
+  
+  const categoryHeader = document.createElement('h4');
+  categoryHeader.className = 'equipment-category-header';
+  categoryHeader.textContent = category;
+  section.appendChild(categoryHeader);
+  
+  const categoryGrid = document.createElement('div');
+  categoryGrid.className = 'equipment-category-grid';
+  
+  items.forEach(item => {
+    const card = createEquipmentCard(item);
+    categoryGrid.appendChild(card);
+  });
+  
+  section.appendChild(categoryGrid);
+  return section;
+}
+
+function showRecommendations(speedTier) {
+  const recommendationContainer = document.getElementById('equipmentRecommendations') || createRecommendationContainer();
+  
+  // Get recommended items for this speed tier
+  const recommendations = getAllEquipmentForSpeedTier(speedTier)
+    .filter(item => item.recommended.includes(speedTier))
+    .slice(0, 3); // Show top 3 recommendations
+  
+  if (recommendations.length > 0) {
+    recommendationContainer.innerHTML = '<h4>Recommended for ' + speedTier + ':</h4>';
+    const recGrid = document.createElement('div');
+    recGrid.className = 'recommendations-grid';
+    
+    recommendations.forEach(item => {
+      const recCard = createRecommendationCard(item);
+      recGrid.appendChild(recCard);
+    });
+    
+    recommendationContainer.appendChild(recGrid);
+    recommendationContainer.style.display = 'block';
+  }
+}
+
+function createRecommendationContainer() {
+  const container = document.createElement('div');
+  container.id = 'equipmentRecommendations';
+  container.className = 'equipment-recommendations';
+  
+  const equipmentOptions = document.getElementById('equipmentOptions');
+  if (equipmentOptions) {
+    equipmentOptions.insertBefore(container, equipmentOptions.firstChild);
+  }
+  
+  return container;
+}
+
+function createRecommendationCard(item) {
+  const card = document.createElement('div');
+  card.className = 'recommendation-card';
+  card.innerHTML = `
+    <div class="rec-badge">Recommended</div>
+    <h5>${item.name}</h5>
+    <p class="rec-price">$${item.price}</p>
+    <p class="rec-description">${item.description}</p>
+    <button type="button" class="add-to-cart-btn" data-sku="${item.sku}">Add to Cart</button>
+  `;
+  
+  const addButton = card.querySelector('.add-to-cart-btn');
+  addButton.addEventListener('click', () => addToCart(item));
+  
+  return card;
 }
 
 function createEquipmentCard(item) {
   const card = document.createElement('div');
   card.className = 'equipment-card card';
+  
+  // Create feature tags
+  const featureTags = item.tags.slice(0, 3).map(tag => 
+    `<span class="feature-tag">${tag}</span>`
+  ).join('');
+  
+  // Create key features list
+  const keyFeatures = [];
+  if (item.features.PoE) keyFeatures.push('PoE Support');
+  if (item.features.sfp) keyFeatures.push('SFP+ Ports');
+  if (item.features.numPorts) keyFeatures.push(`${item.features.numPorts} Ports`);
+  if (item.features.wifiStandard) keyFeatures.push(item.features.wifiStandard);
+  if (item.features.resolution) keyFeatures.push(item.features.resolution);
+  
+  const featuresHTML = keyFeatures.slice(0, 3).map(feature => 
+    `<li>${feature}</li>`
+  ).join('');
+  
   card.innerHTML = `
-    <h4>${item.name}</h4>
-    <p class="equipment-category">${item.category}</p>
-    <p class="equipment-price">$${item.price}</p>
-    <p class="equipment-sku">SKU: ${item.sku}</p>
-    <div class="equipment-controls">
+    <div class="card-header">
+      <h4>${item.name}</h4>
+      ${item.subCategory ? `<p class="equipment-subcategory">${item.subCategory}</p>` : ''}
+      <div class="feature-tags">${featureTags}</div>
+    </div>
+    <div class="card-body">
+      <p class="equipment-description">${item.description}</p>
+      ${featuresHTML ? `<ul class="key-features">${featuresHTML}</ul>` : ''}
+      <div class="equipment-specs">
+        ${item.features.maxSpeed ? `<span class="spec">Max Speed: ${item.features.maxSpeed} Mbps</span>` : ''}
+        ${item.features.powerConsumption ? `<span class="spec">Power: ${item.features.powerConsumption}W</span>` : ''}
+      </div>
+    </div>
+    <div class="card-footer">
+      <p class="equipment-price">$${item.price}</p>
+      <p class="equipment-sku">SKU: ${item.sku}</p>
       <button type="button" class="add-to-cart-btn" data-sku="${item.sku}">Add to Cart</button>
     </div>
   `;
@@ -192,6 +839,52 @@ function createEquipmentCard(item) {
   addButton.addEventListener('click', () => addToCart(item));
   
   return card;
+}
+
+function initializeEquipmentFilters() {
+  // This function will be called when filters are added to the HTML
+  // For now, we'll prepare the structure for future filtering capabilities
+}
+
+// Equipment filtering functions
+function filterEquipmentByFeature(equipment, featureKey, featureValue) {
+  return equipment.filter(item => {
+    if (featureKey === 'category') {
+      // Category is now dynamically added, so this still works
+      return item.category === featureValue;
+    }
+    if (featureKey === 'subCategory') {
+      return item.subCategory === featureValue;
+    }
+    if (featureKey === 'tags') {
+      return item.tags.includes(featureValue);
+    }
+    if (featureKey === 'priceRange') {
+      const [min, max] = featureValue.split('-').map(Number);
+      return item.price >= min && item.price <= max;
+    }
+    if (item.features && item.features[featureKey] !== undefined) {
+      return item.features[featureKey] === featureValue;
+    }
+    return false;
+  });
+}
+
+function getEquipmentByRecommendation(speedTier, maxItems = 5) {
+  const allEquipment = getAllEquipmentForSpeedTier(speedTier);
+  
+  // Sort by recommendation priority and price
+  return allEquipment
+    .filter(item => item.recommended.includes(speedTier))
+    .sort((a, b) => {
+      // Prioritize recommended items, then by price
+      const aRec = item.recommended.includes(speedTier) ? 1 : 0;
+      const bRec = item.recommended.includes(speedTier) ? 1 : 0;
+      
+      if (aRec !== bRec) return bRec - aRec; // Recommended first
+      return a.price - b.price; // Then by price ascending
+    })
+    .slice(0, maxItems);
 }
 
 function addToCart(item) {
@@ -281,7 +974,7 @@ window.removeFromCart = removeFromCart;
 function setupCalculationListeners() {
   // Add listeners to all input fields for real-time calculation
   const inputFields = [
-    'coaxRuns', 'cat6Runs', 'deviceMountQty', 'networkSetupQty', 'mediaPanelQty'
+    'coaxRuns', 'cat6Runs', 'deviceMountQty', 'clientDeviceQty', 'serverDeviceQty', 'mediaPanelQty'
   ];
   
   inputFields.forEach(fieldId => {
@@ -302,7 +995,8 @@ async function calculatePricing() {
 
   const services = {
     deviceMount: parseInt(document.getElementById('deviceMountQty')?.value) || 0,
-    networkSetup: parseInt(document.getElementById('networkSetupQty')?.value) || 0,
+    clientDevice: parseInt(document.getElementById('clientDeviceQty')?.value) || 0,
+    serverDevice: parseInt(document.getElementById('serverDeviceQty')?.value) || 0,
     mediaPanel: parseInt(document.getElementById('mediaPanelQty')?.value) || 0
   };
 
@@ -316,7 +1010,8 @@ async function calculatePricing() {
       'runs[coax]': runs.coax,
       'runs[cat6]': runs.cat6,
       'services[deviceMount]': services.deviceMount,
-      'services[networkSetup]': services.networkSetup,
+      'services[clientDevice]': services.clientDevice,
+      'services[serverDevice]': services.serverDevice,
       'services[mediaPanel]': services.mediaPanel,
       equipmentTotal: equipmentTotal
     });
@@ -434,7 +1129,8 @@ async function handleSubmit(event) {
 
   const services = {
     deviceMount: parseInt(document.getElementById('deviceMountQty')?.value) || 0,
-    networkSetup: parseInt(document.getElementById('networkSetupQty')?.value) || 0,
+    clientDevice: parseInt(document.getElementById('clientDeviceQty')?.value) || 0,
+    serverDevice: parseInt(document.getElementById('serverDeviceQty')?.value) || 0,
     mediaPanel: parseInt(document.getElementById('mediaPanelQty')?.value) || 0
   };
 
@@ -460,23 +1156,246 @@ async function handleSubmit(event) {
 
     if (res.ok) {
       alert(`Quote submitted successfully! Reference ID: ${data.id}`);
-      // Reset form or redirect as needed
+      // Reset form and return to step 1
       form.reset();
       selectedPackage = null;
       includeSurvey = false;
       selectedSpeedTier = null;
       equipmentCart = [];
-      showPackageSelection();
-      document.getElementById('selectedPackageDisplay').style.display = 'none';
-      document.getElementById('pricingSection').style.display = 'none';
-      document.getElementById('equipmentSection').style.display = 'none';
-      document.getElementById('submitBtn').disabled = true;
       updateCartDisplay();
+      
+      // Return to step 1
+      if (window.showStep && window.steps) {
+        window.showStep(window.steps.step1);
+      }
     } else {
       alert(`Error creating quote: ${data.error || 'Unknown error'}`);
     }
   } catch (err) {
     console.error(err);
     alert(`Network error: ${err.message}`);
+  }
+}
+
+function updateFinalQuoteSummary() {
+  // Update package summary
+  updatePackageSummary();
+  
+  // Update cable runs summary
+  updateCableRunsSummary();
+  
+  // Update services summary
+  updateServicesSummary();
+  
+  // Update equipment summary
+  updateEquipmentSummary();
+  
+  // Update survey summary
+  updateSurveySummary();
+  
+  // Update final totals
+  updateFinalTotals();
+}
+
+function updatePackageSummary() {
+  const summaryPackageName = document.getElementById('summaryPackageName');
+  const summaryPackagePrice = document.getElementById('summaryPackagePrice');
+  
+  if (summaryPackageName) {
+    summaryPackageName.textContent = selectedPackage || 'Not selected';
+  }
+  
+  if (summaryPackagePrice) {
+    if (selectedPackage === 'Basic') {
+      summaryPackagePrice.textContent = '$50 per drop + $50 install fee';
+    } else if (selectedPackage === 'Premium') {
+      summaryPackagePrice.textContent = '$50/hr (Est. 3-5 hours)';
+    } else {
+      summaryPackagePrice.textContent = '-';
+    }
+  }
+}
+
+function updateCableRunsSummary() {
+  const summaryCableRuns = document.getElementById('summaryCableRuns');
+  const summaryRuns = document.getElementById('summaryRuns');
+  
+  if (!summaryRuns) return;
+  
+  const coaxRuns = parseInt(document.getElementById('coaxRuns')?.value) || 0;
+  const cat6Runs = parseInt(document.getElementById('cat6Runs')?.value) || 0;
+  
+  if (coaxRuns === 0 && cat6Runs === 0) {
+    if (summaryCableRuns) summaryCableRuns.style.display = 'none';
+    return;
+  }
+  
+  if (summaryCableRuns) summaryCableRuns.style.display = 'block';
+  
+  let runsHTML = '';
+  if (coaxRuns > 0) {
+    runsHTML += `<div class="summary-run-item">
+      <span>Coax runs: ${coaxRuns}</span>
+      <span>$${coaxRuns * cablePricing.coax.cost}</span>
+    </div>`;
+  }
+  if (cat6Runs > 0) {
+    runsHTML += `<div class="summary-run-item">
+      <span>Cat6 runs: ${cat6Runs}</span>
+      <span>$${cat6Runs * cablePricing.cat6.cost}</span>
+    </div>`;
+  }
+  
+  summaryRuns.innerHTML = runsHTML;
+}
+
+function updateServicesSummary() {
+  const summaryServices = document.getElementById('summaryServices');
+  const summaryServicesList = document.getElementById('summaryServicesList');
+  
+  if (!summaryServicesList) return;
+  
+  const deviceMount = parseInt(document.getElementById('deviceMountQty')?.value) || 0;
+  const clientDevice = parseInt(document.getElementById('clientDeviceQty')?.value) || 0;
+  const serverDevice = parseInt(document.getElementById('serverDeviceQty')?.value) || 0;
+  const mediaPanel = parseInt(document.getElementById('mediaPanelQty')?.value) || 0;
+  
+  if (deviceMount === 0 && clientDevice === 0 && serverDevice === 0 && mediaPanel === 0) {
+    if (summaryServices) summaryServices.style.display = 'none';
+    return;
+  }
+  
+  if (summaryServices) summaryServices.style.display = 'block';
+  
+  let servicesHTML = '';
+  if (deviceMount > 0) {
+    servicesHTML += `<div class="summary-service-item">
+      <span>Device mounting (${deviceMount}x)</span>
+      <span>$${deviceMount * servicePricing.deviceMount.cost}</span>
+    </div>`;
+  }
+  if (clientDevice > 0) {
+    servicesHTML += `<div class="summary-service-item">
+      <span>Client device setup (${clientDevice}x)</span>
+      <span>$${clientDevice * servicePricing.clientDevice.cost}</span>
+    </div>`;
+  }
+  if (serverDevice > 0) {
+    servicesHTML += `<div class="summary-service-item">
+      <span>Host/server device setup (${serverDevice}x)</span>
+      <span>$${serverDevice * servicePricing.serverDevice.cost}</span>
+    </div>`;
+  }
+  if (mediaPanel > 0) {
+    servicesHTML += `<div class="summary-service-item">
+      <span>Media panel install (${mediaPanel}x)</span>
+      <span>$${mediaPanel * servicePricing.mediaPanel.cost}</span>
+    </div>`;
+  }
+  
+  summaryServicesList.innerHTML = servicesHTML;
+}
+
+function updateEquipmentSummary() {
+  const summaryEquipment = document.getElementById('summaryEquipment');
+  const summaryEquipmentList = document.getElementById('summaryEquipmentList');
+  
+  if (!summaryEquipmentList) return;
+  
+  if (equipmentCart.length === 0) {
+    if (summaryEquipment) summaryEquipment.style.display = 'none';
+    return;
+  }
+  
+  if (summaryEquipment) summaryEquipment.style.display = 'block';
+  
+  let equipmentHTML = '';
+  equipmentCart.forEach(item => {
+    const itemTotal = item.price * item.quantity;
+    equipmentHTML += `<div class="summary-equipment-item">
+      <span>${item.name} (${item.quantity}x)</span>
+      <span>$${itemTotal.toFixed(2)}</span>
+    </div>`;
+  });
+  
+  summaryEquipmentList.innerHTML = equipmentHTML;
+}
+
+function updateSurveySummary() {
+  const summarySurvey = document.getElementById('summarySurvey');
+  
+  if (!summarySurvey) return;
+  
+  if (includeSurvey) {
+    summarySurvey.style.display = 'block';
+  } else {
+    summarySurvey.style.display = 'none';
+  }
+}
+
+function updateFinalTotals() {
+  const summarySubtotal = document.getElementById('summarySubtotal');
+  const summarySubtotalAmount = document.getElementById('summarySubtotalAmount');
+  const summaryEquipmentTotal = document.getElementById('summaryEquipmentTotal');
+  const summaryEquipmentAmount = document.getElementById('summaryEquipmentAmount');
+  const summaryFinalTotal = document.getElementById('summaryFinalTotal');
+  
+  // Calculate totals
+  const coaxRuns = parseInt(document.getElementById('coaxRuns')?.value) || 0;
+  const cat6Runs = parseInt(document.getElementById('cat6Runs')?.value) || 0;
+  const deviceMount = parseInt(document.getElementById('deviceMountQty')?.value) || 0;
+  const clientDevice = parseInt(document.getElementById('clientDeviceQty')?.value) || 0;
+  const serverDevice = parseInt(document.getElementById('serverDeviceQty')?.value) || 0;
+  const mediaPanel = parseInt(document.getElementById('mediaPanelQty')?.value) || 0;
+  
+  let serviceSubtotal = 0;
+  
+  if (selectedPackage === 'Basic') {
+    // Basic package: cable runs + services + install fee
+    const totalRuns = coaxRuns + cat6Runs;
+    const runsTotal = (coaxRuns * pricing.cables.coax.cost) + (cat6Runs * pricing.cables.cat6.cost);
+    const servicesTotal = (deviceMount * pricing.services.deviceMount.cost) + 
+                         (clientDevice * pricing.services.clientDevice.cost) + 
+                         (serverDevice * pricing.services.serverDevice.cost) + 
+                         (mediaPanel * pricing.services.mediaPanel.cost);
+    const installFee = totalRuns > 0 ? pricing.packages.basic.installFee : 0;
+    
+    serviceSubtotal = runsTotal + servicesTotal + installFee;
+    
+  } else if (selectedPackage === 'Premium') {
+    // Premium package: hours calculated purely from actual work
+    const runHours = (coaxRuns * pricing.cables.coax.time) + (cat6Runs * pricing.cables.cat6.time);
+    const serviceHours = (deviceMount * pricing.services.deviceMount.time) + 
+                        (clientDevice * pricing.services.clientDevice.time) + 
+                        (serverDevice * pricing.services.serverDevice.time) + 
+                        (mediaPanel * pricing.services.mediaPanel.time);
+    const totalHours = runHours + serviceHours;
+    
+    const laborTotal = totalHours * pricing.packages.premium.hourlyRate;
+    
+    serviceSubtotal = laborTotal;
+  }
+  
+  const equipmentTotal = getEquipmentTotal();
+  const surveyFee = includeSurvey ? pricing.packages.survey.cost : 0;
+  
+  // Update displays
+  if (serviceSubtotal > 0) {
+    if (summarySubtotal) summarySubtotal.style.display = 'block';
+    if (summarySubtotalAmount) summarySubtotalAmount.textContent = `$${serviceSubtotal.toFixed(2)}`;
+  } else {
+    if (summarySubtotal) summarySubtotal.style.display = 'none';
+  }
+  
+  if (equipmentTotal > 0) {
+    if (summaryEquipmentTotal) summaryEquipmentTotal.style.display = 'block';
+    if (summaryEquipmentAmount) summaryEquipmentAmount.textContent = `$${equipmentTotal.toFixed(2)}`;
+  } else {
+    if (summaryEquipmentTotal) summaryEquipmentTotal.style.display = 'none';
+  }
+  
+  const finalTotal = serviceSubtotal + equipmentTotal + surveyFee;
+  if (summaryFinalTotal) {
+    summaryFinalTotal.textContent = `$${finalTotal.toFixed(2)}`;
   }
 }

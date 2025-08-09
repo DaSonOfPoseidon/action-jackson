@@ -289,10 +289,17 @@ describe('Data Models', () => {
 
   describe('Schedule Model', () => {
     test('should create a schedule entry', async () => {
+      // Use a future weekday date
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + 7); // Next week
+      while (futureDate.getDay() === 0 || futureDate.getDay() === 6) {
+        futureDate.setDate(futureDate.getDate() + 1); // Skip to weekday
+      }
+      
       const scheduleData = {
         name: 'John Doe',
         email: 'john@example.com',
-        date: new Date('2024-12-25'),
+        date: futureDate,
         time: '10:00'
       };
 
@@ -302,8 +309,52 @@ describe('Data Models', () => {
       expect(savedSchedule._id).toBeDefined();
       expect(savedSchedule.name).toBe('John Doe');
       expect(savedSchedule.email).toBe('john@example.com');
-      expect(savedSchedule.date).toEqual(new Date('2024-12-25'));
+      expect(savedSchedule.date.toDateString()).toEqual(futureDate.toDateString());
       expect(savedSchedule.time).toBe('10:00');
+    });
+
+    test('should reject past dates', async () => {
+      const pastDate = new Date('2020-01-01');
+      
+      const scheduleData = {
+        name: 'John Doe',
+        email: 'john@example.com',
+        date: pastDate,
+        time: '10:00'
+      };
+
+      const schedule = new Schedule(scheduleData);
+      await expect(schedule.save()).rejects.toThrow('Appointment date cannot be in the past');
+    });
+
+    test('should validate time format', async () => {
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + 7);
+      
+      const scheduleData = {
+        name: 'John Doe',
+        email: 'john@example.com',
+        date: futureDate,
+        time: '25:00' // Invalid time
+      };
+
+      const schedule = new Schedule(scheduleData);
+      await expect(schedule.save()).rejects.toThrow('Time must be in HH:MM format');
+    });
+
+    test('should validate email format', async () => {
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + 7);
+      
+      const scheduleData = {
+        name: 'John Doe',
+        email: 'invalid-email', // Invalid email
+        date: futureDate,
+        time: '10:00'
+      };
+
+      const schedule = new Schedule(scheduleData);
+      await expect(schedule.save()).rejects.toThrow('Please enter a valid email address');
     });
   });
 

@@ -9,11 +9,11 @@ require('dotenv').config();
 const app = express();
 
 // Middleware
-app.use(express.json());
+app.use(express.json({ limit: '10mb' })); // Limit JSON payload size
 app.use(cookieParser());
 app.use(compression());
 mongoose.set('strictQuery', false);
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' })); // Limit form data size
 app.use(express.static('public'));
 app.use('/pics', express.static(path.join(__dirname, 'public/pics')));
 app.set('view engine', 'ejs');
@@ -23,16 +23,17 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "https://kit.fontawesome.com"],
-      connectSrc: ["'self'", "https://ka-f.fontawesome.com"],
-      styleSrc: ["'self'", "https://fonts.googleapis.com", "https://ka-f.fontawesome.com"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com", "https://kit.fontawesome.com"],
+      scriptSrc: ["'self'", "https://kit.fontawesome.com", "https://kit-free.fontawesome.com"],
+      connectSrc: ["'self'", "https://ka-f.fontawesome.com", "https://ka-p.fontawesome.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://ka-f.fontawesome.com", "https://ka-p.fontawesome.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com", "https://kit.fontawesome.com", "https://ka-f.fontawesome.com", "https://ka-p.fontawesome.com"],
       imgSrc: ["'self'", "data:"],
     }
   }
 }));
 
-app.set('trust proxy', true);
+// Configure trust proxy securely - only trust first proxy (e.g., Cloudflare)
+app.set('trust proxy', 1);
 
 // Subdomain-based variant detection: sets which "half" of the site we're on and the switcher URL
 app.use((req, res, next) => {
@@ -40,9 +41,9 @@ app.use((req, res, next) => {
   const hostname = req.hostname || req.get('host') || '';
   
   // Debug logging
-  console.log('Host:', req.get('host'));
-  console.log('Hostname:', hostname);
-  console.log('Subdomains:', subdomains);
+  //console.log('Host:', req.get('host'));
+  //console.log('Hostname:', hostname);
+  //console.log('Subdomains:', subdomains);
   
   // Check if hostname starts with 'dev.' or includes 'dev'
   const isPortfolio = subdomains.includes('dev') || hostname.startsWith('dev.');
@@ -51,28 +52,15 @@ app.use((req, res, next) => {
     ? 'https://dev.actionjacksoninstalls.com'
     : 'https://actionjacksoninstalls.com';
     
-  console.log('Variant:', res.locals.variant);
+  //console.log('Variant:', res.locals.variant);
   next();
 });
 
-function createSessionToken(userId) {
-  // sign a JWT or generate a secure random session ID tied to a store
-  return /* your token logic */;
-}
-
-app.post('/login', async (req, res) => {
-  const { username, password } = req.body;
-  const user = await findAndVerifyUser(username, password); // implement this
-  if (!user) return res.status(401).render('login', { title: 'Login', error: 'Invalid credentials' });
-  const token = createSessionToken(user.id);
-  res.cookie('session', token, {
-    domain: '.actionjacksoninstalls.com',
-    secure: true,
-    httpOnly: true,
-    sameSite: 'lax',
-  });
-  res.redirect('/');
-});
+// TODO: Implement proper authentication system when needed
+// - Use JWT tokens with proper secret management
+// - Implement secure password hashing (bcrypt/argon2)
+// - Add rate limiting on auth endpoints
+// - Consider OAuth integration for admin access
 
 // Connect to MongoDB
 async function connectDB() {
@@ -91,12 +79,14 @@ const homeRoutes = require('./routes/home');
 const schedulingRoutes = require('./routes/scheduling');
 const quotesRoutes = require('./routes/quotes');
 const sharedRoutes = require('./routes/shared');
+const invoicesRoutes = require('./routes/invoices');
 
 // Use API routes
 app.use('/api/home', homeRoutes);
 app.use('/api/scheduling', schedulingRoutes);
 app.use('/api/quotes', quotesRoutes);
 app.use('/api/shared', sharedRoutes);
+app.use('/api/invoices', invoicesRoutes);
 
 // Home
 app.get('/', (req, res) => {
