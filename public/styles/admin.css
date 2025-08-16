@@ -1,0 +1,963 @@
+/* Admin Panel Styles - Consolidated from all admin views */
+
+:root {
+    /* Admin-specific variables */
+    --admin-primary: #2563eb;
+    --admin-accent: #1e40af;
+    --admin-success: #059669;
+    --admin-warning: #d97706;
+    --admin-danger: #dc2626;
+    --admin-sidebar: #1e293b;
+    --admin-nav: #0f172a;
+}
+
+/* Base Admin Layout */
+body {
+    background: var(--background);
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.admin-layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Admin Sidebar */
+.admin-sidebar {
+    background: var(--admin-sidebar);
+    width: 250px;
+    padding: 1rem 0;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.admin-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 1rem;
+}
+
+.admin-header h1 {
+    color: var(--admin-primary);
+    font-size: 1.25rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 700;
+}
+
+.admin-user {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+/* Admin Navigation */
+.admin-nav {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.admin-nav li {
+    margin: 0.25rem 0;
+}
+
+.admin-nav a {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.5rem;
+    color: var(--text);
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.admin-nav a:hover,
+.admin-nav a.active {
+    background: rgba(37, 99, 235, 0.1);
+    color: var(--admin-primary);
+    border-right: 3px solid var(--admin-primary);
+}
+
+/* Main Content Area */
+.admin-content {
+    flex: 1;
+    padding: 2rem;
+    overflow-y: auto;
+}
+
+.content-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    position: relative;
+}
+
+.content-header h1 {
+    color: var(--text);
+    margin: 0 0 0.5rem 0;
+    font-size: 2rem;
+}
+
+.content-header p {
+    color: var(--text-muted);
+    margin: 0;
+}
+
+/* Logout Button */
+.logout-btn {
+    background: var(--admin-danger);
+    color: white;
+    border: none;
+    border-radius: var(--radius);
+    padding: 0.75rem 1.5rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.logout-btn:hover {
+    background: #b91c1c;
+}
+
+/* Dashboard-specific Styles */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: var(--surface);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    text-align: center;
+    transition: var(--transition);
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.stat-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: var(--admin-primary);
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0;
+}
+
+.stat-label {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+}
+
+.activity-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 2rem;
+}
+
+.activity-card {
+    background: var(--surface);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.activity-header {
+    background: var(--admin-nav);
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.activity-header h3 {
+    color: var(--text);
+    margin: 0;
+    font-size: 1.125rem;
+}
+
+.activity-list {
+    padding: 1rem 0;
+}
+
+.activity-item {
+    padding: 0.75rem 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-info h4 {
+    color: var(--text);
+    margin: 0 0 0.25rem 0;
+    font-size: 0.875rem;
+}
+
+.activity-info p {
+    color: var(--text-muted);
+    margin: 0;
+    font-size: 0.75rem;
+}
+
+.activity-meta {
+    text-align: right;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+/* Filters Section */
+.filters-section {
+    background: var(--surface);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    align-items: end;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.filter-label {
+    color: var(--text);
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+.filter-input {
+    background: var(--surface-light);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius);
+    padding: 0.75rem;
+    color: var(--text);
+    font-size: 0.875rem;
+}
+
+.filter-btn {
+    background: var(--admin-primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius);
+    padding: 0.75rem 1.5rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: var(--transition);
+    white-space: nowrap;
+}
+
+.filter-btn:hover {
+    background: var(--admin-accent);
+}
+
+/* Tables */
+.quotes-table,
+.schedule-table,
+.invoices-table {
+    background: var(--surface);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.table-header {
+    background: var(--admin-nav);
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.table-header h3,
+.table-title {
+    color: var(--text);
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.table-title {
+    color: var(--admin-primary);
+}
+
+.table-responsive,
+.invoices-grid {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 1rem 1.5rem;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+th {
+    background: var(--surface-light);
+    color: var(--text);
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Some invoices styles override th */
+.invoices-table th {
+    background: rgba(15, 23, 42, 0.5);
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+td {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+.customer-info {
+    color: var(--text);
+    font-weight: 500;
+}
+
+.appointment-date {
+    color: var(--text);
+    font-weight: 500;
+}
+
+.appointment-time {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    margin-top: 0.25rem;
+}
+
+/* Status Colors */
+.status-pending { background: rgba(217, 119, 6, 0.1); color: #fbbf24; }
+.status-reviewed { background: rgba(37, 99, 235, 0.1); color: #3b82f6; }
+.status-approved { background: rgba(5, 150, 105, 0.1); color: #10b981; }
+.status-rejected { background: rgba(220, 38, 38, 0.1); color: #f87171; }
+.status-completed { background: rgba(5, 150, 105, 0.1); color: #10b981; }
+.status-confirmed { background: rgba(37, 99, 235, 0.1); color: #3b82f6; }
+.status-in-progress { background: rgba(156, 163, 175, 0.1); color: #9ca3af; }
+.status-cancelled { background: rgba(220, 38, 38, 0.1); color: #f87171; }
+
+/* Invoice specific status colors */
+.status-draft { background: rgba(156, 163, 175, 0.1); color: #9ca3af; }
+.status-sent { background: rgba(37, 99, 235, 0.1); color: #3b82f6; }
+.status-paid { background: rgba(5, 150, 105, 0.1); color: #10b981; }
+.status-overdue { background: rgba(220, 38, 38, 0.1); color: #ef4444; }
+
+/* Action Buttons */
+.action-btn {
+    background: var(--admin-primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius);
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    font-size: 0.75rem;
+    margin: 0.125rem;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.action-btn:hover {
+    background: var(--admin-accent);
+}
+
+.action-btn.success {
+    background: var(--admin-success);
+}
+
+.action-btn.success:hover {
+    background: #047857;
+}
+
+.action-btn.warning {
+    background: var(--admin-warning);
+}
+
+.action-btn.warning:hover {
+    background: #b45309;
+}
+
+.action-btn.danger {
+    background: var(--admin-danger);
+}
+
+.action-btn.danger:hover {
+    background: #b91c1c;
+}
+
+/* Pagination */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 2rem;
+    padding: 1rem;
+}
+
+.pagination a,
+.pagination span {
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius);
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition: var(--transition);
+}
+
+.pagination a {
+    color: var(--admin-primary);
+    border: 1px solid rgba(37, 99, 235, 0.3);
+}
+
+.pagination a:hover {
+    background: rgba(37, 99, 235, 0.1);
+}
+
+.pagination .current {
+    background: var(--admin-primary);
+    color: white;
+    border: 1px solid var(--admin-primary);
+}
+
+/* Empty States */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1.5rem;
+    color: var(--text-muted);
+}
+
+.empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+/* Special Styling */
+.amount {
+    font-weight: 600;
+    color: var(--admin-success);
+}
+
+.invoice-number {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    color: var(--admin-primary);
+}
+
+/* Admin Login Specific Styles */
+.login-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--background);
+    padding: 1rem;
+}
+
+.login-card {
+    background: var(--surface);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius);
+    padding: 2rem;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.login-header h1 {
+    color: var(--admin-primary);
+    font-size: 1.5rem;
+    margin: 0 0 0.5rem 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.login-header p {
+    color: var(--text-muted);
+    margin: 0;
+    font-size: 0.875rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    display: block;
+    color: var(--text);
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.form-input {
+    width: 100%;
+    background: var(--surface-light);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius);
+    padding: 0.75rem;
+    color: var(--text);
+    font-size: 0.875rem;
+    transition: var(--transition);
+    box-sizing: border-box;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--admin-primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.login-btn {
+    width: 100%;
+    background: var(--admin-primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius);
+    padding: 0.875rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.login-btn:hover {
+    background: var(--admin-accent);
+}
+
+.login-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.error-message {
+    background: rgba(220, 38, 38, 0.1);
+    border: 1px solid rgba(220, 38, 38, 0.2);
+    color: #f87171;
+    padding: 0.75rem;
+    border-radius: var(--radius);
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .admin-layout {
+        flex-direction: column;
+    }
+
+    .admin-sidebar {
+        width: 100%;
+        order: 2;
+    }
+
+    .admin-content {
+        order: 1;
+        padding: 1rem;
+    }
+
+    .content-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .activity-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .filters-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .logout-btn {
+        position: static;
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .login-card {
+        padding: 1.5rem;
+    }
+
+    .login-header h1 {
+        font-size: 1.25rem;
+    }
+}
+
+/* Invoice Badge Styles */
+.invoice-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.invoice-created {
+    background: rgba(34, 197, 94, 0.1);
+    color: #059669;
+}
+
+.invoice-ready {
+    background: rgba(251, 191, 36, 0.1);
+    color: #d97706;
+}
+
+.invoice-pending {
+    background: rgba(107, 114, 128, 0.1);
+    color: #6b7280;
+}
+
+/* Action Button Variations */
+.action-btn.success {
+    background: var(--admin-success);
+    color: white;
+}
+
+.action-btn.success:hover {
+    background: #047857;
+}
+
+.action-btn.secondary {
+    background: #6b7280;
+    color: white;
+}
+
+.action-btn.secondary:hover {
+    background: #4b5563;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+}
+
+.modal-content {
+    background: var(--card-background-color);
+    margin: 5% auto;
+    padding: 0;
+    border-radius: 0.5rem;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow: hidden;
+    border: 1px solid var(--card-border-color);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--card-border-color);
+    background: var(--primary);
+    color: white;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.close {
+    color: white;
+    font-size: 1.5rem;
+    font-weight: bold;
+    cursor: pointer;
+    border: none;
+    background: none;
+    padding: 0;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.25rem;
+    transition: background-color 0.2s;
+}
+
+.close:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.modal-body {
+    padding: 1.5rem;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+/* Invoice Form Styles */
+.invoice-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.quote-summary {
+    background: var(--background);
+    padding: 1rem;
+    border-radius: 0.375rem;
+    border: 1px solid var(--card-border-color);
+}
+
+.quote-summary h3 {
+    margin: 0 0 0.75rem 0;
+    color: var(--primary);
+    font-size: 1rem;
+}
+
+.quote-summary p {
+    margin: 0.25rem 0;
+    color: var(--text-color);
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group label {
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.form-group input,
+.form-group textarea {
+    padding: 0.75rem;
+    border: 1px solid var(--card-border-color);
+    border-radius: 0.375rem;
+    background: var(--background);
+    color: var(--text-color);
+    font-family: inherit;
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    padding-top: 1rem;
+    border-top: 1px solid var(--card-border-color);
+}
+
+.btn-primary,
+.btn-secondary {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 0.375rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--primary-hover, var(--primary));
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    background: transparent;
+    color: var(--text-color);
+    border: 1px solid var(--card-border-color);
+}
+
+.btn-secondary:hover {
+    background: var(--background);
+}
+
+.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 2rem;
+    color: var(--muted-color);
+}
+
+.error {
+    color: var(--admin-danger);
+    text-align: center;
+    padding: 1rem;
+}
+
+/* Mobile Modal Responsiveness */
+@media (max-width: 768px) {
+    .modal-content {
+        margin: 2% auto;
+        width: 95%;
+        max-height: 90vh;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .btn-primary,
+    .btn-secondary {
+        width: 100%;
+    }
+}
+
+/* Quote Edit Mode Styles */
+.edit-mode-field {
+    transition: all 0.2s ease-in-out;
+    border: 1px solid var(--input-border) !important;
+    background: var(--input-background) !important;
+    padding: 0.5rem !important;
+    border-radius: var(--radius) !important;
+    color: var(--text-color) !important;
+}
+
+.edit-mode-field:focus {
+    outline: none;
+    border-color: var(--input-focus-border) !important;
+    box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.1) !important;
+}
+
+.edit-mode-field:hover {
+    border-color: var(--input-focus-border) !important;
+}
+
+.readonly-field {
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    color: var(--text-color) !important;
+    transition: all 0.2s ease-in-out;
+}
+
+.edit-toggle-warning {
+    background: var(--admin-warning) !important;
+    color: var(--background) !important;
+}
+
+.edit-actions-visible {
+    display: block !important;
+    animation: slideIn 0.3s ease-in-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Form field focus states for edit mode */
+.form-field-editable {
+    position: relative;
+}
+
+.form-field-editable::after {
+    content: '';
+    position: absolute;
+    left: -2px;
+    top: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, var(--admin-primary), transparent);
+    border-radius: var(--radius);
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.form-field-editable.edit-mode::after {
+    opacity: 0.1;
+}

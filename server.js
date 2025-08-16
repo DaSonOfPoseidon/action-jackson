@@ -106,6 +106,7 @@ const sharedRoutes = require('./routes/shared');
 const invoicesRoutes = require('./routes/invoices');
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
+const fileRoutes = require('./routes/files');
 
 // Use API routes
 app.use('/api/home', homeRoutes);
@@ -113,6 +114,7 @@ app.use('/api/scheduling', schedulingRoutes);
 app.use('/api/quotes', quotesRoutes);
 app.use('/api/shared', sharedRoutes);
 app.use('/api/invoices', invoicesRoutes);
+app.use('/api/files', fileRoutes);
 app.use('/auth', authRoutes);
 app.use('/admin', adminRoutes);
 
@@ -167,19 +169,45 @@ app.use((err, req, res, next) => {
   const statusCode = err.status || err.statusCode || 500;
   const message = statusCode === 500 ? 'Something went wrong on our end.' : err.message;
   
+  // Determine variant if not already set
+  if (!res.locals.variant) {
+    const hostname = req.hostname || req.get('host') || '';
+    const subdomains = hostname.split('.').slice(0, -2);
+    const isPortfolio = subdomains.includes('dev') || hostname.startsWith('dev.');
+    res.locals.variant = isPortfolio ? 'portfolio' : 'business';
+    res.locals.switcherUrl = res.locals.variant === 'business'
+      ? 'https://dev.actionjacksoninstalls.com'
+      : 'https://actionjacksoninstalls.com';
+  }
+  
   res.status(statusCode).render('error', { 
     title: `Error ${statusCode}`, 
     message: message,
-    statusCode: statusCode
+    statusCode: statusCode,
+    variant: res.locals.variant,
+    switcherUrl: res.locals.switcherUrl
   });
 });
 
 // 404 handler (must be last)
 app.use((req, res) => {
+  // Determine variant if not already set
+  if (!res.locals.variant) {
+    const hostname = req.hostname || req.get('host') || '';
+    const subdomains = hostname.split('.').slice(0, -2);
+    const isPortfolio = subdomains.includes('dev') || hostname.startsWith('dev.');
+    res.locals.variant = isPortfolio ? 'portfolio' : 'business';
+    res.locals.switcherUrl = res.locals.variant === 'business'
+      ? 'https://dev.actionjacksoninstalls.com'
+      : 'https://actionjacksoninstalls.com';
+  }
+
   res.status(404).render('error', { 
     title: 'Page Not Found', 
     message: 'The page you\'re looking for doesn\'t exist.',
-    statusCode: 404
+    statusCode: 404,
+    variant: res.locals.variant,
+    switcherUrl: res.locals.switcherUrl
   });
 });
 // Start server only if not in test environment

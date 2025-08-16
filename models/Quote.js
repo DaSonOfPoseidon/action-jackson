@@ -51,9 +51,37 @@ const QuoteSchema = new mongoose.Schema({
     equipmentTotal: { type: Number, default: 0 }
   },
 
+  // File attachments
+  attachments: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Attachment'
+  }],
+
+  // Admin management fields
+  status: {
+    type: String,
+    enum: ['pending', 'reviewed', 'approved', 'rejected', 'completed'],
+    default: 'pending'
+  },
+  updatedBy: { type: String },
+  adminNotes: { type: String, maxlength: 1000 },
+  
+  // Invoice reference (when quote is converted to invoice)
+  invoiceId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Invoice'
+  },
+
   ip:        { type: String },
   userAgent: { type: String },
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+// Update the updatedAt field before saving
+QuoteSchema.pre('save', function(next) {
+  this.updatedAt = Date.now();
+  next();
 });
 
 module.exports = mongoose.model('Quote', QuoteSchema);

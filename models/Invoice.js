@@ -56,6 +56,12 @@ const InvoiceSchema = new mongoose.Schema({
     price: { type: Number, min: 0 },
     quantity: { type: Number, min: 1 }
   }],
+
+  // File attachments
+  attachments: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Attachment'
+  }],
   
   // Tracking
   createdAt: { type: Date, default: Date.now },
@@ -65,14 +71,56 @@ const InvoiceSchema = new mongoose.Schema({
 // Auto-generate invoice number before saving
 InvoiceSchema.pre('save', async function(next) {
   if (!this.invoiceNumber) {
-    const year = new Date().getFullYear();
-    const count = await this.constructor.countDocuments() + 1;
-    this.invoiceNumber = `INV-${year}-${count.toString().padStart(4, '0')}`;
+    try {
+      const year = new Date().getFullYear();
+      
+      // Use atomic findOneAndUpdate to get next invoice number safely
+      let counter = 1;
+      let invoiceNumber;
+      let attempts = 0;
+      const maxAttempts = 10;
+      
+      while (attempts < maxAttempts) {
+        // Get the highest invoice number for this year
+        const lastInvoice = await this.constructor
+          .findOne({ invoiceNumber: { $regex: `^INV-${year}-` } })
+          .sort({ invoiceNumber: -1 })
+          .exec();
+        
+        if (lastInvoice) {
+          const lastNumber = parseInt(lastInvoice.invoiceNumber.split('-')[2]);
+          counter = lastNumber + 1;
+        }
+        
+        invoiceNumber = `INV-${year}-${counter.toString().padStart(4, '0')}`;
+        
+        // Check if this number already exists
+        const existing = await this.constructor.findOne({ invoiceNumber });
+        if (!existing) {
+          break;
+        }
+        
+        counter++;
+        attempts++;
+      }
+      
+      if (attempts >= maxAttempts) {
+        throw new Error('Unable to generate unique invoice number after multiple attempts');
+      }
+      
+      this.invoiceNumber = invoiceNumber;
+    } catch (error) {
+      return next(error);
+    }
   }
   
   // Auto-calculate final amount
-  if (this.amount && this.discount >= 0) {
-    this.finalAmount = this.amount * (1 - this.discount / 100);
+  if (this.amount !== undefined && this.amount !== null) {
+    const discount = this.discount || 0;
+    this.finalAmount = this.amount * (1 - discount / 100);
+  } else if (!this.finalAmount) {
+    // If no amount is provided but finalAmount is required, set a default
+    this.finalAmount = 0;
   }
   
   this.updatedAt = Date.now();
@@ -81,17 +129,27 @@ InvoiceSchema.pre('save', async function(next) {
 
 // Static method to create invoice from quote
 InvoiceSchema.statics.createFromQuote = async function(quote, additionalData = {}) {
+  const baseAmount = quote.pricing.totalCost || quote.pricing.estimatedTotal || 0;
+  const amount = additionalData.amount || baseAmount;
+  const discount = additionalData.discount || quote.discount || 0;
+  
+  // Calculate finalAmount immediately
+  const finalAmount = amount * (1 - discount / 100);
+  
   const invoiceData = {
     quoteId: quote._id,
     customer: quote.customer,
     packageOption: quote.packageOption,
-    amount: quote.pricing.totalCost || quote.pricing.estimatedTotal || 0,
-    discount: quote.discount || 0,
+    amount: amount,
+    discount: discount,
+    finalAmount: finalAmount, // Set this explicitly
     runs: quote.runs,
     services: quote.services,
     equipment: quote.equipment,
     serviceDescription: `${quote.packageOption} Package Installation`,
-    ...additionalData
+    ...additionalData,
+    // Override finalAmount in case it was passed in additionalData
+    finalAmount: finalAmount
   };
   
   return new this(invoiceData);

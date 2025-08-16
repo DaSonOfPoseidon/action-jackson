@@ -1,0 +1,15 @@
+{
+  "watch": ["./"],
+  "ext": "js,mjs,cjs,json,ejs",
+  "ignore": [
+    "node_modules/**",
+    "tests/**",
+    "*.test.js",
+    ".git/**",
+    "public/**"
+  ],
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "delay": 1000
+}

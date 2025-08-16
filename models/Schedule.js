@@ -59,6 +59,12 @@ const ScheduleSchema = new mongoose.Schema({
     enum: ['Scheduled', 'Confirmed', 'Completed', 'Cancelled', 'No-Show'],
     default: 'Scheduled'
   },
+  // File attachments
+  attachments: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Attachment'
+  }],
+
   // Tracking fields for security/audit
   ip: {
     type: String

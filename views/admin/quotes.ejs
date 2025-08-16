@@ -7,351 +7,22 @@
     
     <!-- Security Headers -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
-    <meta http-equiv="X-Frame-Options" content="DENY">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     
     <!-- CSS -->
     <link rel="stylesheet" href="/styles/business.css">
-    <link rel="stylesheet" href="https://kit.fontawesome.com/da7c56b6ed.css" crossorigin="anonymous">
-    
-    <style>
-        :root {
-            --admin-primary: #2563eb;
-            --admin-accent: #1e40af;
-            --admin-success: #059669;
-            --admin-warning: #d97706;
-            --admin-danger: #dc2626;
-            --admin-sidebar: #1e293b;
-            --admin-nav: #0f172a;
-        }
-
-        body {
-            background: var(--background);
-            margin: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        .admin-layout {
-            display: flex;
-            min-height: 100vh;
-        }
-
-        .admin-sidebar {
-            background: var(--admin-sidebar);
-            width: 250px;
-            padding: 1rem 0;
-            border-right: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .admin-header {
-            padding: 1rem 1.5rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            margin-bottom: 1rem;
-        }
-
-        .admin-header h1 {
-            color: var(--admin-primary);
-            font-size: 1.25rem;
-            margin: 0;
-        }
-
-        .admin-user {
-            margin-top: 0.5rem;
-            font-size: 0.875rem;
-            color: var(--text-muted);
-        }
-
-        .admin-nav {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .admin-nav li {
-            margin: 0.25rem 0;
-        }
-
-        .admin-nav a {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem 1.5rem;
-            color: var(--text);
-            text-decoration: none;
-            transition: var(--transition);
-        }
-
-        .admin-nav a:hover,
-        .admin-nav a.active {
-            background: rgba(37, 99, 235, 0.1);
-            color: var(--admin-primary);
-            border-right: 3px solid var(--admin-primary);
-        }
-
-        .admin-content {
-            flex: 1;
-            padding: 2rem;
-            overflow-y: auto;
-        }
-
-        .content-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-
-        .content-header h1 {
-            color: var(--text);
-            margin: 0;
-            font-size: 2rem;
-        }
-
-        .logout-btn {
-            background: var(--admin-danger);
-            color: white;
-            border: none;
-            border-radius: var(--radius);
-            padding: 0.5rem 1rem;
-            cursor: pointer;
-            font-size: 0.875rem;
-            transition: var(--transition);
-        }
-
-        .logout-btn:hover {
-            background: #b91c1c;
-        }
-
-        .filters-section {
-            background: var(--surface);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: var(--radius);
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .filters-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            align-items: end;
-        }
-
-        .filter-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .filter-label {
-            color: var(--text);
-            font-weight: 500;
-            font-size: 0.875rem;
-        }
-
-        .filter-input {
-            background: var(--surface-light);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: var(--radius);
-            padding: 0.5rem;
-            color: var(--text);
-            font-size: 0.875rem;
-        }
-
-        .filter-btn {
-            background: var(--admin-primary);
-            color: white;
-            border: none;
-            border-radius: var(--radius);
-            padding: 0.5rem 1rem;
-            cursor: pointer;
-            font-size: 0.875rem;
-            transition: var(--transition);
-        }
-
-        .filter-btn:hover {
-            background: var(--admin-accent);
-        }
-
-        .quotes-table {
-            background: var(--surface);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: var(--radius);
-            overflow: hidden;
-        }
-
-        .table-header {
-            background: var(--admin-nav);
-            padding: 1rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .table-header h3 {
-            color: var(--text);
-            margin: 0;
-            font-size: 1.125rem;
-        }
-
-        .table-responsive {
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th, td {
-            padding: 1rem;
-            text-align: left;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        th {
-            background: var(--surface-light);
-            color: var(--text);
-            font-weight: 600;
-            font-size: 0.875rem;
-        }
-
-        td {
-            color: var(--text-muted);
-            font-size: 0.875rem;
-        }
-
-        .customer-info {
-            color: var(--text);
-            font-weight: 500;
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 0.25rem 0.5rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
-
-        .status-pending { background: rgba(217, 119, 6, 0.1); color: #fbbf24; }
-        .status-reviewed { background: rgba(37, 99, 235, 0.1); color: #3b82f6; }
-        .status-approved { background: rgba(5, 150, 105, 0.1); color: #10b981; }
-        .status-rejected { background: rgba(220, 38, 38, 0.1); color: #f87171; }
-        .status-completed { background: rgba(5, 150, 105, 0.1); color: #10b981; }
-
-        .action-btn {
-            background: var(--admin-primary);
-            color: white;
-            border: none;
-            border-radius: var(--radius);
-            padding: 0.25rem 0.5rem;
-            cursor: pointer;
-            font-size: 0.75rem;
-            margin: 0.125rem;
-            transition: var(--transition);
-        }
-
-        .action-btn:hover {
-            background: var(--admin-accent);
-        }
-
-        .action-btn.danger {
-            background: var(--admin-danger);
-        }
-
-        .action-btn.danger:hover {
-            background: #b91c1c;
-        }
-
-        .pagination {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 1rem;
-            margin-top: 2rem;
-            padding: 1rem;
-        }
-
-        .pagination a,
-        .pagination span {
-            padding: 0.5rem 0.75rem;
-            color: var(--text);
-            text-decoration: none;
-            border-radius: var(--radius);
-            transition: var(--transition);
-        }
-
-        .pagination a:hover {
-            background: var(--admin-primary);
-            color: white;
-        }
-
-        .pagination .current {
-            background: var(--admin-primary);
-            color: white;
-        }
-
-        @media (max-width: 768px) {
-            .admin-layout {
-                flex-direction: column;
-            }
-
-            .admin-sidebar {
-                width: 100%;
-                order: 2;
-            }
-
-            .admin-content {
-                order: 1;
-                padding: 1rem;
-            }
-
-            .content-header {
-                flex-direction: column;
-                gap: 1rem;
-                align-items: stretch;
-            }
-
-            .filters-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="/styles/admin.css">
+    <!-- Font Awesome Kit  -->
+    <script src="https://kit.fontawesome.com/8623ae8306.js" crossorigin="anonymous"></script>
 </head>
 <body>
     <div class="admin-layout">
-        <aside class="admin-sidebar">
-            <div class="admin-header">
-                <h1>🛠️ Admin Panel</h1>
-                <div class="admin-user">
-                    Logged in as <strong><%= user.username %></strong><br>
-                    <span class="status-badge status-<%= user.role %>"><%= user.role.toUpperCase() %></span>
-                </div>
-            </div>
-            <nav>
-                <ul class="admin-nav">
-                    <li><a href="/admin/dashboard">
-                        <i class="fas fa-tachometer-alt"></i> Dashboard
-                    </a></li>
-                    <li><a href="/admin/quotes" class="active">
-                        <i class="fas fa-file-invoice"></i> Quotes
-                    </a></li>
-                    <li><a href="/admin/schedule">
-                        <i class="fas fa-calendar-alt"></i> Schedule
-                    </a></li>
-                    <li><a href="/api/invoices">
-                        <i class="fas fa-receipt"></i> Invoices
-                    </a></li>
-                    <li><a href="/" target="_blank">
-                        <i class="fas fa-external-link-alt"></i> View Site
-                    </a></li>
-                </ul>
-            </nav>
-        </aside>
+        <%- include('../partials/admin-sidebar', { currentPage: 'quotes' }) %>
 
         <main class="admin-content">
             <div class="content-header">
                 <h1>Quote Management</h1>
-                <button class="logout-btn" onclick="logout()">
+                <button class="logout-btn" id="logoutBtn">
                     <i class="fas fa-sign-out-alt"></i> Logout
                 </button>
             </div>
@@ -405,6 +76,7 @@
                                 <th>Service</th>
                                 <th>Total Cost</th>
                                 <th>Status</th>
+                                <th>Invoice</th>
                                 <th>Date</th>
                                 <th>Actions</th>
                             </tr>
@@ -424,16 +96,40 @@
                                                 <%= (quote.status || 'pending').toUpperCase() %>
                                             </span>
                                         </td>
+                                        <td>
+                                            <% if (quote.invoiceId) { %>
+                                                <span class="invoice-badge invoice-created">
+                                                    <i class="fas fa-file-invoice"></i> Created
+                                                </span>
+                                            <% } else if (quote.status === 'approved') { %>
+                                                <span class="invoice-badge invoice-ready">
+                                                    <i class="fas fa-clock"></i> Ready
+                                                </span>
+                                            <% } else { %>
+                                                <span class="invoice-badge invoice-pending">
+                                                    <i class="fas fa-minus"></i> N/A
+                                                </span>
+                                            <% } %>
+                                        </td>
                                         <td><%= quote.createdAt.toLocaleDateString() %></td>
                                         <td>
-                                            <button class="action-btn" onclick="viewQuote('<%= quote._id %>')">
+                                            <button class="action-btn view-quote-btn" data-quote-id="<%= quote._id %>">
                                                 <i class="fas fa-eye"></i> View
                                             </button>
-                                            <button class="action-btn" onclick="updateStatus('<%= quote._id %>', 'reviewed')">
+                                            <button class="action-btn update-status-btn" data-quote-id="<%= quote._id %>" data-status="reviewed">
                                                 <i class="fas fa-check"></i> Review
                                             </button>
+                                            <% if (quote.status === 'approved' && !quote.invoiceId) { %>
+                                                <button class="action-btn success convert-to-invoice-btn" data-quote-id="<%= quote._id %>">
+                                                    <i class="fas fa-file-invoice"></i> Create Invoice
+                                                </button>
+                                            <% } else if (quote.invoiceId) { %>
+                                                <button class="action-btn secondary view-invoice-btn" data-invoice-id="<%= quote.invoiceId %>">
+                                                    <i class="fas fa-external-link-alt"></i> View Invoice
+                                                </button>
+                                            <% } %>
                                             <% if (user.role === 'superadmin') { %>
-                                                <button class="action-btn danger" onclick="deleteQuote('<%= quote._id %>')">
+                                                <button class="action-btn danger delete-quote-btn" data-quote-id="<%= quote._id %>">
                                                     <i class="fas fa-trash"></i> Delete
                                                 </button>
                                             <% } %>
@@ -442,7 +138,7 @@
                                 <% }) %>
                             <% } else { %>
                                 <tr>
-                                    <td colspan="6" style="text-align: center; padding: 2rem;">
+                                    <td colspan="7" style="text-align: center; padding: 2rem;">
                                         No quotes found matching your criteria
                                     </td>
                                 </tr>
@@ -480,7 +176,81 @@
         </main>
     </div>
 
+    <!-- Quote to Invoice Conversion Modal -->
+    <div id="invoiceModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Convert Quote to Invoice</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body" id="invoiceModalBody">
+                <div class="loading">
+                    <i class="fas fa-spinner fa-spin"></i> Loading quote details...
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // Add event listeners when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Logout button
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+            
+            // View quote buttons
+            document.querySelectorAll('.view-quote-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const quoteId = this.getAttribute('data-quote-id');
+                    viewQuote(quoteId);
+                });
+            });
+            
+            // Update status buttons
+            document.querySelectorAll('.update-status-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const quoteId = this.getAttribute('data-quote-id');
+                    const status = this.getAttribute('data-status');
+                    updateStatus(quoteId, status);
+                });
+            });
+            
+            // Delete quote buttons
+            document.querySelectorAll('.delete-quote-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const quoteId = this.getAttribute('data-quote-id');
+                    deleteQuote(quoteId);
+                });
+            });
+            
+            // Convert to invoice buttons
+            document.querySelectorAll('.convert-to-invoice-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const quoteId = this.getAttribute('data-quote-id');
+                    openInvoiceModal(quoteId);
+                });
+            });
+            
+            // View invoice buttons
+            document.querySelectorAll('.view-invoice-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const invoiceId = this.getAttribute('data-invoice-id');
+                    window.location.href = `/admin/invoices/${invoiceId}`;
+                });
+            });
+            
+            // Modal close functionality
+            document.querySelector('.close').addEventListener('click', function() {
+                closeInvoiceModal();
+            });
+            
+            window.addEventListener('click', function(event) {
+                const modal = document.getElementById('invoiceModal');
+                if (event.target === modal) {
+                    closeInvoiceModal();
+                }
+            });
+        });
+
         async function logout() {
             if (confirm('Are you sure you want to logout?')) {
                 try {
@@ -490,7 +260,7 @@
                     });
 
                     if (response.ok) {
-                        window.location.href = '/admin/login?message=' + encodeURIComponent('Logged out successfully');
+                        window.location.href = '/';
                     } else {
                         alert('Logout failed. Please try again.');
                     }
@@ -554,6 +324,127 @@
             } catch (error) {
                 console.error('Delete error:', error);
                 alert('Error deleting quote. Please try again.');
+            }
+        }
+
+        // Invoice modal functions
+        async function openInvoiceModal(quoteId) {
+            const modal = document.getElementById('invoiceModal');
+            const modalBody = document.getElementById('invoiceModalBody');
+            
+            modal.style.display = 'block';
+            modalBody.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading quote details...</div>';
+            
+            try {
+                // Fetch quote details using the new JSON API endpoint
+                const response = await fetch(`/admin/quotes/${quoteId}/data`, {
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to fetch quote details');
+                }
+                
+                const quote = await response.json();
+                renderInvoiceForm(quote);
+                
+            } catch (error) {
+                console.error('Error loading quote:', error);
+                modalBody.innerHTML = '<div class="error">Error loading quote details. Please try again.</div>';
+            }
+        }
+        
+        function closeInvoiceModal() {
+            document.getElementById('invoiceModal').style.display = 'none';
+        }
+        
+        function renderInvoiceForm(quote) {
+            const modalBody = document.getElementById('invoiceModalBody');
+            
+            modalBody.innerHTML = `
+                <div class="invoice-form">
+                    <div class="quote-summary">
+                        <h3>Quote Summary</h3>
+                        <p><strong>Customer:</strong> ${quote.customer.name} (${quote.customer.email})</p>
+                        <p><strong>Package:</strong> ${quote.packageOption}</p>
+                        <p><strong>Total Cost:</strong> $${quote.pricing.totalCost || quote.pricing.estimatedTotal}</p>
+                    </div>
+                    
+                    <form id="invoiceForm">
+                        <div class="form-group">
+                            <label for="serviceDescription">Service Description</label>
+                            <textarea id="serviceDescription" name="serviceDescription" required>${quote.packageOption} Package Installation</textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="amount">Amount</label>
+                            <input type="number" id="amount" name="amount" step="0.01" value="${quote.pricing.totalCost || quote.pricing.estimatedTotal}" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="discount">Discount (%)</label>
+                            <input type="number" id="discount" name="discount" min="0" max="100" value="${quote.discount || 0}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="dueDate">Due Date</label>
+                            <input type="date" id="dueDate" name="dueDate" value="${getDefaultDueDate()}">
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="button" class="btn-secondary" onclick="closeInvoiceModal()">Cancel</button>
+                            <button type="submit" class="btn-primary">Create Invoice</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            // Add form submit handler
+            document.getElementById('invoiceForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                createInvoiceFromQuote(quote._id);
+            });
+        }
+        
+        function getDefaultDueDate() {
+            const date = new Date();
+            date.setDate(date.getDate() + 30); // 30 days from now
+            return date.toISOString().split('T')[0];
+        }
+        
+        async function createInvoiceFromQuote(quoteId) {
+            const form = document.getElementById('invoiceForm');
+            const formData = new FormData(form);
+            
+            const invoiceData = {
+                serviceDescription: formData.get('serviceDescription'),
+                amount: parseFloat(formData.get('amount')),
+                discount: parseInt(formData.get('discount')) || 0,
+                dueDate: formData.get('dueDate')
+            };
+            
+            try {
+                const response = await fetch(`/admin/quotes/${quoteId}/convert-to-invoice`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(invoiceData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    alert('Invoice created successfully!');
+                    closeInvoiceModal();
+                    location.reload(); // Refresh to show updated status
+                } else {
+                    alert('Failed to create invoice: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error creating invoice:', error);
+                alert('Error creating invoice. Please try again.');
             }
         }
     </script>

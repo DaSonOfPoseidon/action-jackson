@@ -54,10 +54,22 @@ router.post('/login',
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         console.log(`Login validation failed from IP: ${req.ip} - ${JSON.stringify(errors.array())}`);
-        return res.status(400).json({
-          error: 'Invalid input data',
-          details: errors.array()
-        });
+        
+        // Check if this is an API request (JSON) or browser form submission
+        const acceptsJson = req.headers.accept && req.headers.accept.includes('application/json');
+        const isJsonRequest = req.headers['content-type'] && req.headers['content-type'].includes('application/json');
+
+        if (acceptsJson || isJsonRequest) {
+          // API/AJAX request - return JSON
+          return res.status(400).json({
+            error: 'Invalid input data',
+            details: errors.array()
+          });
+        } else {
+          // Browser form submission - redirect with error
+          const errorParam = encodeURIComponent('Please check your username and password format');
+          return res.redirect(`/admin/login?error=validation_failed&message=${errorParam}`);
+        }
       }
 
       const { username, password, rememberMe } = req.body;
@@ -79,11 +91,22 @@ router.post('/login',
 
         console.log(`Login failed: ${username} from IP: ${req.ip} - Reason: ${authResult.reason}`);
         
-        return res.status(statusCode).json({
-          error: errorMessage,
-          reason: authResult.reason,
-          lockUntil: authResult.lockUntil
-        });
+        // Check if this is an API request (JSON) or browser form submission
+        const acceptsJson = req.headers.accept && req.headers.accept.includes('application/json');
+        const isJsonRequest = req.headers['content-type'] && req.headers['content-type'].includes('application/json');
+
+        if (acceptsJson || isJsonRequest) {
+          // API/AJAX request - return JSON
+          return res.status(statusCode).json({
+            error: errorMessage,
+            reason: authResult.reason,
+            lockUntil: authResult.lockUntil
+          });
+        } else {
+          // Browser form submission - redirect with error
+          const errorParam = encodeURIComponent(errorMessage);
+          return res.redirect(`/admin/login?error=login_failed&message=${errorParam}`);
+        }
       }
 
       // Generate tokens
@@ -121,24 +144,47 @@ router.post('/login',
 
       console.log(`Login successful: ${authResult.user.username} from IP: ${req.ip}`);
 
-      res.json({
-        success: true,
-        user: {
-          username: authResult.user.username,
-          role: authResult.user.role,
-          lastLogin: authResult.user.lastLogin
-        },
-        tokens: {
-          accessToken,
-          refreshToken: rememberMe ? refreshToken : null
-        }
-      });
+      // Check if this is an API request (JSON) or browser form submission
+      const acceptsJson = req.headers.accept && req.headers.accept.includes('application/json');
+      const isJsonRequest = req.headers['content-type'] && req.headers['content-type'].includes('application/json');
+
+      if (acceptsJson || isJsonRequest) {
+        // API/AJAX request - return JSON
+        res.json({
+          success: true,
+          user: {
+            username: authResult.user.username,
+            role: authResult.user.role,
+            lastLogin: authResult.user.lastLogin
+          },
+          tokens: {
+            accessToken,
+            refreshToken: rememberMe ? refreshToken : null
+          }
+        });
+      } else {
+        // Browser form submission - redirect to dashboard
+        const redirectUrl = req.query.redirect || '/admin/dashboard';
+        res.redirect(redirectUrl);
+      }
 
     } catch (error) {
       console.error('Login error:', error);
-      res.status(500).json({
-        error: 'Authentication system error'
-      });
+      
+      // Check if this is an API request (JSON) or browser form submission
+      const acceptsJson = req.headers.accept && req.headers.accept.includes('application/json');
+      const isJsonRequest = req.headers['content-type'] && req.headers['content-type'].includes('application/json');
+
+      if (acceptsJson || isJsonRequest) {
+        // API/AJAX request - return JSON
+        res.status(500).json({
+          error: 'Authentication system error'
+        });
+      } else {
+        // Browser form submission - redirect with error
+        const errorParam = encodeURIComponent('System error occurred. Please try again.');
+        res.redirect(`/admin/login?error=system_error&message=${errorParam}`);
+      }
     }
   }
 );
@@ -317,7 +363,8 @@ router.get('/verify', async (req, res) => {
  * GET /auth/csrf - Get CSRF token
  */
 router.get('/csrf', (req, res) => {
-  if (!req.session) {
+  // Check if there's an authenticated admin session
+  if (!req.session || !req.session.adminId) {
     return res.status(401).json({
       error: 'Session required for CSRF token'
     });

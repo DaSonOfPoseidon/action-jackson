@@ -258,11 +258,11 @@ const adminSecurityHeaders = (req, res, next) => {
   // Stricter CSP for admin pages
   res.setHeader('Content-Security-Policy', [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline'",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' https://fonts.gstatic.com",
+    "script-src 'self' 'unsafe-inline' https://kit.fontawesome.com https://kit-free.fontawesome.com",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://ka-f.fontawesome.com https://ka-p.fontawesome.com",
+    "font-src 'self' https://fonts.gstatic.com https://kit.fontawesome.com https://ka-f.fontawesome.com https://ka-p.fontawesome.com",
     "img-src 'self' data:",
-    "connect-src 'self'",
+    "connect-src 'self' https://ka-f.fontawesome.com https://ka-p.fontawesome.com",
     "frame-ancestors 'none'"
   ].join('; '));
   

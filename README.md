@@ -35,9 +35,10 @@ This repository powers the Action Jackson web presence: a combined business/bran
 - **Web Server:** Express
 - **Templating:** EJS
 - **Database:** MongoDB via Mongoose
+- **File Storage:** MinIO (S3-compatible object storage)
 - **Email:** Nodemailer (for quote submission notifications)
 - **Styling & Assets:** Custom CSS/JS in `public/`
-- **Testing:** Jest with Supertest and MongoDB Memory Server
+- **Testing:** Jest with Supertest, MongoDB Memory Server, and MinIO mocking
 - **Containerization:** Docker & Docker Compose
 
 ## Features
@@ -46,7 +47,8 @@ This repository powers the Action Jackson web presence: a combined business/bran
 - **Dual-Domain Support**: Business site and developer portfolio with shared infrastructure
 - **Professional Theming**: Dark theme with business-grade UI/UX design
 - **MongoDB Persistence**: Flexible connection with authentication support
-- **Comprehensive Testing**: 62+ tests covering security, functionality, and integrations
+- **S3-Compatible File Storage**: MinIO integration with comprehensive file management
+- **Comprehensive Testing**: 80+ tests covering security, functionality, and integrations
 - **Docker Deployment**: Containerized for consistent development and production environments
 
 ### Advanced Quote System
@@ -67,14 +69,23 @@ This repository powers the Action Jackson web presence: a combined business/bran
 - **Quote Integration**: Seamless conversion from quotes to invoices
 - **Auto-Generated Numbers**: Format INV-YYYY-NNNN with collision protection
 - **API Security**: Optional API key authentication for external access
+- **File Attachments**: Support for invoice documents, receipts, and supporting materials
 - **Complete CRUD Operations**: Create, read, update, delete with proper validation
 
+### S3-Compatible File Storage System
+- **MinIO Integration**: Full object storage with S3-compatible API
+- **Multi-Environment Support**: Separate buckets for development, production, and testing
+- **Comprehensive File Management**: Upload, download, delete, presigned URLs, and statistics
+- **Advanced Security**: File type validation, size limits, access control, audit trails
+- **Database Integration**: MongoDB metadata storage with complete file lifecycle management
+
 ### Enhanced Security Features
-- **Multi-Layer Rate Limiting**: Different limits for quotes, calculations, scheduling
+- **Multi-Layer Rate Limiting**: Different limits for quotes, calculations, scheduling, file operations
 - **Comprehensive Input Validation**: Business logic constraints and sanitization
 - **Email Security**: Domain validation, disposable email blocking
 - **Anti-Spam Protection**: Honeypot fields, time-based restrictions
 - **Request Security**: Size limits, user agent logging, IP tracking
+- **File Security**: Type validation, malicious file detection, checksum verification, access control
 
 ## Prerequisites
 
@@ -82,6 +93,7 @@ This repository powers the Action Jackson web presence: a combined business/bran
 - Node.js 18+ (LTS recommended)
 - npm
 - MongoDB instance (self-hosted, remote, or via Docker Compose)
+- MinIO server (for file storage) or S3-compatible storage service
 - Docker & Docker Compose (if using containerized deployment)
 
 ## Getting Started
@@ -123,10 +135,11 @@ npm test -- --coverage
 The test suite includes:
 - **Server Tests**: Middleware, routing, error handling, health checks
 - **API Route Tests**: All endpoints with comprehensive database mocking
-- **Model Tests**: Enhanced validation, scheduling constraints, quote integration
-- **Security Tests**: XSS prevention, spam protection, rate limiting enforcement  
-- **Business Logic Tests**: Appointment conflicts, service requirements, equipment limits
-- **Integration Tests**: Email confirmations, quote-to-invoice conversion, audit logging
+- **Model Tests**: Enhanced validation, scheduling constraints, quote integration, file attachments
+- **Security Tests**: XSS prevention, spam protection, rate limiting enforcement, file security
+- **Business Logic Tests**: Appointment conflicts, service requirements, equipment limits, file access controls
+- **Integration Tests**: Email confirmations, quote-to-invoice conversion, file operations, audit logging
+- **File Management Tests**: Upload/download operations, storage statistics, cleanup procedures
 
 ### Environment Variables
 
@@ -140,6 +153,14 @@ MONGO_URI=mongodb://username:password@host:port/database?authSource=admin
 EMAIL_USER=your-gmail@gmail.com
 EMAIL_PASS=your-app-password  # Use app-specific passwords, not account password
 ADMIN_EMAIL=admin@actionjacksoninstalls.com
+
+# MinIO S3 Storage Configuration
+MINIO_ENDPOINT=localhost  # or your storage server IP
+MINIO_PORT=9000
+MINIO_ACCESS_KEY=minio-access-key
+MINIO_SECRET_KEY=minio-secret-key
+MINIO_USE_SSL=false  # set to true for HTTPS
+MINIO_BUCKET_NAME=actionjackson-files
 
 # Security Configuration
 INVOICE_API_KEY=your-secure-api-key-for-invoices  # Optional but recommended
@@ -183,6 +204,12 @@ docker compose down
 | POST   | `/api/invoices/from-quote/:quoteId` | Convert quote to invoice seamlessly |
 | PUT    | `/api/invoices/:id`           | Update existing invoice |
 | DELETE | `/api/invoices/:id`           | Delete invoice |
+| POST   | `/api/files/upload`           | Upload files with comprehensive validation and security |
+| GET    | `/api/files/download/:fileId` | Download files with access control and audit logging |
+| GET    | `/api/files/presigned/:fileId` | Generate presigned URLs for temporary file access |
+| DELETE | `/api/files/:fileId`          | Delete files (soft delete by default, permanent optional) |
+| GET    | `/api/files/model/:type/:id`  | List files associated with specific model instances |
+| GET    | `/api/files/stats`            | Storage statistics and usage analytics (admin only) |
 | GET    | `/healthz`                    | Health check with database connectivity test |
 
 ## Dual-Domain Semantics
@@ -228,7 +255,17 @@ The application is designed for easy content customization:
 
 ## Recent Major Updates
 
-### ✅ Enhanced Services System (Latest)
+### ✅ S3-Compatible File Storage System (Latest)
+- **MinIO Integration**: Full object storage with S3-compatible API and multi-environment support
+- **Comprehensive File Management**: Upload, download, delete, presigned URLs, and detailed statistics
+- **Advanced Security Controls**: File type validation, size limits, checksum verification, access control
+- **Database Integration**: MongoDB metadata storage with complete audit trails and lifecycle management
+- **API Endpoints**: RESTful file management API with rate limiting and comprehensive validation
+- **Testing Coverage**: Complete test suite with MinIO mocking for isolated testing environments
+- **Storage Organization**: Intelligent file organization by model type and date for optimal structure
+- **Cleanup Utilities**: Automated cleanup of deleted files and storage optimization procedures
+
+### ✅ Enhanced Services System
 - Updated service options with client device setup and host/server device setup
 - Improved pricing structure for different device types
 - Enhanced final quote summary with detailed service breakdowns
@@ -257,10 +294,13 @@ The application is designed for easy content customization:
 - **Advanced Filtering**: Equipment filtering UI with dynamic criteria
 - **Enhanced Monitoring**: Comprehensive logging and error tracking
 - **Performance Improvements**: Caching strategies and CDN integration
-- **Mobile App**: React Native app for appointment scheduling
-- **Analytics Dashboard**: Business intelligence and reporting features
-- **Advanced Authentication**: Role-based access control system
-- **API Versioning**: Support for multiple API versions
+- **File Management UI**: Frontend interface for file upload/management in admin dashboard
+- **Advanced File Features**: File versioning, thumbnail generation, and metadata extraction
+- **Mobile App**: React Native app for appointment scheduling with file attachment support
+- **Analytics Dashboard**: Business intelligence and reporting features including file usage analytics
+- **Advanced Authentication**: Role-based access control system with granular file permissions
+- **API Versioning**: Support for multiple API versions with backward compatibility
+- **Cloud Integration**: Support for additional S3-compatible providers (AWS S3, DigitalOcean Spaces)
 
 ## License
 

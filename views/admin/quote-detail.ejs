@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - Action Jackson Admin</title>
+    
+    <!-- Security Headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="/styles/business.css">
+    <link rel="stylesheet" href="/styles/admin.css">
+    <!-- Font Awesome Kit  -->
+    <script src="https://kit.fontawesome.com/8623ae8306.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="admin-layout">
+        <%- include('../partials/admin-sidebar', { currentPage: 'quotes' }) %>
+
+        <main class="admin-content">
+            <div class="content-header">
+                <div>
+                    <h1><%= quote.customer.name %> - Quote Details</h1>
+                    <p>Quote submitted on <%= quote.createdAt.toLocaleDateString() %></p>
+                </div>
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <% if (quote.status === 'approved' && !quote.invoiceId) { %>
+                        <button class="action-btn success convert-to-invoice-btn" data-quote-id="<%= quote._id %>">
+                            <i class="fas fa-file-invoice"></i> Create Invoice
+                        </button>
+                    <% } else if (quote.invoiceId) { %>
+                        <button class="action-btn secondary view-invoice-btn" data-invoice-id="<%= quote.invoiceId %>">
+                            <i class="fas fa-external-link-alt"></i> View Invoice
+                        </button>
+                    <% } %>
+                    <button class="logout-btn" onclick="window.history.back()">
+                        <i class="fas fa-arrow-left"></i> Back to Quotes
+                    </button>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+                <!-- Quote Details -->
+                <div class="quotes-table">
+                    <div class="table-header">
+                        <h3>Quote Information</h3>
+                    </div>
+                    <div style="padding: 2rem;">
+                        <!-- Edit Mode Toggle -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--card-border-color);">
+                            <h4 style="color: var(--admin-primary); margin: 0;">Quote Details</h4>
+                            <button id="editToggle" class="action-btn">
+                                <i class="fas fa-edit"></i> <span id="editToggleText">Edit Quote</span>
+                            </button>
+                        </div>
+
+                        <form id="quoteEditForm" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                            <div>
+                                <h4 style="color: var(--admin-primary); margin-bottom: 1rem;">Customer Information</h4>
+                                
+                                <!-- Customer Name (read-only) -->
+                                <div style="margin-bottom: 1rem;">
+                                    <label style="font-weight: bold; display: block; margin-bottom: 0.25rem;">Name:</label>
+                                    <input type="text" id="customerName" value="<%= quote.customer.name %>" readonly 
+                                           style="border: none; background: transparent; color: var(--text-color); font-size: inherit;">
+                                </div>
+                                
+                                <!-- Customer Email (read-only) -->
+                                <div style="margin-bottom: 1rem;">
+                                    <label style="font-weight: bold; display: block; margin-bottom: 0.25rem;">Email:</label>
+                                    <input type="email" id="customerEmail" value="<%= quote.customer.email %>" readonly 
+                                           style="border: none; background: transparent; color: var(--text-color); font-size: inherit;">
+                                </div>
+                                
+                                <!-- Package Option -->
+                                <div style="margin-bottom: 1rem;">
+                                    <label style="font-weight: bold; display: block; margin-bottom: 0.25rem;">Package:</label>
+                                    <select id="packageOption" name="packageOption" disabled 
+                                            class="readonly-field" style="border: none; background: transparent; color: var(--text-color); font-size: inherit;">
+                                        <option value="Basic" <%= quote.packageOption === 'Basic' ? 'selected' : '' %>>Basic</option>
+                                        <option value="Premium" <%= quote.packageOption === 'Premium' ? 'selected' : '' %>>Premium</option>
+                                    </select>
+                                </div>
+                                
+                                <!-- Speed Tier -->
+                                <div style="margin-bottom: 1rem;">
+                                    <label style="font-weight: bold; display: block; margin-bottom: 0.25rem;">Speed Tier:</label>
+                                    <select id="speedTier" name="speedTier" disabled 
+                                            class="readonly-field" style="border: none; background: transparent; color: var(--text-color); font-size: inherit;">
+                                        <option value="">None Selected</option>
+                                        <option value="1 Gig" <%= quote.speedTier === '1 Gig' ? 'selected' : '' %>>1 Gig</option>
+                                        <option value="5 Gig" <%= quote.speedTier === '5 Gig' ? 'selected' : '' %>>5 Gig</option>
+                                        <option value="10 Gig" <%= quote.speedTier === '10 Gig' ? 'selected' : '' %>>10 Gig</option>
+                                    </select>
+                                </div>
+                                
+                                <!-- Survey Included -->
+                                <div style="margin-bottom: 1rem;">
+                                    <label style="font-weight: bold; display: inline-block; margin-right: 0.5rem;">
+                                        <input type="checkbox" id="includeSurvey" name="includeSurvey" 
+                                               <%= quote.includeSurvey ? 'checked' : '' %> disabled> Survey Included
+                                    </label>
+                                </div>
+
+                                <!-- Discount -->
+                                <div style="margin-bottom: 1rem;">
+                                    <label style="font-weight: bold; display: block; margin-bottom: 0.25rem;">Discount (%):</label>
+                                    <input type="number" id="discount" name="discount" min="0" max="100" step="1" 
+                                           value="<%= quote.discount || 0 %>" readonly class="readonly-field"
+                                           style="border: none; background: transparent; color: var(--text-color); font-size: inherit; width: 80px;">
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h4 style="color: var(--admin-primary); margin-bottom: 1rem;">Services & Runs</h4>
+                                
+                                <!-- Cable Runs -->
+                                <div style="margin-bottom: 1.5rem;">
+                                    <h5 style="margin-bottom: 0.5rem; font-weight: 600;">Cable Runs:</h5>
+                                    <div style="margin-bottom: 0.5rem;">
+                                        <label style="font-weight: bold; display: inline-block; width: 60px;">Coax:</label>
+                                        <input type="number" id="coaxRuns" name="runs.coax" min="0" 
+                                               value="<%= quote.runs ? quote.runs.coax || 0 : 0 %>" readonly class="readonly-field"
+                                               style="border: none; background: transparent; color: var(--text-color); font-size: inherit; width: 60px;">
+                                        runs
+                                    </div>
+                                    <div style="margin-bottom: 0.5rem;">
+                                        <label style="font-weight: bold; display: inline-block; width: 60px;">Cat6:</label>
+                                        <input type="number" id="cat6Runs" name="runs.cat6" min="0" 
+                                               value="<%= quote.runs ? quote.runs.cat6 || 0 : 0 %>" readonly class="readonly-field"
+                                               style="border: none; background: transparent; color: var(--text-color); font-size: inherit; width: 60px;">
+                                        runs
+                                    </div>
+                                </div>
+                                
+                                <!-- Additional Services -->
+                                <div style="margin-bottom: 1.5rem;">
+                                    <h5 style="margin-bottom: 0.5rem; font-weight: 600;">Additional Services:</h5>
+                                    <div style="margin-bottom: 0.5rem;">
+                                        <label style="font-weight: bold; display: inline-block; width: 150px;">Device Mounting:</label>
+                                        <input type="number" id="deviceMount" name="services.deviceMount" min="0" 
+                                               value="<%= quote.services ? quote.services.deviceMount || 0 : 0 %>" readonly class="readonly-field"
+                                               style="border: none; background: transparent; color: var(--text-color); font-size: inherit; width: 60px;">
+                                    </div>
+                                    <div style="margin-bottom: 0.5rem;">
+                                        <label style="font-weight: bold; display: inline-block; width: 150px;">Network Setup:</label>
+                                        <input type="number" id="networkSetup" name="services.networkSetup" min="0" 
+                                               value="<%= quote.services ? quote.services.networkSetup || 0 : 0 %>" readonly class="readonly-field"
+                                               style="border: none; background: transparent; color: var(--text-color); font-size: inherit; width: 60px;">
+                                    </div>
+                                    <div style="margin-bottom: 0.5rem;">
+                                        <label style="font-weight: bold; display: inline-block; width: 150px;">Media Panel:</label>
+                                        <input type="number" id="mediaPanel" name="services.mediaPanel" min="0" 
+                                               value="<%= quote.services ? quote.services.mediaPanel || 0 : 0 %>" readonly class="readonly-field"
+                                               style="border: none; background: transparent; color: var(--text-color); font-size: inherit; width: 60px;">
+                                    </div>
+                                </div>
+
+                                <!-- Pricing Fields -->
+                                <div style="margin-bottom: 1.5rem;">
+                                    <h5 style="margin-bottom: 0.5rem; font-weight: 600;">Pricing:</h5>
+                                    <% if (quote.packageOption === 'Basic') { %>
+                                        <div style="margin-bottom: 0.5rem;">
+                                            <label style="font-weight: bold; display: inline-block; width: 120px;">Total Cost:</label>
+                                            $<span id="totalCost" style="color: var(--admin-success); font-weight: 600; font-size: 1.1em;">
+                                                <%= quote.pricing ? quote.pricing.totalCost || 0 : 0 %>
+                                            </span>
+                                        </div>
+                                        <div style="margin-bottom: 0.5rem;">
+                                            <label style="font-weight: bold; display: inline-block; width: 120px;">Deposit Required:</label>
+                                            $<span id="depositRequired" style="color: var(--admin-warning); font-weight: 600; font-size: 1.1em;">
+                                                <%= quote.pricing ? quote.pricing.depositRequired || 0 : 0 %>
+                                            </span>
+                                        </div>
+                                    <% } else { %>
+                                        <div style="margin-bottom: 0.5rem;">
+                                            <label style="font-weight: bold; display: inline-block; width: 120px;">Labor Hours:</label>
+                                            <span id="estimatedLaborHours" style="color: var(--text-color); font-weight: 500;">
+                                                <%= quote.pricing ? quote.pricing.estimatedLaborHours || 0 : 0 %>
+                                            </span>
+                                        </div>
+                                        <div style="margin-bottom: 0.5rem;">
+                                            <label style="font-weight: bold; display: inline-block; width: 120px;">Labor Rate:</label>
+                                            $<input type="number" id="laborRate" name="pricing.laborRate" step="0.01" min="0" 
+                                                   value="<%= quote.pricing ? quote.pricing.laborRate || 50 : 50 %>" class="readonly-field"
+                                                   style="border: none; background: transparent; color: var(--text-color); font-size: inherit; width: 80px;">/hr
+                                        </div>
+                                        <div style="margin-bottom: 0.5rem;">
+                                            <label style="font-weight: bold; display: inline-block; width: 120px;">Estimated Total:</label>
+                                            $<span id="estimatedTotal" style="color: var(--admin-success); font-weight: 600; font-size: 1.1em;">
+                                                <%= quote.pricing ? quote.pricing.estimatedTotal || 0 : 0 %>
+                                            </span>
+                                        </div>
+                                    <% } %>
+                                </div>
+                            </div>
+                        </form>
+
+                        <!-- Save/Cancel Buttons (hidden by default) -->
+                        <div id="editActions" style="display: none; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--card-border-color); text-align: right;">
+                            <button id="cancelEdit" class="action-btn" style="margin-right: 1rem;">
+                                <i class="fas fa-times"></i> Cancel
+                            </button>
+                            <button id="saveQuote" class="action-btn success">
+                                <i class="fas fa-save"></i> Save Changes
+                            </button>
+                        </div>
+
+                        <% if (quote.equipment && quote.equipment.length > 0) { %>
+                        <div style="margin-top: 2rem;">
+                            <h4 style="color: var(--admin-primary); margin-bottom: 1rem;">Selected Equipment</h4>
+                            <div class="table-responsive">
+                                <table style="width: 100%;">
+                                    <thead>
+                                        <tr style="background: var(--surface-light);">
+                                            <th>Item</th>
+                                            <th>SKU</th>
+                                            <th>Quantity</th>
+                                            <th>Unit Price</th>
+                                            <th>Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% quote.equipment.forEach(item => { %>
+                                        <tr>
+                                            <td><%= item.name %></td>
+                                            <td><%= item.sku %></td>
+                                            <td><%= item.quantity %></td>
+                                            <td>$<%= item.price.toFixed(2) %></td>
+                                            <td>$<%= (item.price * item.quantity).toFixed(2) %></td>
+                                        </tr>
+                                        <% }) %>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <% } %>
+
+                        <!-- Admin Notes Section -->
+                        <div style="margin-top: 2rem;">
+                            <h4 style="color: var(--admin-primary); margin-bottom: 1rem;">Admin Notes</h4>
+                            <textarea id="adminNotes" name="adminNotes" readonly class="readonly-field"
+                                      style="width: 100%; min-height: 100px; border: none; background: var(--surface-light); padding: 1rem; border-radius: var(--radius); color: var(--text-color); font-family: inherit; resize: vertical;"
+                                      placeholder="Add internal notes about this quote..."><%= quote.adminNotes || '' %></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status & Pricing Sidebar -->
+                <div>
+                    <!-- Status Card -->
+                    <div class="quotes-table" style="margin-bottom: 2rem;">
+                        <div class="table-header">
+                            <h3>Status & Actions</h3>
+                        </div>
+                        <div style="padding: 1.5rem;">
+                            <div style="margin-bottom: 1.5rem;">
+                                <span class="status-badge status-<%= quote.status || 'pending' %>">
+                                    <%= (quote.status || 'pending').toUpperCase() %>
+                                </span>
+                            </div>
+                            
+                            <div style="margin-bottom: 1.5rem;">
+                                <% if (quote.invoiceId) { %>
+                                    <span class="invoice-badge invoice-created">
+                                        <i class="fas fa-file-invoice"></i> Invoice Created
+                                    </span>
+                                <% } else if (quote.status === 'approved') { %>
+                                    <span class="invoice-badge invoice-ready">
+                                        <i class="fas fa-clock"></i> Ready for Invoice
+                                    </span>
+                                <% } else { %>
+                                    <span class="invoice-badge invoice-pending">
+                                        <i class="fas fa-minus"></i> Invoice N/A
+                                    </span>
+                                <% } %>
+                            </div>
+
+                            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                <% if (quote.status !== 'approved') { %>
+                                <button class="action-btn success update-status-btn" data-quote-id="<%= quote._id %>" data-status="approved">
+                                    <i class="fas fa-check"></i> Approve Quote
+                                </button>
+                                <% } %>
+                                <button class="action-btn update-status-btn" data-quote-id="<%= quote._id %>" data-status="reviewed">
+                                    <i class="fas fa-eye"></i> Mark Reviewed
+                                </button>
+                                <button class="action-btn danger update-status-btn" data-quote-id="<%= quote._id %>" data-status="rejected">
+                                    <i class="fas fa-times"></i> Reject
+                                </button>
+                            </div>
+                            
+                            <% if (quote.updatedBy) { %>
+                            <div style="margin-top: 1rem; font-size: 0.75rem; color: var(--text-muted);">
+                                Last updated by <%= quote.updatedBy %>
+                            </div>
+                            <% } %>
+                        </div>
+                    </div>
+
+                    <!-- Pricing Card -->
+                    <div class="quotes-table">
+                        <div class="table-header">
+                            <h3>Pricing Details</h3>
+                        </div>
+                        <div style="padding: 1.5rem;">
+                            <% if (quote.packageOption === 'Basic') { %>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                    <span>Total Cost:</span>
+                                    <span class="amount">$<%= quote.pricing.totalCost || 0 %></span>
+                                </div>
+                                <% if (quote.pricing.depositRequired) { %>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                    <span>Deposit Required:</span>
+                                    <span>$<%= quote.pricing.depositRequired %></span>
+                                </div>
+                                <% } %>
+                            <% } else { %>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                    <span>Labor Hours:</span>
+                                    <span><%= quote.pricing.estimatedLaborHours || 0 %></span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                    <span>Labor Rate:</span>
+                                    <span>$<%= quote.pricing.laborRate || 50 %>/hr</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                    <span>Estimated Total:</span>
+                                    <span class="amount">$<%= quote.pricing.estimatedTotal || 0 %></span>
+                                </div>
+                            <% } %>
+                            
+                            <% if (quote.pricing.surveyFee > 0) { %>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <span>Survey Fee:</span>
+                                <span>$<%= quote.pricing.surveyFee %></span>
+                            </div>
+                            <% } %>
+                            
+                            <% if (quote.pricing.equipmentTotal > 0) { %>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <span>Equipment Total:</span>
+                                <span>$<%= quote.pricing.equipmentTotal %></span>
+                            </div>
+                            <% } %>
+
+                            <% if (quote.discount > 0) { %>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: var(--admin-success);">
+                                <span>Discount:</span>
+                                <span>-<%= quote.discount %>%</span>
+                            </div>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Quote to Invoice Conversion Modal -->
+    <div id="invoiceModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Convert Quote to Invoice</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body" id="invoiceModalBody">
+                <div class="loading">
+                    <i class="fas fa-spinner fa-spin"></i> Loading quote details...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Add event listeners when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            // Initialize pricing calculation
+            setupPricingCalculation();
+            
+            // Edit toggle button
+            const editToggle = document.getElementById('editToggle');
+            
+            if (editToggle) {
+                editToggle.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    toggleEditMode();
+                });
+                
+                // Visual test - change button color on hover
+                editToggle.addEventListener('mouseenter', function() {
+                    this.style.backgroundColor = '#ef4444';
+                });
+                
+                editToggle.addEventListener('mouseleave', function() {
+                    this.style.backgroundColor = '';
+                });
+            }
+            
+            // Cancel edit button
+            const cancelEditBtn = document.getElementById('cancelEdit');
+            if (cancelEditBtn) {
+                cancelEditBtn.addEventListener('click', function() {
+                    cancelEdit();
+                });
+            }
+            
+            // Save quote button
+            const saveQuoteBtn = document.getElementById('saveQuote');
+            if (saveQuoteBtn) {
+                saveQuoteBtn.addEventListener('click', function() {
+                    saveQuote();
+                });
+            }
+            
+            // Update status buttons
+            document.querySelectorAll('.update-status-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const quoteId = this.getAttribute('data-quote-id');
+                    const status = this.getAttribute('data-status');
+                    updateStatus(quoteId, status);
+                });
+            });
+            
+            // Convert to invoice buttons
+            document.querySelectorAll('.convert-to-invoice-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const quoteId = this.getAttribute('data-quote-id');
+                    openInvoiceModal(quoteId);
+                });
+            });
+            
+            // View invoice buttons
+            document.querySelectorAll('.view-invoice-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const invoiceId = this.getAttribute('data-invoice-id');
+                    window.location.href = `/admin/invoices/${invoiceId}`;
+                });
+            });
+            
+            // Modal close functionality
+            const closeBtn = document.querySelector('.close');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', function() {
+                    closeInvoiceModal();
+                });
+            }
+            
+            window.addEventListener('click', function(event) {
+                const modal = document.getElementById('invoiceModal');
+                if (event.target === modal) {
+                    closeInvoiceModal();
+                }
+            });
+        });
+
+        async function updateStatus(id, status) {
+            if (!confirm(`Are you sure you want to mark this quote as ${status}?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/admin/quotes/${id}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ status })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Failed to update status: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Status update error:', error);
+                alert('Error updating status. Please try again.');
+            }
+        }
+
+        // Invoice modal functions (same as quotes.ejs)
+        async function openInvoiceModal(quoteId) {
+            const modal = document.getElementById('invoiceModal');
+            const modalBody = document.getElementById('invoiceModalBody');
+            
+            modal.style.display = 'block';
+            modalBody.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading quote details...</div>';
+            
+            try {
+                // Fetch quote details from server using the JSON API endpoint
+                const response = await fetch(`/admin/quotes/<%= quote._id %>/data`, {
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to fetch quote details');
+                }
+                
+                const quote = await response.json();
+                renderInvoiceForm(quote);
+                
+            } catch (error) {
+                console.error('Error loading quote:', error);
+                modalBody.innerHTML = '<div class="error">Error loading quote details. Please try again.</div>';
+            }
+        }
+        
+        function closeInvoiceModal() {
+            document.getElementById('invoiceModal').style.display = 'none';
+        }
+        
+        function renderInvoiceForm(quote) {
+            const modalBody = document.getElementById('invoiceModalBody');
+            
+            modalBody.innerHTML = `
+                <div class="invoice-form">
+                    <div class="quote-summary">
+                        <h3>Quote Summary</h3>
+                        <p><strong>Customer:</strong> ${quote.customer.name} (${quote.customer.email})</p>
+                        <p><strong>Package:</strong> ${quote.packageOption}</p>
+                        <p><strong>Total Cost:</strong> $${quote.pricing.totalCost || quote.pricing.estimatedTotal}</p>
+                    </div>
+                    
+                    <form id="invoiceForm">
+                        <div class="form-group">
+                            <label for="serviceDescription">Service Description</label>
+                            <textarea id="serviceDescription" name="serviceDescription" required>${quote.packageOption} Package Installation</textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="amount">Amount</label>
+                            <input type="number" id="amount" name="amount" step="0.01" value="${quote.pricing.totalCost || quote.pricing.estimatedTotal}" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="discount">Discount (%)</label>
+                            <input type="number" id="discount" name="discount" min="0" max="100" value="${quote.discount || 0}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="dueDate">Due Date</label>
+                            <input type="date" id="dueDate" name="dueDate" value="${getDefaultDueDate()}">
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="button" class="btn-secondary" onclick="closeInvoiceModal()">Cancel</button>
+                            <button type="submit" class="btn-primary">Create Invoice</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            // Add form submit handler
+            document.getElementById('invoiceForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                createInvoiceFromQuote(quote._id);
+            });
+        }
+        
+        function getDefaultDueDate() {
+            const date = new Date();
+            date.setDate(date.getDate() + 30); // 30 days from now
+            return date.toISOString().split('T')[0];
+        }
+        
+        async function createInvoiceFromQuote(quoteId) {
+            const form = document.getElementById('invoiceForm');
+            const formData = new FormData(form);
+            
+            const invoiceData = {
+                serviceDescription: formData.get('serviceDescription'),
+                amount: parseFloat(formData.get('amount')),
+                discount: parseInt(formData.get('discount')) || 0,
+                dueDate: formData.get('dueDate')
+            };
+            
+            try {
+                const response = await fetch(`/admin/quotes/${quoteId}/convert-to-invoice`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(invoiceData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    alert('Invoice created successfully!');
+                    closeInvoiceModal();
+                    location.reload(); // Refresh to show updated status
+                } else {
+                    alert('Failed to create invoice: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error creating invoice:', error);
+                alert('Error creating invoice. Please try again.');
+            }
+        }
+
+        // Quote editing functions
+        let isEditMode = false;
+        
+        // Service pricing constants
+        const SERVICE_PRICING = {
+            deviceMount: 10,    // $10 per device mount
+            networkSetup: 20,   // $20 per network setup  
+            mediaPanel: 50,     // $50 per media panel
+            coaxRun: 50,        // $50 per coax run
+            cat6Run: 75         // $75 per cat6 run
+        };
+        
+        const LABOR_RATES = {
+            deviceMount: 0.25,  // 0.25 hours per device mount
+            networkSetup: 0.5,  // 0.5 hours per network setup
+            mediaPanel: 1.0,    // 1.0 hour per media panel
+            coaxRun: 0.5,       // 0.5 hours per coax run
+            cat6Run: 0.75       // 0.75 hours per cat6 run
+        };
+        
+        // Add event listeners for real-time calculation
+        function setupPricingCalculation() {
+            const serviceFields = [
+                'coaxRuns', 'cat6Runs', 'deviceMount', 'networkSetup', 'mediaPanel', 
+                'packageOption', 'includeSurvey', 'discount', 'laborRate'
+            ];
+            
+            serviceFields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    field.addEventListener('input', calculatePricing);
+                    field.addEventListener('change', calculatePricing);
+                }
+            });
+        }
+        
+        function calculatePricing() {
+            
+            const packageOption = document.getElementById('packageOption').value;
+            const includeSurvey = document.getElementById('includeSurvey').checked;
+            const discount = parseInt(document.getElementById('discount').value) || 0;
+            
+            // Get service quantities
+            const services = {
+                coax: parseInt(document.getElementById('coaxRuns').value) || 0,
+                cat6: parseInt(document.getElementById('cat6Runs').value) || 0,
+                deviceMount: parseInt(document.getElementById('deviceMount').value) || 0,
+                networkSetup: parseInt(document.getElementById('networkSetup').value) || 0,
+                mediaPanel: parseInt(document.getElementById('mediaPanel').value) || 0
+            };
+            
+            
+            if (packageOption === 'Basic') {
+                calculateBasicPricing(services, includeSurvey, discount);
+            } else {
+                calculatePremiumPricing(services, includeSurvey, discount);
+            }
+        }
+        
+        function calculateBasicPricing(services, includeSurvey, discount) {
+            // Calculate base service costs
+            const servicesCost = 
+                (services.coax * SERVICE_PRICING.coaxRun) +
+                (services.cat6 * SERVICE_PRICING.cat6Run) +
+                (services.deviceMount * SERVICE_PRICING.deviceMount) +
+                (services.networkSetup * SERVICE_PRICING.networkSetup) +
+                (services.mediaPanel * SERVICE_PRICING.mediaPanel);
+            
+            const surveyFee = includeSurvey ? 100 : 0;
+            const subtotal = servicesCost + surveyFee;
+            const discountAmount = subtotal * (discount / 100);
+            const totalCost = subtotal - discountAmount;
+            const depositRequired = Math.round(totalCost * 0.3); // 30% deposit
+            
+            
+            // Update UI
+            document.getElementById('totalCost').textContent = totalCost.toFixed(2);
+            document.getElementById('depositRequired').textContent = depositRequired.toFixed(2);
+        }
+        
+        function calculatePremiumPricing(services, includeSurvey, discount) {
+            const laborRate = parseFloat(document.getElementById('laborRate').value) || 50;
+            
+            // Calculate labor hours
+            const laborHours = 
+                (services.coax * LABOR_RATES.coaxRun) +
+                (services.cat6 * LABOR_RATES.cat6Run) +
+                (services.deviceMount * LABOR_RATES.deviceMount) +
+                (services.networkSetup * LABOR_RATES.networkSetup) +
+                (services.mediaPanel * LABOR_RATES.mediaPanel);
+            
+            const surveyFee = includeSurvey ? 100 : 0;
+            const laborCost = laborHours * laborRate;
+            const subtotal = laborCost + surveyFee;
+            const discountAmount = subtotal * (discount / 100);
+            const estimatedTotal = subtotal - discountAmount;
+            
+            
+            // Update UI
+            document.getElementById('estimatedLaborHours').textContent = laborHours.toFixed(1);
+            document.getElementById('estimatedTotal').textContent = estimatedTotal.toFixed(2);
+        }
+
+        function toggleEditMode() {
+            isEditMode = !isEditMode;
+            
+            const editableFields = [
+                'packageOption', 'speedTier', 'includeSurvey', 'discount',
+                'coaxRuns', 'cat6Runs', 'deviceMount', 'networkSetup', 'mediaPanel',
+                'totalCost', 'depositRequired', 'estimatedLaborHours', 'laborRate', 'estimatedTotal',
+                'adminNotes'
+            ];
+            
+            const toggleBtn = document.getElementById('editToggle');
+            const toggleText = document.getElementById('editToggleText');
+            const editActions = document.getElementById('editActions');
+            
+            
+            if (isEditMode) {
+                // Enable editing
+                editableFields.forEach(fieldId => {
+                    const field = document.getElementById(fieldId);
+                    if (field) {
+                        if (field.type === 'checkbox') {
+                            field.disabled = false;
+                        } else {
+                            field.readOnly = false;
+                            // Remove readonly class and add edit mode class
+                            field.classList.remove('readonly-field');
+                            field.classList.add('edit-mode-field');
+                            
+                            // Fallback styling in case CSS classes don't work
+                            field.style.border = '1px solid rgba(255, 255, 255, 0.3)';
+                            field.style.background = '#374151';
+                            field.style.padding = '0.5rem';
+                            field.style.borderRadius = '0.375rem';
+                            field.style.color = '#f9fafb';
+                        }
+                    }
+                });
+                
+                if (toggleBtn) {
+                    toggleBtn.className = 'action-btn warning edit-toggle-warning';
+                    toggleBtn.style.backgroundColor = '#d97706';
+                    toggleBtn.style.color = '#111827';
+                }
+                if (toggleText) toggleText.innerHTML = '<i class="fas fa-times"></i> Cancel Edit';
+                if (editActions) {
+                    editActions.classList.add('edit-actions-visible');
+                    editActions.style.display = 'block';
+                }
+                
+            } else {
+                // Disable editing
+                editableFields.forEach(fieldId => {
+                    const field = document.getElementById(fieldId);
+                    if (field) {
+                        if (field.type === 'checkbox') {
+                            field.disabled = true;
+                        } else {
+                            field.readOnly = true;
+                            // Remove edit mode class and add readonly class
+                            field.classList.remove('edit-mode-field');
+                            field.classList.add('readonly-field');
+                            
+                            // Fallback styling
+                            field.style.border = 'none';
+                            field.style.background = 'transparent';
+                            field.style.padding = '0';
+                            field.style.color = '#f9fafb';
+                        }
+                    }
+                });
+                
+                if (toggleBtn) {
+                    toggleBtn.className = 'action-btn';
+                    toggleBtn.style.backgroundColor = '';
+                    toggleBtn.style.color = '';
+                }
+                if (toggleText) toggleText.innerHTML = '<i class="fas fa-edit"></i> Edit Quote';
+                if (editActions) {
+                    editActions.classList.remove('edit-actions-visible');
+                    editActions.style.display = 'none';
+                }
+            }
+        }
+
+        function cancelEdit() {
+            if (confirm('Are you sure you want to cancel? All changes will be lost.')) {
+                location.reload(); // Reload to reset all fields
+            }
+        }
+
+        async function saveQuote() {
+            if (!confirm('Are you sure you want to save these changes?')) {
+                return;
+            }
+
+            const form = document.getElementById('quoteEditForm');
+            const formData = new FormData(form);
+            
+            // Build quote data object with better data extraction
+            const quoteData = {
+                packageOption: document.getElementById('packageOption').value,
+                speedTier: document.getElementById('speedTier').value || null,
+                includeSurvey: document.getElementById('includeSurvey').checked,
+                discount: parseInt(document.getElementById('discount').value) || 0,
+                runs: {
+                    coax: parseInt(document.getElementById('coaxRuns').value) || 0,
+                    cat6: parseInt(document.getElementById('cat6Runs').value) || 0
+                },
+                services: {
+                    deviceMount: parseInt(document.getElementById('deviceMount').value) || 0,
+                    networkSetup: parseInt(document.getElementById('networkSetup').value) || 0,
+                    mediaPanel: parseInt(document.getElementById('mediaPanel').value) || 0
+                },
+                pricing: {},
+                adminNotes: document.getElementById('adminNotes').value || ''
+            };
+
+            // Pricing will be calculated on the server based on services
+            // Only send the labor rate for Premium packages
+            if (quoteData.packageOption === 'Premium') {
+                const laborRateField = document.getElementById('laborRate');
+                quoteData.laborRate = laborRateField ? parseFloat(laborRateField.value) || 50 : 50;
+            }
+
+
+            try {
+                const response = await fetch(`/admin/quotes/<%= quote._id %>`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(quoteData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    alert('Quote updated successfully!');
+                    location.reload(); // Refresh to show updated data
+                } else {
+                    alert('Failed to update quote: ' + (result.error || 'Unknown error'));
+                    console.error('Server error details:', result);
+                }
+            } catch (error) {
+                console.error('Error updating quote:', error);
+                alert('Error updating quote. Please try again.');
+            }
+        }
+    </script>
+</body>
+</html>
