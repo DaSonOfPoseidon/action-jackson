@@ -1294,7 +1294,10 @@ async function calculatePricing() {
     deviceMount: parseInt(document.getElementById('deviceMountQty')?.value) || 0,
     clientDevice: parseInt(document.getElementById('clientDeviceQty')?.value) || 0,
     serverDevice: parseInt(document.getElementById('serverDeviceQty')?.value) || 0,
-    mediaPanel: parseInt(document.getElementById('mediaPanelQty')?.value) || 0
+    mediaPanel: parseInt(document.getElementById('mediaPanelQty')?.value) || 0,
+    internalCameras: parseInt(document.getElementById('internalCamerasQty')?.value) || 0,
+    externalCameras: parseInt(document.getElementById('externalCamerasQty')?.value) || 0,
+    doorbellCameras: parseInt(document.getElementById('doorbellCamerasQty')?.value) || 0
   };
 
   const cameras = {
@@ -1316,6 +1319,9 @@ async function calculatePricing() {
       'services[clientDevice]': services.clientDevice,
       'services[serverDevice]': services.serverDevice,
       'services[mediaPanel]': services.mediaPanel,
+      'services[internalCameras]': services.internalCameras,
+      'services[externalCameras]': services.externalCameras,
+      'services[doorbellCameras]': services.doorbellCameras,
       equipmentTotal: equipmentTotal
     });
 
@@ -1434,7 +1440,10 @@ async function handleSubmit(event) {
     deviceMount: parseInt(document.getElementById('deviceMountQty')?.value) || 0,
     clientDevice: parseInt(document.getElementById('clientDeviceQty')?.value) || 0,
     serverDevice: parseInt(document.getElementById('serverDeviceQty')?.value) || 0,
-    mediaPanel: parseInt(document.getElementById('mediaPanelQty')?.value) || 0
+    mediaPanel: parseInt(document.getElementById('mediaPanelQty')?.value) || 0,
+    internalCameras: parseInt(document.getElementById('internalCamerasQty')?.value) || 0,
+    externalCameras: parseInt(document.getElementById('externalCamerasQty')?.value) || 0,
+    doorbellCameras: parseInt(document.getElementById('doorbellCamerasQty')?.value) || 0
   };
 
   const payload = {
@@ -1458,7 +1467,7 @@ async function handleSubmit(event) {
     const data = await res.json();
 
     if (res.ok) {
-      alert(`Quote submitted successfully! Reference ID: ${data.id}`);
+      alert(`Quote submitted successfully! Your quote number is: #${data.quoteNumber}`);
       // Reset form and return to step 1
       form.reset();
       selectedPackage = null;

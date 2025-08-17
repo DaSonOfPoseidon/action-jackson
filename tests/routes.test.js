@@ -89,6 +89,19 @@ describe('API Routes', () => {
 
   describe('Scheduling Routes - /api/scheduling', () => {
     test('GET /slots should return available slots', async () => {
+      // First create a quote for the test appointment
+      const testQuote = new Quote({
+        quoteNumber: '12345678',
+        customer: { name: 'John Doe', email: 'john@example.com' },
+        packageOption: 'Basic',
+        includeSurvey: false,
+        discount: 0,
+        runs: { coax: 1, cat6: 0 },
+        services: { deviceMount: 0, clientDevice: 0, serverDevice: 0, mediaPanel: 0 },
+        pricing: { totalCost: 100, depositRequired: 0 }
+      });
+      await testQuote.save();
+      
       // Use a future date that's not a weekend (Tuesday)
       const futureDate = new Date();
       futureDate.setDate(futureDate.getDate() + 7); // Next week
@@ -97,6 +110,8 @@ describe('API Routes', () => {
       }
       
       await Schedule.create({
+        quoteNumber: '12345678',
+        quoteId: testQuote._id,
         name: 'John Doe',
         email: 'john@example.com',
         date: futureDate,
@@ -111,7 +126,27 @@ describe('API Routes', () => {
       expect(response.body.upcomingAppointments).toHaveLength(1);
     });
 
-    test('POST /book should create new appointment', async () => {
+    test('POST /book should create new appointment with valid quote', async () => {
+      // First create a quote
+      const quoteData = {
+        customer: {
+          name: 'Jane Smith',
+          email: 'jane@example.com'
+        },
+        packageOption: 'Basic',
+        includeSurvey: false,
+        discount: 0,
+        runs: { coax: 1, cat6: 1 },
+        services: { deviceMount: 0, clientDevice: 0, serverDevice: 0, mediaPanel: 0 }
+      };
+
+      const quoteResponse = await request(app)
+        .post('/api/quotes/create')
+        .send(quoteData);
+      
+      expect(quoteResponse.status).toBe(201);
+      const quoteNumber = quoteResponse.body.quoteNumber;
+      
       // Use a future weekday date
       const futureDate = new Date();
       futureDate.setDate(futureDate.getDate() + 8); // Next week + 1 day
@@ -120,6 +155,7 @@ describe('API Routes', () => {
       }
       
       const appointmentData = {
+        quoteNumber: quoteNumber,
         name: 'Jane Smith',
         email: 'jane@example.com',
         date: futureDate.toISOString().split('T')[0], // YYYY-MM-DD format
@@ -132,42 +168,37 @@ describe('API Routes', () => {
       
       expect(response.status).toBe(201);
       expect(response.body).toHaveProperty('message');
-      expect(response.body.message).toBe('Appointment scheduled successfully');
+      expect(response.body.message).toBe(`Appointment scheduled successfully for Quote #${quoteNumber}`);
       expect(response.body).toHaveProperty('appointment');
+      expect(response.body.appointment.quoteNumber).toBe(quoteNumber);
       
       const savedAppointment = await Schedule.findOne({ email: 'jane@example.com' });
       expect(savedAppointment).toBeTruthy();
       expect(savedAppointment.name).toBe('Jane Smith');
+      expect(savedAppointment.quoteNumber).toBe(quoteNumber);
     });
 
-    test('POST /book should handle database errors', async () => {
-      // Use a future weekday date
+    test('POST /book should reject invalid quote number', async () => {
       const futureDate = new Date();
       futureDate.setDate(futureDate.getDate() + 9); // Next week + 2 days
       while (futureDate.getDay() === 0 || futureDate.getDay() === 6) {
         futureDate.setDate(futureDate.getDate() + 1); // Skip to weekday
       }
       
-      // Mock the Schedule constructor's save method instead of create
-      const Schedule = require('../models/Schedule');
-      const originalSave = Schedule.prototype.save;
-      Schedule.prototype.save = jest.fn().mockRejectedValue(new Error('Database write failed'));
-      
       const response = await request(app)
         .post('/api/scheduling/book')
         .send({
+          quoteNumber: '99999999', // Non-existent quote number
           name: 'Test User',
           email: 'errortest@example.com',
-          date: futureDate.toISOString().split('T')[0], // YYYY-MM-DD format
+          date: futureDate.toISOString().split('T')[0],
           time: '15:00'
         });
       
-      expect(response.status).toBe(500);
+      expect(response.status).toBe(400);
       expect(response.body).toHaveProperty('error');
-      expect(response.body.error).toBe('Error scheduling appointment');
-      
-      // Restore original function
-      Schedule.prototype.save = originalSave;
+      expect(response.body.error).toBe('Validation failed');
+      expect(response.body.details).toContain('Quote number not found. Please verify your quote number.');
     });
   });
 
@@ -181,7 +212,8 @@ describe('API Routes', () => {
             'runs[coax]': 2,
             'runs[cat6]': 3,
             'services[deviceMount]': 1,
-            'services[networkSetup]': 1,
+            'services[clientDevice]': 1,
+            'services[serverDevice]': 0,
             'services[mediaPanel]': 0,
             includeSurvey: false
           });
@@ -191,8 +223,8 @@ describe('API Routes', () => {
         expect(response.body.pricing).toHaveProperty('totalCost');
         expect(response.body.pricing).toHaveProperty('depositRequired');
         
-        // 5 runs * $100 per run = $500, + $30 services = $530
-        expect(response.body.pricing.totalCost).toBe(530);
+        // 5 runs * $100 per run = $500, + $20 services = $520
+        expect(response.body.pricing.totalCost).toBe(520);
         expect(response.body.pricing.depositRequired).toBe(20); // Over $100 threshold
       });
 
@@ -204,7 +236,8 @@ describe('API Routes', () => {
             'runs[coax]': 2,
             'runs[cat6]': 2,
             'services[deviceMount]': 2,
-            'services[networkSetup]': 1,
+            'services[clientDevice]': 1,
+            'services[serverDevice]': 0,
             'services[mediaPanel]': 1,
             includeSurvey: false
           });
@@ -216,8 +249,8 @@ describe('API Routes', () => {
         
         // Base 3hrs + Install 2hrs + (4 runs * 0.5) = 7 hours
         expect(response.body.pricing.estimatedLaborHours).toBe(7);
-        // 7hrs * $50 + $90 services = $440
-        expect(response.body.pricing.estimatedTotal).toBe(440);
+        // 7hrs * $50 + $80 services = $430
+        expect(response.body.pricing.estimatedTotal).toBe(430);
       });
 
       test('should include survey fee when survey is selected', async () => {
@@ -315,7 +348,8 @@ describe('API Routes', () => {
           },
           services: {
             deviceMount: 1,
-            networkSetup: 1,
+            clientDevice: 1,
+            serverDevice: 0,
             mediaPanel: 0
           }
         };
@@ -326,13 +360,17 @@ describe('API Routes', () => {
         
         expect(response.status).toBe(201);
         expect(response.body).toHaveProperty('id');
+        expect(response.body).toHaveProperty('quoteNumber');
+        expect(response.body).toHaveProperty('message');
+        expect(response.body.quoteNumber).toMatch(/^\d{8}$/); // 8-digit number
         
         const savedQuote = await Quote.findById(response.body.id);
         expect(savedQuote).toBeTruthy();
+        expect(savedQuote.quoteNumber).toBe(response.body.quoteNumber);
         expect(savedQuote.customer.name).toBe('John Doe');
         expect(savedQuote.packageOption).toBe('Basic');
         expect(savedQuote.includeSurvey).toBe(false);
-        expect(savedQuote.pricing.totalCost).toBe(330); // 3 runs * $100 + $30 services
+        expect(savedQuote.pricing.totalCost).toBe(320); // 3 runs * $100 + $20 services
         expect(savedQuote.pricing.depositRequired).toBe(20);
         expect(savedQuote.pricing.surveyFee).toBe(0);
       });
@@ -352,7 +390,7 @@ describe('API Routes', () => {
           },
           services: {
             deviceMount: 2,
-            networkSetup: 0,
+            clientDevice: 0,
             mediaPanel: 1
           }
         };
@@ -362,8 +400,11 @@ describe('API Routes', () => {
           .send(quoteData);
         
         expect(response.status).toBe(201);
+        expect(response.body).toHaveProperty('quoteNumber');
+        expect(response.body.quoteNumber).toMatch(/^\d{8}$/); // 8-digit number
         
         const savedQuote = await Quote.findById(response.body.id);
+        expect(savedQuote.quoteNumber).toBe(response.body.quoteNumber);
         expect(savedQuote.packageOption).toBe('Premium');
         expect(savedQuote.includeSurvey).toBe(true);
         expect(savedQuote.pricing.estimatedLaborHours).toBe(6.5); // 3 + 2 + (3*0.5)
@@ -382,7 +423,7 @@ describe('API Routes', () => {
           includeSurvey: true,
           discount: 0,
           runs: { coax: 3, cat6: 2 },
-          services: { deviceMount: 0, networkSetup: 0, mediaPanel: 0 }
+          services: { deviceMount: 0, clientDevice: 0, serverDevice: 0, mediaPanel: 0 }
         };
 
         const response = await request(app)
@@ -406,7 +447,7 @@ describe('API Routes', () => {
           packageOption: 'InvalidPackage',
           includeSurvey: false,
           runs: { coax: 1, cat6: 1 },
-          services: { deviceMount: 0, networkSetup: 0, mediaPanel: 0 }
+          services: { deviceMount: 0, clientDevice: 0, serverDevice: 0, mediaPanel: 0 }
         };
 
         const response = await request(app)
@@ -445,7 +486,7 @@ describe('API Routes', () => {
           packageOption: 'Basic',
           includeSurvey: false,
           runs: { coax: 0, cat6: 0 },
-          services: { deviceMount: 0, networkSetup: 0, mediaPanel: 0 }
+          services: { deviceMount: 0, clientDevice: 0, serverDevice: 0, mediaPanel: 0 }
         };
 
         const response = await request(app)
@@ -465,7 +506,7 @@ describe('API Routes', () => {
           packageOption: 'Premium',
           includeSurvey: false,
           runs: { coax: 1, cat6: 1 },
-          services: { deviceMount: 1, networkSetup: 1, mediaPanel: 1 }
+          services: { deviceMount: 1, clientDevice: 1, serverDevice: 1, mediaPanel: 1 }
         };
 
         const response = await request(app)
@@ -489,7 +530,7 @@ describe('API Routes', () => {
           packageOption: 'Basic',
           includeSurvey: false,
           runs: { coax: 1, cat6: 0 },
-          services: { deviceMount: 0, networkSetup: 0, mediaPanel: 0 }
+          services: { deviceMount: 0, clientDevice: 0, serverDevice: 0, mediaPanel: 0 }
         };
 
         // First request should succeed
@@ -519,7 +560,7 @@ describe('API Routes', () => {
             customer: { name: 'Test User', email: `dbtest-${Date.now()}@example.com` },
             packageOption: 'Basic',
             runs: { coax: 1, cat6: 0 },
-            services: { deviceMount: 0, networkSetup: 0, mediaPanel: 0 }
+            services: { deviceMount: 0, clientDevice: 0, serverDevice: 0, mediaPanel: 0 }
           });
         
         expect(response.status).toBe(500);
@@ -539,7 +580,7 @@ describe('API Routes', () => {
           includeSurvey: false,
           discount: 20,
           runs: { coax: 2, cat6: 2 },
-          services: { deviceMount: 0, networkSetup: 0, mediaPanel: 0 }
+          services: { deviceMount: 0, clientDevice: 0, serverDevice: 0, mediaPanel: 0 }
         };
 
         const response = await request(app)
@@ -563,7 +604,7 @@ describe('API Routes', () => {
             },
             packageOption: 'Basic',
             runs: { coax: 1, cat6: 0 },
-            services: { deviceMount: 0, networkSetup: 0, mediaPanel: 0 }
+            services: { deviceMount: 0, clientDevice: 0, serverDevice: 0, mediaPanel: 0 }
           };
 
           const response = await request(app)
@@ -583,7 +624,7 @@ describe('API Routes', () => {
             },
             packageOption: 'Basic',
             runs: { coax: 1, cat6: 0 },
-            services: { deviceMount: 0, networkSetup: 0, mediaPanel: 0 }
+            services: { deviceMount: 0, clientDevice: 0, serverDevice: 0, mediaPanel: 0 }
           };
 
           const response = await request(app)
@@ -603,7 +644,7 @@ describe('API Routes', () => {
             },
             packageOption: 'Basic',
             runs: { coax: 1, cat6: 0 },
-            services: { deviceMount: 0, networkSetup: 0, mediaPanel: 0 },
+            services: { deviceMount: 0, clientDevice: 0, serverDevice: 0, mediaPanel: 0 },
             honeypot: 'bot-filled-field'
           };
 
@@ -624,7 +665,7 @@ describe('API Routes', () => {
             },
             packageOption: 'Basic',
             runs: { coax: 1, cat6: 0 },
-            services: { deviceMount: 0, networkSetup: 0, mediaPanel: 0 },
+            services: { deviceMount: 0, clientDevice: 0, serverDevice: 0, mediaPanel: 0 },
             equipment: [
               { sku: 'TEST', name: 'Expensive Item', price: 10000, quantity: 10 }
             ]
@@ -646,7 +687,7 @@ describe('API Routes', () => {
             },
             packageOption: 'Basic',
             runs: { coax: 1, cat6: 0 },
-            services: { deviceMount: 0, networkSetup: 0, mediaPanel: 0 }
+            services: { deviceMount: 0, clientDevice: 0, serverDevice: 0, mediaPanel: 0 }
           };
 
           const response = await request(app)
@@ -666,7 +707,7 @@ describe('API Routes', () => {
             },
             packageOption: 'Basic',
             runs: { coax: 51, cat6: 0 }, // Exceeds 50 limit
-            services: { deviceMount: 0, networkSetup: 0, mediaPanel: 0 }
+            services: { deviceMount: 0, clientDevice: 0, serverDevice: 0, mediaPanel: 0 }
           };
 
           const response = await request(app)
@@ -686,7 +727,7 @@ describe('API Routes', () => {
             },
             packageOption: 'Basic',
             runs: { coax: 1, cat6: 0 },
-            services: { deviceMount: 0, networkSetup: 0, mediaPanel: 0 }
+            services: { deviceMount: 0, clientDevice: 0, serverDevice: 0, mediaPanel: 0 }
           };
 
           const response = await request(app)
@@ -708,7 +749,7 @@ describe('API Routes', () => {
             },
             packageOption: 'Basic',
             runs: { coax: 1, cat6: 0 },
-            services: { deviceMount: 0, networkSetup: 0, mediaPanel: 0 }
+            services: { deviceMount: 0, clientDevice: 0, serverDevice: 0, mediaPanel: 0 }
           };
 
           const response = await request(app)
@@ -738,7 +779,7 @@ describe('API Routes', () => {
             },
             packageOption: 'Basic',
             runs: { coax: 1, cat6: 0 },
-            services: { deviceMount: 0, networkSetup: 0, mediaPanel: 0 }
+            services: { deviceMount: 0, clientDevice: 0, serverDevice: 0, mediaPanel: 0 }
           };
 
           // First 3 requests should succeed (within rate limit)

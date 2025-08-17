@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Schedule = require('../models/Schedule');
+const Quote = require('../models/Quote');
 const rateLimit = require('express-rate-limit');
 const { body, validationResult, query } = require('express-validator');
 const validator = require('validator');
@@ -62,6 +63,19 @@ const checkSchedulingConflict = async (date, time, excludeId = null) => {
 
 // Validation middleware for booking
 const validateBooking = [
+  body('quoteNumber')
+    .trim()
+    .isLength({ min: 8, max: 8 })
+    .withMessage('Quote number must be exactly 8 digits')
+    .matches(/^\d{8}$/)
+    .withMessage('Quote number must contain only digits')
+    .custom(async (quoteNumber) => {
+      const quote = await Quote.findOne({ quoteNumber });
+      if (!quote) {
+        throw new Error('Quote number not found. Please verify your quote number.');
+      }
+      return true;
+    }),
   body('name')
     .trim()
     .isLength({ min: 2, max: 100 })
@@ -148,6 +162,57 @@ const validateBooking = [
     .trim()
 ];
 
+// Validate quote number and get quote details
+router.get('/validate-quote/:quoteNumber', async (req, res) => {
+  try {
+    const { quoteNumber } = req.params;
+    
+    // Validate quote number format
+    if (!/^\d{8}$/.test(quoteNumber)) {
+      return res.status(400).json({ 
+        error: 'Invalid quote number format. Quote number must be 8 digits.' 
+      });
+    }
+
+    // Find the quote
+    const quote = await Quote.findOne({ quoteNumber }).select('quoteNumber customer packageOption includeSurvey createdAt');
+    
+    if (!quote) {
+      return res.status(404).json({ 
+        error: 'Quote not found. Please verify your quote number.' 
+      });
+    }
+
+    // Check if already scheduled
+    const existingAppointment = await Schedule.findOne({ quoteNumber });
+    
+    if (existingAppointment) {
+      return res.status(409).json({
+        error: 'This quote already has an appointment scheduled.',
+        appointment: {
+          date: existingAppointment.date.toISOString().split('T')[0],
+          time: existingAppointment.time
+        }
+      });
+    }
+
+    res.json({
+      valid: true,
+      quote: {
+        quoteNumber: quote.quoteNumber,
+        customerName: quote.customer.name,
+        customerEmail: quote.customer.email,
+        packageOption: quote.packageOption,
+        includeSurvey: quote.includeSurvey,
+        createdAt: quote.createdAt
+      }
+    });
+  } catch (error) {
+    console.error('Error validating quote:', error);
+    res.status(500).json({ error: 'Error validating quote' });
+  }
+});
+
 // Get available time slots for a specific date
 router.get('/slots', [
   query('date')
@@ -220,9 +285,33 @@ router.post('/book', validateBooking, async (req, res) => {
     });
   }
 
-  const { name, email, date, time, phone, notes } = req.body;
+  const { quoteNumber, name, email, date, time, phone, notes } = req.body;
 
   try {
+    // Fetch the quote to get customer details and verify ownership
+    const quote = await Quote.findOne({ quoteNumber });
+    if (!quote) {
+      return res.status(404).json({ error: 'Quote not found' });
+    }
+
+    // Verify email matches the quote (security check)
+    if (quote.customer.email.toLowerCase() !== email.toLowerCase()) {
+      return res.status(403).json({ 
+        error: 'Email does not match the quote. Please use the same email address used for the quote.' 
+      });
+    }
+
+    // Check if this quote already has an appointment scheduled
+    const existingAppointment = await Schedule.findOne({ quoteNumber });
+    if (existingAppointment) {
+      return res.status(409).json({
+        error: 'This quote already has an appointment scheduled.',
+        existingAppointment: {
+          date: existingAppointment.date.toISOString().split('T')[0],
+          time: existingAppointment.time
+        }
+      });
+    }
     // Check for scheduling conflicts
     const conflict = await checkSchedulingConflict(date, time);
     if (conflict) {
@@ -253,6 +342,8 @@ router.post('/book', validateBooking, async (req, res) => {
 
     // Create the appointment
     const appointmentData = {
+      quoteNumber,
+      quoteId: quote._id,
       name: validator.escape(validator.trim(name)),
       email: email.toLowerCase(),
       date: new Date(date),
@@ -277,15 +368,16 @@ router.post('/book', validateBooking, async (req, res) => {
           html: `
             <h2>Appointment Confirmed!</h2>
             <p>Hello ${name.split(' ')[0]},</p>
-            <p>Your appointment has been successfully scheduled:</p>
+            <p>Your appointment has been successfully scheduled for Quote #${quoteNumber}:</p>
             <ul>
+              <li><strong>Quote Number:</strong> #${quoteNumber}</li>
               <li><strong>Date:</strong> ${new Date(date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</li>
               <li><strong>Time:</strong> ${time}</li>
               ${phone ? `<li><strong>Phone:</strong> ${phone}</li>` : ''}
             </ul>
             ${notes ? `<p><strong>Notes:</strong> ${notes}</p>` : ''}
             <p>We'll contact you 24 hours before the appointment to confirm.</p>
-            <p>If you need to reschedule, please contact us as soon as possible.</p>
+            <p>If you need to reschedule, please contact us as soon as possible and reference your quote number #${quoteNumber}.</p>
             <p>Thank you for choosing Action Jackson Installs!</p>
           `
         });
@@ -295,16 +387,18 @@ router.post('/book', validateBooking, async (req, res) => {
           await transporter.sendMail({
             from: process.env.EMAIL_USER,
             to: process.env.ADMIN_EMAIL,
-            subject: '📅 New Appointment Booked',
+            subject: `📅 New Appointment for Quote #${quoteNumber}`,
             html: `
               <h2>New Appointment Scheduled</h2>
               <ul>
+                <li><strong>Quote Number:</strong> #${quoteNumber}</li>
                 <li><strong>Customer:</strong> ${name}</li>
                 <li><strong>Email:</strong> ${email}</li>
                 <li><strong>Phone:</strong> ${phone || 'Not provided'}</li>
                 <li><strong>Date:</strong> ${new Date(date).toLocaleDateString()}</li>
                 <li><strong>Time:</strong> ${time}</li>
                 <li><strong>Notes:</strong> ${notes || 'None'}</li>
+                <li><strong>Package:</strong> ${quote.packageOption}${quote.includeSurvey ? ' + Survey' : ''}</li>
                 <li><strong>IP:</strong> ${appointmentData.ip}</li>
               </ul>
             `
@@ -316,12 +410,13 @@ router.post('/book', validateBooking, async (req, res) => {
       }
     }
 
-    console.log(`Appointment scheduled: ${name} on ${date} at ${time}`);
+    console.log(`Appointment scheduled: ${name} on ${date} at ${time} for Quote #${quoteNumber}`);
     
     res.status(201).json({
-      message: 'Appointment scheduled successfully',
+      message: `Appointment scheduled successfully for Quote #${quoteNumber}`,
       appointment: {
         id: newSchedule._id,
+        quoteNumber: quoteNumber,
         date: date,
         time: time,
         confirmationSent: !!transporter

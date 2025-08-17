@@ -1,6 +1,22 @@
 const mongoose = require('mongoose');
 
 const ScheduleSchema = new mongoose.Schema({
+  quoteNumber: {
+    type: String,
+    required: true,
+    index: true,
+    validate: {
+      validator: function(quoteNumber) {
+        return /^\d{8}$/.test(quoteNumber);
+      },
+      message: 'Quote number must be 8 digits'
+    }
+  },
+  quoteId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Quote',
+    required: true
+  },
   name: {
     type: String,
     required: true,

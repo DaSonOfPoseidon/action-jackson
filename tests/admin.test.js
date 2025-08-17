@@ -461,6 +461,136 @@ describe('Admin System Tests', () => {
           expect(response.body.error).toBe('Account temporarily locked due to failed login attempts');
         }
       });
+
+      // Security tests for redirect validation
+      describe('redirect validation security', () => {
+        test('should allow valid internal admin redirects', async () => {
+          const response = await request(app)
+            .post('/auth/login?redirect=/admin/quotes')
+            .type('form')
+            .send({
+              username: 'testadmin',
+              password: 'SecurePassword123!',
+              rememberMe: false
+            });
+
+          expect(response.status).toBe(302);
+          expect(response.headers.location).toBe('/admin/quotes');
+        });
+
+        test('should block external redirect attempts', async () => {
+          const response = await request(app)
+            .post('/auth/login?redirect=https://evil.com/admin')
+            .type('form')
+            .send({
+              username: 'testadmin',
+              password: 'SecurePassword123!',
+              rememberMe: false
+            });
+
+          expect(response.status).toBe(302);
+          expect(response.headers.location).toBe('/admin/dashboard');
+        });
+
+        test('should block javascript protocol redirects', async () => {
+          const response = await request(app)
+            .post('/auth/login?redirect=javascript:alert(1)')
+            .type('form')
+            .send({
+              username: 'testadmin',
+              password: 'SecurePassword123!',
+              rememberMe: false
+            });
+
+          expect(response.status).toBe(302);
+          expect(response.headers.location).toBe('/admin/dashboard');
+        });
+
+        test('should block directory traversal attempts', async () => {
+          const response = await request(app)
+            .post('/auth/login?redirect=/admin/../../../etc/passwd')
+            .type('form')
+            .send({
+              username: 'testadmin',
+              password: 'SecurePassword123!',
+              rememberMe: false
+            });
+
+          expect(response.status).toBe(302);
+          expect(response.headers.location).toBe('/admin/dashboard');
+        });
+
+        test('should block double slash redirects', async () => {
+          const response = await request(app)
+            .post('/auth/login?redirect=/admin//evil.com')
+            .type('form')
+            .send({
+              username: 'testadmin',
+              password: 'SecurePassword123!',
+              rememberMe: false
+            });
+
+          expect(response.status).toBe(302);
+          expect(response.headers.location).toBe('/admin/dashboard');
+        });
+
+        test('should block backslash redirects', async () => {
+          const response = await request(app)
+            .post('/auth/login?redirect=/admin\\..\\evil.com')
+            .type('form')
+            .send({
+              username: 'testadmin',
+              password: 'SecurePassword123!',
+              rememberMe: false
+            });
+
+          expect(response.status).toBe(302);
+          expect(response.headers.location).toBe('/admin/dashboard');
+        });
+
+        test('should block non-admin path redirects', async () => {
+          const response = await request(app)
+            .post('/auth/login?redirect=/secret-endpoint')
+            .type('form')
+            .send({
+              username: 'testadmin',
+              password: 'SecurePassword123!',
+              rememberMe: false
+            });
+
+          expect(response.status).toBe(302);
+          expect(response.headers.location).toBe('/admin/dashboard');
+        });
+
+        test('should block excessively long redirect URLs', async () => {
+          const longPath = '/admin/' + 'a'.repeat(200);
+          const response = await request(app)
+            .post('/auth/login?redirect=' + longPath)
+            .type('form')
+            .send({
+              username: 'testadmin',
+              password: 'SecurePassword123!',
+              rememberMe: false
+            });
+
+          expect(response.status).toBe(302);
+          expect(response.headers.location).toBe('/admin/dashboard');
+        });
+
+        test('should handle empty redirect gracefully', async () => {
+          const response = await request(app)
+            .post('/auth/login?redirect=')
+            .type('form')
+            .send({
+              username: 'testadmin',
+              password: 'SecurePassword123!',
+              rememberMe: false
+            });
+
+          expect(response.status).toBe(302);
+          expect(response.headers.location).toBe('/admin/dashboard');
+        });
+      });
     });
 
     describe('POST /auth/logout', () => {

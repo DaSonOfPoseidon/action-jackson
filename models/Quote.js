@@ -1,6 +1,12 @@
 const mongoose = require('mongoose');
 
 const QuoteSchema = new mongoose.Schema({
+  quoteNumber: { 
+    type: String, 
+    required: true, 
+    unique: true,
+    index: true 
+  },
   customer: {
     name:  { type: String, required: true },
     email: { type: String, required: true }
@@ -23,9 +29,13 @@ const QuoteSchema = new mongoose.Schema({
   },
 
   services: {
-    deviceMount:   { type: Number, default: 0 },
-    networkSetup:  { type: Number, default: 0 },
-    mediaPanel:    { type: Number, default: 0 }
+    deviceMount:     { type: Number, default: 0 },
+    clientDevice:    { type: Number, default: 0 },
+    serverDevice:    { type: Number, default: 0 },
+    mediaPanel:      { type: Number, default: 0 },
+    internalCameras: { type: Number, default: 0 },
+    externalCameras: { type: Number, default: 0 },
+    doorbellCameras: { type: Number, default: 0 }
   },
 
   equipment: [{
@@ -77,6 +87,33 @@ const QuoteSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
+
+// Generate unique 8-digit quote number
+QuoteSchema.statics.generateQuoteNumber = async function() {
+  let quoteNumber;
+  let isUnique = false;
+  let attempts = 0;
+  const maxAttempts = 10;
+
+  while (!isUnique && attempts < maxAttempts) {
+    // Generate 8-digit number (10000000 to 99999999)
+    quoteNumber = Math.floor(Math.random() * 90000000) + 10000000;
+    quoteNumber = quoteNumber.toString();
+    
+    // Check if this number already exists
+    const existing = await this.findOne({ quoteNumber });
+    if (!existing) {
+      isUnique = true;
+    }
+    attempts++;
+  }
+
+  if (!isUnique) {
+    throw new Error('Failed to generate unique quote number after multiple attempts');
+  }
+
+  return quoteNumber;
+};
 
 // Update the updatedAt field before saving
 QuoteSchema.pre('save', function(next) {

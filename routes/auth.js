@@ -5,6 +5,39 @@ const { body, validationResult } = require('express-validator');
 const Admin = require('../models/Admin');
 const { TokenManager, csrfProtection, generateCSRFToken } = require('../middleware/auth');
 
+/**
+ * Validates redirect URLs to prevent open redirect vulnerabilities
+ * @param {string} url - The URL to validate
+ * @returns {boolean} - True if the URL is safe for redirection
+ */
+function validateRedirectUrl(url) {
+  if (!url || typeof url !== 'string') {
+    return false;
+  }
+  
+  // Only allow relative paths starting with /admin/
+  if (!url.startsWith('/admin/')) {
+    return false;
+  }
+  
+  // Prevent directory traversal and external redirects
+  if (url.includes('//') || url.includes('\\') || url.includes('..')) {
+    return false;
+  }
+  
+  // Prevent protocol handlers (http:, https:, javascript:, etc.)
+  if (url.includes(':')) {
+    return false;
+  }
+  
+  // Additional safety check - ensure it's a reasonable length
+  if (url.length > 200) {
+    return false;
+  }
+  
+  return true;
+}
+
 // Rate limiting for authentication endpoints
 const authRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -165,7 +198,12 @@ router.post('/login',
       } else {
         // Browser form submission - redirect to dashboard
         const redirectUrl = req.query.redirect || '/admin/dashboard';
-        res.redirect(redirectUrl);
+        
+        // Validate redirect URL to prevent open redirect attacks
+        const safeRedirectUrl = validateRedirectUrl(redirectUrl) ? redirectUrl : '/admin/dashboard';
+        
+        console.log(`Login successful: ${authResult.user.username} from IP: ${req.ip}`);
+        res.redirect(safeRedirectUrl);
       }
 
     } catch (error) {

@@ -103,8 +103,12 @@ const calculatePricing = (packageOption, runs, services, includeSurvey = false, 
     const totalRuns = (runs.coax || 0) + (runs.cat6 || 0);
     const runsCost = totalRuns * (config.laborPerRun + config.installFeePerRun);
     const servicesCost = (services.deviceMount || 0) * 10 + 
-                        (services.networkSetup || 0) * 20 + 
-                        (services.mediaPanel || 0) * 50;
+                        (services.clientDevice || 0) * 10 + 
+                        (services.serverDevice || 0) * 50 + 
+                        (services.mediaPanel || 0) * 50 +
+                        (services.internalCameras || 0) * 80 + 
+                        (services.externalCameras || 0) * 100 + 
+                        (services.doorbellCameras || 0) * 150;
     
     const subtotal = runsCost + servicesCost;
     const totalCost = subtotal * (1 - discount / 100);
@@ -128,8 +132,12 @@ const calculatePricing = (packageOption, runs, services, includeSurvey = false, 
     
     const laborCost = totalHours * config.laborHourlyRate;
     const servicesCost = (services.deviceMount || 0) * 10 + 
-                        (services.networkSetup || 0) * 20 + 
-                        (services.mediaPanel || 0) * 50;
+                        (services.clientDevice || 0) * 10 + 
+                        (services.serverDevice || 0) * 50 + 
+                        (services.mediaPanel || 0) * 50 +
+                        (services.internalCameras || 0) * 80 + 
+                        (services.externalCameras || 0) * 100 + 
+                        (services.doorbellCameras || 0) * 150;
     
     const subtotal = laborCost + servicesCost;
     const estimatedTotal = subtotal * (1 - discount / 100);
@@ -163,8 +171,12 @@ router.get('/calculate', calculateRateLimit, (req, res) => {
 
     const servicesData = {
       deviceMount: parseInt(req.query.services?.deviceMount || '0') || 0,
-      networkSetup: parseInt(req.query.services?.networkSetup || '0') || 0,
-      mediaPanel: parseInt(req.query.services?.mediaPanel || '0') || 0
+      clientDevice: parseInt(req.query.services?.clientDevice || '0') || 0,
+      serverDevice: parseInt(req.query.services?.serverDevice || '0') || 0,
+      mediaPanel: parseInt(req.query.services?.mediaPanel || '0') || 0,
+      internalCameras: parseInt(req.query.services?.internalCameras || '0') || 0,
+      externalCameras: parseInt(req.query.services?.externalCameras || '0') || 0,
+      doorbellCameras: parseInt(req.query.services?.doorbellCameras || '0') || 0
     };
 
     // Handle equipment total from query (for real-time calculation)
@@ -224,14 +236,30 @@ const validateQuote = [
     .optional()
     .isInt({ min: 0, max: 20 })
     .withMessage('Device mounts must be between 0 and 20'),
-  body('services.networkSetup')
+  body('services.clientDevice')
     .optional()
     .isInt({ min: 0, max: 10 })
-    .withMessage('Network setups must be between 0 and 10'),
+    .withMessage('Client device setups must be between 0 and 10'),
+  body('services.serverDevice')
+    .optional()
+    .isInt({ min: 0, max: 10 })
+    .withMessage('Server device setups must be between 0 and 10'),
   body('services.mediaPanel')
     .optional()
     .isInt({ min: 0, max: 10 })
     .withMessage('Media panels must be between 0 and 10'),
+  body('services.internalCameras')
+    .optional()
+    .isInt({ min: 0, max: 20 })
+    .withMessage('Internal cameras must be between 0 and 20'),
+  body('services.externalCameras')
+    .optional()
+    .isInt({ min: 0, max: 20 })
+    .withMessage('External cameras must be between 0 and 20'),
+  body('services.doorbellCameras')
+    .optional()
+    .isInt({ min: 0, max: 5 })
+    .withMessage('Doorbell cameras must be between 0 and 5'),
   body('speedTier')
     .optional()
     .isIn(['1 Gig', '5 Gig', '10 Gig'])
@@ -293,8 +321,11 @@ router.post('/create', quoteRateLimit, validateQuote, async (req, res) => {
       return res.status(429).json({ error: 'Please wait 10 minutes between quote requests.' });
     }
 
-    // 1) Save to Mongo
+    // 1) Generate unique quote number and save to Mongo
+    const quoteNumber = await Quote.generateQuoteNumber();
+    
     const newQuote = new Quote({
+      quoteNumber,
       customer: sanitizedCustomer,
       packageOption,
       includeSurvey,
@@ -309,52 +340,72 @@ router.post('/create', quoteRateLimit, validateQuote, async (req, res) => {
     });
     await newQuote.save();
 
-    // 2) Notify admin by email
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
+    // 2) Notify admin by email (optional - only if email is configured)
+    if (process.env.EMAIL_USER && process.env.EMAIL_PASS && 
+        !process.env.EMAIL_USER.includes('example.com') && 
+        !process.env.EMAIL_USER.includes('your_dev_email')) {
+      
+      try {
+        const transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS
+          }
+        });
+
+        const mailLines = [
+          `New Quote Submission - #${quoteNumber}`,
+          `----------------------------------------`,
+          `Quote Number: ${quoteNumber}`,
+          `Name: ${sanitizedCustomer.name}`,
+          `Email: ${sanitizedCustomer.email}`,
+          `Package: ${packageOption}${includeSurvey ? ' + Survey' : ''}`,
+          speedTier ? `Speed Tier: ${speedTier}` : '',
+          `Discount: ${discount}%`,
+          `Coax runs: ${runs.coax}`,
+          `Cat6 runs: ${runs.cat6}`,
+          `Device mounts: ${services.deviceMount}`,
+          `Client device setups: ${services.clientDevice}`,
+          `Server device setups: ${services.serverDevice}`,
+          `Media panels: ${services.mediaPanel}`,
+          `Internal cameras: ${services.internalCameras}`,
+          `External cameras: ${services.externalCameras}`,
+          `Doorbell cameras: ${services.doorbellCameras}`,
+          equipment && equipment.length > 0 ? `Equipment Items: ${equipment.length}` : '',
+          ...(equipment || []).map(item => `  - ${item.name} (${item.quantity}x) @ $${item.price} each`),
+          packageOption === 'Basic' 
+            ? `Total Cost: $${pricing.totalCost}`
+            : `Estimated Hours: ${pricing.estimatedLaborHours}`,
+          packageOption === 'Basic' 
+            ? `Deposit Required: $${pricing.depositRequired}`
+            : `Estimated Total: $${pricing.estimatedTotal}`,
+          includeSurvey ? `Survey Fee: $${pricing.surveyFee}` : '',
+          pricing.equipmentTotal > 0 ? `Equipment Total: $${pricing.equipmentTotal}` : '',
+          `IP Address: ${clientIP}`,
+          `User Agent: ${req.get('User-Agent')?.substring(0, 100) || 'Unknown'}`,
+          `Timestamp: ${new Date().toISOString()}`
+        ].filter(line => line !== '');
+
+        await transporter.sendMail({
+          from: process.env.EMAIL_USER,
+          to:   process.env.ADMIN_EMAIL,
+          subject: `📄 New Quote #${quoteNumber} Submitted`,
+          text:     mailLines.join('\n')
+        });
+      } catch (emailError) {
+        console.error('Email notification failed (quote still saved):', emailError.message);
       }
-    });
-
-    const mailLines = [
-      `New Quote Submission`,
-      `--------------------`,
-      `Name: ${sanitizedCustomer.name}`,
-      `Email: ${sanitizedCustomer.email}`,
-      `Package: ${packageOption}${includeSurvey ? ' + Survey' : ''}`,
-      speedTier ? `Speed Tier: ${speedTier}` : '',
-      `Discount: ${discount}%`,
-      `Coax runs: ${runs.coax}`,
-      `Cat6 runs: ${runs.cat6}`,
-      `Device mounts: ${services.deviceMount}`,
-      `Network setups: ${services.networkSetup}`,
-      `Media panels: ${services.mediaPanel}`,
-      equipment && equipment.length > 0 ? `Equipment Items: ${equipment.length}` : '',
-      ...(equipment || []).map(item => `  - ${item.name} (${item.quantity}x) @ $${item.price} each`),
-      packageOption === 'Basic' 
-        ? `Total Cost: $${pricing.totalCost}`
-        : `Estimated Hours: ${pricing.estimatedLaborHours}`,
-      packageOption === 'Basic' 
-        ? `Deposit Required: $${pricing.depositRequired}`
-        : `Estimated Total: $${pricing.estimatedTotal}`,
-      includeSurvey ? `Survey Fee: $${pricing.surveyFee}` : '',
-      pricing.equipmentTotal > 0 ? `Equipment Total: $${pricing.equipmentTotal}` : '',
-      `IP Address: ${clientIP}`,
-      `User Agent: ${req.get('User-Agent')?.substring(0, 100) || 'Unknown'}`,
-      `Timestamp: ${new Date().toISOString()}`
-    ].filter(line => line !== '');
-
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to:   process.env.ADMIN_EMAIL,
-      subject: '📄 New Quote Submitted',
-      text:     mailLines.join('\n')
-    });
+    } else {
+      console.log('Email notification skipped - email not configured');
+    }
 
     // 3) Respond to frontend
-    res.status(201).json({ id: newQuote._id });
+    res.status(201).json({ 
+      id: newQuote._id,
+      quoteNumber: quoteNumber,
+      message: `Quote #${quoteNumber} created successfully`
+    });
   } catch (err) {
     console.error('Quote create error:', err);
     res.status(500).json({ error: 'Error generating quote' });
