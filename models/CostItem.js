@@ -36,7 +36,7 @@ const CostItemSchema = new mongoose.Schema({
     }
   },
 
-  // How pricing is calculated
+  // How pricing is calculated (customer-facing)
   unitType: {
     type: String,
     required: [true, 'Unit type is required'],
@@ -46,6 +46,16 @@ const CostItemSchema = new mongoose.Schema({
     }
   },
 
+  // Internal cost unit type (when different from customer pricing unit)
+  costUnitType: {
+    type: String,
+    enum: {
+      values: [null, 'per-foot', 'per-run', 'per-unit', 'flat-fee', 'threshold'],
+      message: '{VALUE} is not a valid cost unit type'
+    },
+    default: null
+  },
+
   // Display label (e.g. "per run", "per mount", "flat fee")
   unitLabel: {
     type: String,
@@ -53,10 +63,16 @@ const CostItemSchema = new mongoose.Schema({
     maxlength: [50, 'Unit label cannot exceed 50 characters']
   },
 
-  // Admin's actual cost (for margin tracking in future quote builder)
-  cost: {
+  // Material cost component
+  materialCost: {
     type: Number,
-    min: [0, 'Cost cannot be negative']
+    min: [0, 'Material cost cannot be negative']
+  },
+
+  // Labor cost component
+  laborCost: {
+    type: Number,
+    min: [0, 'Labor cost cannot be negative']
   },
 
   // Customer-facing price
@@ -71,6 +87,34 @@ const CostItemSchema = new mongoose.Schema({
     type: Number,
     min: [0, 'Threshold amount cannot be negative']
   },
+
+  // Purchase URL for materials
+  purchaseUrl: {
+    type: String,
+    trim: true,
+    maxlength: [2000, 'Purchase URL cannot exceed 2000 characters'],
+    validate: {
+      validator: function(v) {
+        if (!v) return true;
+        return /^https?:\/\/.+/.test(v);
+      },
+      message: 'Purchase URL must be a valid http or https URL'
+    }
+  },
+
+  // Bill of materials - component items needed
+  billOfMaterials: [{
+    item: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'CostItem',
+      required: [true, 'BOM item reference is required']
+    },
+    quantity: {
+      type: Number,
+      required: [true, 'BOM quantity is required'],
+      min: [1, 'BOM quantity must be at least 1']
+    }
+  }],
 
   // Soft-disable toggle
   isActive: {
@@ -92,10 +136,51 @@ const CostItemSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now }
 });
 
+// Virtual: combined cost from materialCost + laborCost
+CostItemSchema.virtual('cost').get(function() {
+  const mat = this.materialCost || 0;
+  const lab = this.laborCost || 0;
+  return mat + lab;
+});
+
+// Enable virtuals in JSON/Object output
+CostItemSchema.set('toJSON', { virtuals: true });
+CostItemSchema.set('toObject', { virtuals: true });
+
 // Indexes
 CostItemSchema.index({ category: 1, sortOrder: 1 });
 CostItemSchema.index({ code: 1 }, { unique: true });
 CostItemSchema.index({ isActive: 1, category: 1 });
+
+// Pre-validate hook: prevent self-referencing and duplicate BOM entries
+CostItemSchema.pre('validate', function(next) {
+  if (this.billOfMaterials && this.billOfMaterials.length > 0) {
+    const selfId = this._id ? this._id.toString() : null;
+    const seen = new Set();
+
+    for (const entry of this.billOfMaterials) {
+      const itemId = entry.item ? entry.item.toString() : null;
+
+      // Prevent self-reference
+      if (selfId && itemId === selfId) {
+        const err = new Error('Bill of materials cannot reference itself');
+        err.name = 'ValidationError';
+        return next(err);
+      }
+
+      // Prevent duplicates
+      if (itemId && seen.has(itemId)) {
+        const err = new Error('Bill of materials cannot contain duplicate items');
+        err.name = 'ValidationError';
+        return next(err);
+      }
+
+      if (itemId) seen.add(itemId);
+    }
+  }
+
+  next();
+});
 
 // Update timestamp on save
 CostItemSchema.pre('save', function(next) {
@@ -109,6 +194,7 @@ CostItemSchema.pre('save', function(next) {
  */
 CostItemSchema.statics.getActiveByCategory = async function() {
   return this.find({ isActive: true })
+    .populate('billOfMaterials.item', 'code name price')
     .sort({ category: 1, sortOrder: 1 })
     .exec();
 };
@@ -125,9 +211,14 @@ CostItemSchema.statics.getPricingMap = async function() {
       name: item.name,
       category: item.category,
       unitType: item.unitType,
+      costUnitType: item.costUnitType,
       unitLabel: item.unitLabel,
       price: item.price,
+      materialCost: item.materialCost,
+      laborCost: item.laborCost,
       cost: item.cost,
+      purchaseUrl: item.purchaseUrl,
+      billOfMaterials: item.billOfMaterials,
       thresholdAmount: item.thresholdAmount
     };
   }

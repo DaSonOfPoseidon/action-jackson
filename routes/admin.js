@@ -1,4 +1,5 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const router = express.Router();
 const rateLimit = require('express-rate-limit');
 const { adminPageAuth, adminSecurityHeaders } = require('../middleware/auth');
@@ -930,12 +931,14 @@ router.get('/cost-items', async (req, res) => {
         sortQuery = { category: 1, sortOrder: 1, name: 1 };
     }
 
-    const [costItems, totalCount] = await Promise.all([
+    const [costItems, totalCount, allItemsForBom] = await Promise.all([
       CostItem.find(filter)
+        .populate('billOfMaterials.item', 'code name')
         .sort(sortQuery)
         .skip(skip)
         .limit(limit),
-      CostItem.countDocuments(filter)
+      CostItem.countDocuments(filter),
+      CostItem.find({ isActive: true }, '_id code name price').sort({ code: 1 }).lean()
     ]);
 
     const totalPages = Math.ceil(totalCount / limit);
@@ -943,6 +946,7 @@ router.get('/cost-items', async (req, res) => {
     res.render('admin/cost-items', {
       title: 'Cost Item Management',
       costItems,
+      allItemsForBom,
       pagination: {
         currentPage: page,
         totalPages,
@@ -982,17 +986,21 @@ router.post('/cost-items/seed', async (req, res) => {
       });
     }
 
+    // Pass 1: Create all items (without BOM references)
     const defaults = [
-      { code: 'CAT6-RUN', name: 'Cat6 Cable Run', category: 'Cable Runs', unitType: 'per-run', unitLabel: 'per run', price: 100, sortOrder: 0 },
-      { code: 'COAX-RUN', name: 'Coax Cable Run', category: 'Cable Runs', unitType: 'per-run', unitLabel: 'per run', price: 150, sortOrder: 1 },
-      { code: 'FIBER-RUN', name: 'Fiber Cable Run', category: 'Cable Runs', unitType: 'per-run', unitLabel: 'per run', price: 200, sortOrder: 2 },
-      { code: 'AP-MOUNT', name: 'Access Point Mount', category: 'Services', unitType: 'per-unit', unitLabel: 'per mount', price: 25, sortOrder: 0 },
-      { code: 'ETH-RELOCATION', name: 'Ethernet Relocation', category: 'Services', unitType: 'per-unit', unitLabel: 'per relocation', price: 20, sortOrder: 1 },
-      { code: 'MEDIA-PANEL', name: 'Media Panel Install', category: 'Centralization', unitType: 'flat-fee', unitLabel: 'flat fee', price: 100, sortOrder: 0 },
-      { code: 'PATCH-PANEL', name: 'Patch Panel', category: 'Centralization', unitType: 'flat-fee', unitLabel: 'flat fee', price: 50, sortOrder: 1 },
+      { code: 'CAT6-RUN', name: 'Cat6 Cable Run', category: 'Cable Runs', unitType: 'per-run', costUnitType: 'per-foot', unitLabel: 'per run', price: 100, materialCost: 25, laborCost: 40, sortOrder: 0 },
+      { code: 'COAX-RUN', name: 'Coax Cable Run', category: 'Cable Runs', unitType: 'per-run', costUnitType: 'per-foot', unitLabel: 'per run', price: 150, materialCost: 35, laborCost: 50, sortOrder: 1 },
+      { code: 'FIBER-RUN', name: 'Fiber Cable Run', category: 'Cable Runs', unitType: 'per-run', costUnitType: 'per-foot', unitLabel: 'per run', price: 200, materialCost: 60, laborCost: 70, sortOrder: 2 },
+      { code: 'AP-MOUNT', name: 'Access Point Mount', category: 'Services', unitType: 'per-unit', unitLabel: 'per mount', price: 25, materialCost: 5, laborCost: 10, sortOrder: 0 },
+      { code: 'ETH-RELOCATION', name: 'Ethernet Relocation', category: 'Services', unitType: 'per-unit', unitLabel: 'per relocation', price: 20, materialCost: 2, laborCost: 10, sortOrder: 1 },
+      { code: 'MEDIA-PANEL', name: 'Media Panel Install', category: 'Centralization', unitType: 'flat-fee', unitLabel: 'flat fee', price: 100, materialCost: 30, laborCost: 40, sortOrder: 0 },
+      { code: 'PATCH-PANEL', name: 'Patch Panel', category: 'Centralization', unitType: 'flat-fee', unitLabel: 'flat fee', price: 50, materialCost: 20, laborCost: 15, sortOrder: 1 },
       { code: 'LOOSE-TERM', name: 'Loose Termination', category: 'Centralization', unitType: 'flat-fee', unitLabel: 'flat fee', price: 0, sortOrder: 2 },
       { code: 'DEPOSIT-DROPS', name: 'Drops Only Deposit', category: 'Deposits', unitType: 'threshold', unitLabel: 'deposit', price: 20, thresholdAmount: 100, sortOrder: 0 },
-      { code: 'DEPOSIT-WHOLE', name: 'Whole-Home Deposit', category: 'Deposits', unitType: 'flat-fee', unitLabel: 'flat fee', price: 200, sortOrder: 1 }
+      { code: 'DEPOSIT-WHOLE', name: 'Whole-Home Deposit', category: 'Deposits', unitType: 'flat-fee', unitLabel: 'flat fee', price: 200, sortOrder: 1 },
+      { code: 'RJ45-CONNECTOR', name: 'RJ45 Connector', category: 'Equipment', unitType: 'per-unit', unitLabel: 'each', price: 2, materialCost: 0.50, sortOrder: 0 },
+      { code: 'KEYSTONE-JACK', name: 'Keystone Jack', category: 'Equipment', unitType: 'per-unit', unitLabel: 'each', price: 5, materialCost: 2, sortOrder: 1 },
+      { code: 'WALL-PLATE', name: 'Wall Plate', category: 'Equipment', unitType: 'per-unit', unitLabel: 'each', price: 4, materialCost: 1.50, sortOrder: 2 }
     ];
 
     let created = 0;
@@ -1009,6 +1017,33 @@ router.post('/cost-items/seed', async (req, res) => {
           updatedBy: req.admin.username
         });
         created++;
+      }
+    }
+
+    // Pass 2: Wire up BOM references for cable runs
+    const bomMappings = {
+      'CAT6-RUN': [
+        { code: 'RJ45-CONNECTOR', quantity: 2 },
+        { code: 'KEYSTONE-JACK', quantity: 1 },
+        { code: 'WALL-PLATE', quantity: 1 }
+      ]
+    };
+
+    for (const [parentCode, components] of Object.entries(bomMappings)) {
+      const parent = await CostItem.findOne({ code: parentCode });
+      if (parent && (!parent.billOfMaterials || parent.billOfMaterials.length === 0)) {
+        const bomEntries = [];
+        for (const comp of components) {
+          const compItem = await CostItem.findOne({ code: comp.code });
+          if (compItem) {
+            bomEntries.push({ item: compItem._id, quantity: comp.quantity });
+          }
+        }
+        if (bomEntries.length > 0) {
+          parent.billOfMaterials = bomEntries;
+          parent.updatedBy = req.admin.username;
+          await parent.save();
+        }
       }
     }
 
@@ -1030,16 +1065,65 @@ router.post('/cost-items/seed', async (req, res) => {
 });
 
 /**
+ * GET /admin/cost-items/search - Lightweight search for BOM typeahead
+ */
+router.get('/cost-items/search', async (req, res) => {
+  try {
+    const q = req.query.q ? req.query.q.trim() : '';
+    const exclude = req.query.exclude || '';
+
+    if (!q) {
+      return res.json([]);
+    }
+
+    const filter = {
+      isActive: true,
+      $or: [
+        { code: { $regex: q, $options: 'i' } },
+        { name: { $regex: q, $options: 'i' } }
+      ]
+    };
+
+    if (exclude && mongoose.Types.ObjectId.isValid(exclude)) {
+      filter._id = { $ne: exclude };
+    }
+
+    const items = await CostItem.find(filter, '_id code name price')
+      .limit(20)
+      .sort({ code: 1 })
+      .lean();
+
+    res.json(items);
+  } catch (error) {
+    console.error('Cost item search error:', error);
+    res.status(500).json({ error: 'Error searching cost items' });
+  }
+});
+
+/**
  * POST /admin/cost-items - Create a new cost item
  */
 router.post('/cost-items', async (req, res) => {
   try {
-    const { code, name, description, category, unitType, unitLabel, price, cost, thresholdAmount, sortOrder } = req.body;
+    const { code, name, description, category, unitType, costUnitType, unitLabel, price, materialCost, laborCost, thresholdAmount, purchaseUrl, billOfMaterials, sortOrder } = req.body;
 
     if (!code || !name || !category || !unitType || price == null) {
       return res.status(400).json({
         error: 'Missing required fields: code, name, category, unitType, price'
       });
+    }
+
+    // Validate BOM item IDs exist
+    if (billOfMaterials && billOfMaterials.length > 0) {
+      for (const entry of billOfMaterials) {
+        if (!mongoose.Types.ObjectId.isValid(entry.item)) {
+          return res.status(400).json({ error: 'Invalid BOM item ID: ' + entry.item });
+        }
+        const exists = await CostItem.findById(entry.item);
+        if (!exists) {
+          return res.status(400).json({ error: 'BOM item not found: ' + entry.item });
+        }
+      }
     }
 
     const costItem = new CostItem({
@@ -1048,10 +1132,14 @@ router.post('/cost-items', async (req, res) => {
       description,
       category,
       unitType,
+      costUnitType: costUnitType || null,
       unitLabel,
       price,
-      cost,
+      materialCost,
+      laborCost,
       thresholdAmount,
+      purchaseUrl: purchaseUrl || undefined,
+      billOfMaterials: billOfMaterials || [],
       sortOrder: sortOrder || 0,
       createdBy: req.admin.username,
       updatedBy: req.admin.username
@@ -1095,7 +1183,20 @@ router.post('/cost-items', async (req, res) => {
  */
 router.put('/cost-items/:id', async (req, res) => {
   try {
-    const { code, name, description, category, unitType, unitLabel, price, cost, thresholdAmount, sortOrder } = req.body;
+    const { code, name, description, category, unitType, costUnitType, unitLabel, price, materialCost, laborCost, thresholdAmount, purchaseUrl, billOfMaterials, sortOrder } = req.body;
+
+    // Validate BOM item IDs exist
+    if (billOfMaterials && billOfMaterials.length > 0) {
+      for (const entry of billOfMaterials) {
+        if (!mongoose.Types.ObjectId.isValid(entry.item)) {
+          return res.status(400).json({ error: 'Invalid BOM item ID: ' + entry.item });
+        }
+        const exists = await CostItem.findById(entry.item);
+        if (!exists) {
+          return res.status(400).json({ error: 'BOM item not found: ' + entry.item });
+        }
+      }
+    }
 
     const updateData = {
       updatedBy: req.admin.username,
@@ -1107,10 +1208,14 @@ router.put('/cost-items/:id', async (req, res) => {
     if (description !== undefined) updateData.description = description;
     if (category !== undefined) updateData.category = category;
     if (unitType !== undefined) updateData.unitType = unitType;
+    if (costUnitType !== undefined) updateData.costUnitType = costUnitType || null;
     if (unitLabel !== undefined) updateData.unitLabel = unitLabel;
     if (price !== undefined) updateData.price = price;
-    if (cost !== undefined) updateData.cost = cost;
+    if (materialCost !== undefined) updateData.materialCost = materialCost;
+    if (laborCost !== undefined) updateData.laborCost = laborCost;
     if (thresholdAmount !== undefined) updateData.thresholdAmount = thresholdAmount;
+    if (purchaseUrl !== undefined) updateData.purchaseUrl = purchaseUrl || null;
+    if (billOfMaterials !== undefined) updateData.billOfMaterials = billOfMaterials;
     if (sortOrder !== undefined) updateData.sortOrder = sortOrder;
 
     const costItem = await CostItem.findByIdAndUpdate(

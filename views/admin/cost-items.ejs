@@ -110,7 +110,8 @@
                                     <th>Category</th>
                                     <th>Unit Type</th>
                                     <th>Price</th>
-                                    <th>Cost</th>
+                                    <th>Material Cost</th>
+                                    <th>Labor Cost</th>
                                     <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
@@ -123,6 +124,16 @@
                                         </td>
                                         <td>
                                             <strong><%= item.name %></strong>
+                                            <% if (item.purchaseUrl) { %>
+                                                <a href="<%= item.purchaseUrl %>" target="_blank" rel="noopener noreferrer" class="purchase-link-icon" title="Purchase link">
+                                                    <i class="fas fa-external-link-alt"></i>
+                                                </a>
+                                            <% } %>
+                                            <% if (item.billOfMaterials && item.billOfMaterials.length > 0) { %>
+                                                <span class="bom-badge" title="<%= item.billOfMaterials.length %> component(s)">
+                                                    <i class="fas fa-cubes"></i> <%= item.billOfMaterials.length %>
+                                                </span>
+                                            <% } %>
                                             <% if (item.description) { %>
                                                 <br><small style="color: var(--text-muted);"><%= item.description %></small>
                                             <% } %>
@@ -132,7 +143,12 @@
                                                 <%= item.category %>
                                             </span>
                                         </td>
-                                        <td><%= item.unitLabel || item.unitType %></td>
+                                        <td>
+                                            <%= item.unitLabel || item.unitType %>
+                                            <% if (item.costUnitType && item.costUnitType !== item.unitType) { %>
+                                                <br><small style="color: var(--text-muted);">cost: <%= item.costUnitType %></small>
+                                            <% } %>
+                                        </td>
                                         <td>
                                             <span class="amount">$<%= item.price.toFixed(2) %></span>
                                             <% if (item.thresholdAmount) { %>
@@ -140,8 +156,15 @@
                                             <% } %>
                                         </td>
                                         <td>
-                                            <% if (item.cost != null) { %>
-                                                $<%= item.cost.toFixed(2) %>
+                                            <% if (item.materialCost != null) { %>
+                                                $<%= item.materialCost.toFixed(2) %>
+                                            <% } else { %>
+                                                <span style="color: var(--text-muted);">—</span>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <% if (item.laborCost != null) { %>
+                                                $<%= item.laborCost.toFixed(2) %>
                                             <% } else { %>
                                                 <span style="color: var(--text-muted);">—</span>
                                             <% } %>
@@ -153,7 +176,7 @@
                                             </span>
                                         </td>
                                         <td>
-                                            <button class="action-btn edit-btn" data-item='<%- JSON.stringify({ _id: item._id, code: item.code, name: item.name, description: item.description || "", category: item.category, unitType: item.unitType, unitLabel: item.unitLabel || "", price: item.price, cost: item.cost, thresholdAmount: item.thresholdAmount, sortOrder: item.sortOrder }) %>'>
+                                            <button class="action-btn edit-btn" data-item='<%- JSON.stringify({ _id: item._id, code: item.code, name: item.name, description: item.description || "", category: item.category, unitType: item.unitType, costUnitType: item.costUnitType || "", unitLabel: item.unitLabel || "", price: item.price, materialCost: item.materialCost, laborCost: item.laborCost, purchaseUrl: item.purchaseUrl || "", thresholdAmount: item.thresholdAmount, sortOrder: item.sortOrder, billOfMaterials: (item.billOfMaterials || []).map(function(b) { return { item: b.item && b.item._id ? b.item._id : b.item, code: b.item && b.item.code ? b.item.code : "", name: b.item && b.item.name ? b.item.name : "", quantity: b.quantity }; }) }) %>'>
                                                 <i class="fas fa-edit"></i> Edit
                                             </button>
                                             <button class="action-btn warning toggle-btn" data-item-id="<%= item._id %>" data-active="<%= item.isActive %>">
@@ -213,7 +236,7 @@
 
     <!-- Create/Edit Modal -->
     <div id="costItemModal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content modal-wide">
             <div class="modal-header">
                 <h2 id="modalTitle">Add Cost Item</h2>
                 <button class="close" id="closeModal">&times;</button>
@@ -263,20 +286,39 @@
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="itemUnitLabel">Unit Label</label>
-                        <input type="text" id="itemUnitLabel" class="form-input" placeholder="e.g. per run, per mount, flat fee">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label for="itemCostUnitType">Cost Unit Type</label>
+                            <select id="itemCostUnitType" class="form-input">
+                                <option value="">Same as Unit Type</option>
+                                <option value="per-foot">Per Foot</option>
+                                <option value="per-run">Per Run</option>
+                                <option value="per-unit">Per Unit</option>
+                                <option value="flat-fee">Flat Fee</option>
+                                <option value="threshold">Threshold</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="itemUnitLabel">Unit Label</label>
+                            <input type="text" id="itemUnitLabel" class="form-input" placeholder="e.g. per run, per mount, flat fee">
+                        </div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
                         <div class="form-group">
                             <label for="itemPrice">Price ($)</label>
                             <input type="number" id="itemPrice" class="form-input" step="0.01" min="0" required>
                         </div>
 
                         <div class="form-group">
-                            <label for="itemCost">Cost ($)</label>
-                            <input type="number" id="itemCost" class="form-input" step="0.01" min="0" placeholder="Optional">
+                            <label for="itemMaterialCost">Material Cost ($)</label>
+                            <input type="number" id="itemMaterialCost" class="form-input" step="0.01" min="0" placeholder="Optional">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="itemLaborCost">Labor Cost ($)</label>
+                            <input type="number" id="itemLaborCost" class="form-input" step="0.01" min="0" placeholder="Optional">
                         </div>
                     </div>
 
@@ -286,8 +328,23 @@
                     </div>
 
                     <div class="form-group">
+                        <label for="itemPurchaseUrl">Purchase URL</label>
+                        <input type="url" id="itemPurchaseUrl" class="form-input" placeholder="https://example.com/product">
+                    </div>
+
+                    <div class="form-group">
                         <label for="itemSortOrder">Sort Order</label>
                         <input type="number" id="itemSortOrder" class="form-input" value="0" min="0">
+                    </div>
+
+                    <!-- Bill of Materials Section -->
+                    <div class="form-group" id="bomSection">
+                        <label>Bill of Materials</label>
+                        <div id="bomList" class="bom-list"></div>
+                        <div class="bom-search-container">
+                            <input type="text" id="bomSearchInput" class="form-input" placeholder="Search items to add...">
+                            <div id="bomSearchResults" class="bom-search-results"></div>
+                        </div>
                     </div>
 
                     <div class="form-actions">
@@ -307,6 +364,10 @@
             const form = document.getElementById('costItemForm');
             const unitTypeSelect = document.getElementById('itemUnitType');
             const thresholdGroup = document.getElementById('thresholdGroup');
+
+            // BOM state
+            let bomEntries = [];
+            let bomSearchTimeout = null;
 
             // Logout
             document.getElementById('logoutBtn').addEventListener('click', logout);
@@ -366,6 +427,26 @@
                 saveItem();
             });
 
+            // BOM search with debounce
+            document.getElementById('bomSearchInput').addEventListener('input', function() {
+                clearTimeout(bomSearchTimeout);
+                const query = this.value.trim();
+                if (query.length < 1) {
+                    document.getElementById('bomSearchResults').style.display = 'none';
+                    return;
+                }
+                bomSearchTimeout = setTimeout(function() { searchBomItems(query); }, 300);
+            });
+
+            // Close BOM search on outside click
+            document.addEventListener('click', function(e) {
+                var searchResults = document.getElementById('bomSearchResults');
+                var searchInput = document.getElementById('bomSearchInput');
+                if (!searchResults.contains(e.target) && e.target !== searchInput) {
+                    searchResults.style.display = 'none';
+                }
+            });
+
             function openModal(item) {
                 document.getElementById('modalTitle').textContent = item ? 'Edit Cost Item' : 'Add Cost Item';
                 document.getElementById('itemId').value = item ? item._id : '';
@@ -374,14 +455,35 @@
                 document.getElementById('itemDescription').value = item ? item.description : '';
                 document.getElementById('itemCategory').value = item ? item.category : '';
                 document.getElementById('itemUnitType').value = item ? item.unitType : '';
+                document.getElementById('itemCostUnitType').value = item && item.costUnitType ? item.costUnitType : '';
                 document.getElementById('itemUnitLabel').value = item ? item.unitLabel : '';
                 document.getElementById('itemPrice').value = item ? item.price : '';
-                document.getElementById('itemCost').value = item && item.cost != null ? item.cost : '';
+                document.getElementById('itemMaterialCost').value = item && item.materialCost != null ? item.materialCost : '';
+                document.getElementById('itemLaborCost').value = item && item.laborCost != null ? item.laborCost : '';
                 document.getElementById('itemThreshold').value = item && item.thresholdAmount != null ? item.thresholdAmount : '';
+                document.getElementById('itemPurchaseUrl').value = item && item.purchaseUrl ? item.purchaseUrl : '';
                 document.getElementById('itemSortOrder').value = item ? item.sortOrder : 0;
 
                 // Show/hide threshold
                 thresholdGroup.style.display = (item && item.unitType === 'threshold') ? 'block' : 'none';
+
+                // Load BOM entries
+                bomEntries = [];
+                if (item && item.billOfMaterials && item.billOfMaterials.length > 0) {
+                    bomEntries = item.billOfMaterials.map(function(b) {
+                        return {
+                            item: b.item,
+                            code: b.code || '',
+                            name: b.name || '',
+                            quantity: b.quantity
+                        };
+                    });
+                }
+                renderBomList();
+
+                // Clear search
+                document.getElementById('bomSearchInput').value = '';
+                document.getElementById('bomSearchResults').style.display = 'none';
 
                 modal.style.display = 'block';
             }
@@ -389,39 +491,168 @@
             function closeModal() {
                 modal.style.display = 'none';
                 form.reset();
+                bomEntries = [];
+                renderBomList();
+            }
+
+            function renderBomList() {
+                var list = document.getElementById('bomList');
+                if (bomEntries.length === 0) {
+                    list.textContent = '';
+                    var emptyDiv = document.createElement('div');
+                    emptyDiv.className = 'bom-empty';
+                    emptyDiv.textContent = 'No components added';
+                    list.appendChild(emptyDiv);
+                    return;
+                }
+                // Clear existing content
+                list.textContent = '';
+
+                bomEntries.forEach(function(entry, idx) {
+                    var entryDiv = document.createElement('div');
+                    entryDiv.className = 'bom-entry';
+
+                    var infoSpan = document.createElement('span');
+                    infoSpan.className = 'bom-entry-info';
+                    var strong = document.createElement('strong');
+                    strong.textContent = entry.code;
+                    infoSpan.appendChild(strong);
+                    infoSpan.appendChild(document.createTextNode(' \u2014 ' + entry.name));
+                    entryDiv.appendChild(infoSpan);
+
+                    var qtyInput = document.createElement('input');
+                    qtyInput.type = 'number';
+                    qtyInput.className = 'bom-qty-input';
+                    qtyInput.value = entry.quantity;
+                    qtyInput.min = '1';
+                    qtyInput.setAttribute('data-idx', idx);
+                    qtyInput.addEventListener('change', function() {
+                        var i = parseInt(this.getAttribute('data-idx'));
+                        var val = parseInt(this.value);
+                        if (val >= 1) bomEntries[i].quantity = val;
+                        else this.value = bomEntries[i].quantity;
+                    });
+                    entryDiv.appendChild(qtyInput);
+
+                    var removeBtn = document.createElement('button');
+                    removeBtn.type = 'button';
+                    removeBtn.className = 'bom-remove-btn';
+                    removeBtn.title = 'Remove';
+                    removeBtn.setAttribute('data-idx', idx);
+                    var icon = document.createElement('i');
+                    icon.className = 'fas fa-times';
+                    removeBtn.appendChild(icon);
+                    removeBtn.addEventListener('click', function() {
+                        var i = parseInt(this.getAttribute('data-idx'));
+                        bomEntries.splice(i, 1);
+                        renderBomList();
+                    });
+                    entryDiv.appendChild(removeBtn);
+
+                    list.appendChild(entryDiv);
+                });
+            }
+
+            async function searchBomItems(query) {
+                var currentId = document.getElementById('itemId').value;
+                var url = '/admin/cost-items/search?q=' + encodeURIComponent(query);
+                if (currentId) url += '&exclude=' + currentId;
+
+                try {
+                    var response = await fetch(url, { credentials: 'include' });
+                    var items = await response.json();
+
+                    // Filter out already-added items
+                    var addedIds = {};
+                    bomEntries.forEach(function(e) { addedIds[e.item] = true; });
+                    var filtered = items.filter(function(i) { return !addedIds[i._id]; });
+
+                    var resultsDiv = document.getElementById('bomSearchResults');
+                    // Clear existing
+                    resultsDiv.textContent = '';
+
+                    if (filtered.length === 0) {
+                        var emptyDiv = document.createElement('div');
+                        emptyDiv.className = 'bom-search-empty';
+                        emptyDiv.textContent = 'No matching items';
+                        resultsDiv.appendChild(emptyDiv);
+                    } else {
+                        filtered.forEach(function(i) {
+                            var itemDiv = document.createElement('div');
+                            itemDiv.className = 'bom-search-item';
+                            itemDiv.setAttribute('data-id', i._id);
+                            itemDiv.setAttribute('data-code', i.code);
+                            itemDiv.setAttribute('data-name', i.name);
+
+                            var strong = document.createElement('strong');
+                            strong.textContent = i.code;
+                            itemDiv.appendChild(strong);
+                            itemDiv.appendChild(document.createTextNode(' \u2014 ' + i.name + ' '));
+                            var priceSpan = document.createElement('span');
+                            priceSpan.style.color = 'var(--text-muted)';
+                            priceSpan.textContent = '$' + (i.price != null ? i.price.toFixed(2) : '0.00');
+                            itemDiv.appendChild(priceSpan);
+
+                            itemDiv.addEventListener('click', function() {
+                                bomEntries.push({
+                                    item: this.getAttribute('data-id'),
+                                    code: this.getAttribute('data-code'),
+                                    name: this.getAttribute('data-name'),
+                                    quantity: 1
+                                });
+                                renderBomList();
+                                document.getElementById('bomSearchInput').value = '';
+                                resultsDiv.style.display = 'none';
+                            });
+
+                            resultsDiv.appendChild(itemDiv);
+                        });
+                    }
+                    resultsDiv.style.display = 'block';
+                } catch (error) {
+                    console.error('BOM search error:', error);
+                }
             }
 
             async function saveItem() {
-                const id = document.getElementById('itemId').value;
-                const data = {
+                var id = document.getElementById('itemId').value;
+                var data = {
                     code: document.getElementById('itemCode').value.trim(),
                     name: document.getElementById('itemName').value.trim(),
                     description: document.getElementById('itemDescription').value.trim(),
                     category: document.getElementById('itemCategory').value,
                     unitType: document.getElementById('itemUnitType').value,
+                    costUnitType: document.getElementById('itemCostUnitType').value || '',
                     unitLabel: document.getElementById('itemUnitLabel').value.trim(),
                     price: parseFloat(document.getElementById('itemPrice').value),
-                    sortOrder: parseInt(document.getElementById('itemSortOrder').value) || 0
+                    sortOrder: parseInt(document.getElementById('itemSortOrder').value) || 0,
+                    billOfMaterials: bomEntries.map(function(e) { return { item: e.item, quantity: e.quantity }; })
                 };
 
-                const costVal = document.getElementById('itemCost').value;
-                if (costVal !== '') data.cost = parseFloat(costVal);
+                var materialVal = document.getElementById('itemMaterialCost').value;
+                if (materialVal !== '') data.materialCost = parseFloat(materialVal);
 
-                const thresholdVal = document.getElementById('itemThreshold').value;
+                var laborVal = document.getElementById('itemLaborCost').value;
+                if (laborVal !== '') data.laborCost = parseFloat(laborVal);
+
+                var thresholdVal = document.getElementById('itemThreshold').value;
                 if (thresholdVal !== '') data.thresholdAmount = parseFloat(thresholdVal);
 
-                try {
-                    const url = id ? '/admin/cost-items/' + id : '/admin/cost-items';
-                    const method = id ? 'PUT' : 'POST';
+                var purchaseUrl = document.getElementById('itemPurchaseUrl').value.trim();
+                data.purchaseUrl = purchaseUrl;
 
-                    const response = await fetch(url, {
+                try {
+                    var url = id ? '/admin/cost-items/' + id : '/admin/cost-items';
+                    var method = id ? 'PUT' : 'POST';
+
+                    var response = await fetch(url, {
                         method: method,
                         headers: { 'Content-Type': 'application/json' },
                         credentials: 'include',
                         body: JSON.stringify(data)
                     });
 
-                    const result = await response.json();
+                    var result = await response.json();
 
                     if (result.success) {
                         location.reload();
@@ -435,16 +666,16 @@
             }
 
             async function toggleItem(id, currentActive) {
-                const action = currentActive ? 'disable' : 'enable';
+                var action = currentActive ? 'disable' : 'enable';
                 if (!confirm('Are you sure you want to ' + action + ' this cost item?')) return;
 
                 try {
-                    const response = await fetch('/admin/cost-items/' + id + '/toggle', {
+                    var response = await fetch('/admin/cost-items/' + id + '/toggle', {
                         method: 'PUT',
                         credentials: 'include'
                     });
 
-                    const data = await response.json();
+                    var data = await response.json();
 
                     if (data.success) {
                         location.reload();
@@ -461,12 +692,12 @@
                 if (!confirm('Are you sure you want to delete ' + code + '? This action cannot be undone.')) return;
 
                 try {
-                    const response = await fetch('/admin/cost-items/' + id, {
+                    var response = await fetch('/admin/cost-items/' + id, {
                         method: 'DELETE',
                         credentials: 'include'
                     });
 
-                    const data = await response.json();
+                    var data = await response.json();
 
                     if (data.success) {
                         location.reload();
@@ -483,12 +714,12 @@
                 if (!confirm('This will add default cost items based on current hardcoded pricing. Existing items with the same code will be skipped. Continue?')) return;
 
                 try {
-                    const response = await fetch('/admin/cost-items/seed', {
+                    var response = await fetch('/admin/cost-items/seed', {
                         method: 'POST',
                         credentials: 'include'
                     });
 
-                    const data = await response.json();
+                    var data = await response.json();
 
                     if (data.success) {
                         alert('Seeded ' + data.created + ' items. ' + data.skipped + ' already existed.');
@@ -505,7 +736,7 @@
             async function logout() {
                 if (confirm('Are you sure you want to logout?')) {
                     try {
-                        const response = await fetch('/auth/logout', {
+                        var response = await fetch('/auth/logout', {
                             method: 'POST',
                             credentials: 'include'
                         });
