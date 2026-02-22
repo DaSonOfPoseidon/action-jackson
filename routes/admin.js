@@ -55,7 +55,7 @@ router.get('/dashboard', async (req, res) => {
       Quote.find().sort({ createdAt: -1 }).limit(5)
         .select('customer.name serviceType packageOption pricing.totalCost pricing.depositAmount createdAt status'),
       Schedule.find().sort({ createdAt: -1 }).limit(5)
-        .select('name date service status createdAt'),
+        .select('name date time status createdAt'),
       Invoice.find().sort({ createdAt: -1 }).limit(5)
         .select('invoiceNumber customer.name finalAmount status createdAt')
     ]);

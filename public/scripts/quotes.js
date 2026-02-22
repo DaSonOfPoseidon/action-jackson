@@ -193,6 +193,7 @@ function initializeStepNavigation() {
 
 function initializeServiceTypeSelection() {
   const serviceButtons = document.querySelectorAll('.service-select-btn');
+  console.log('[quotes] Service buttons found:', serviceButtons.length);
   serviceButtons.forEach(btn => {
     btn.addEventListener('click', (e) => {
       const type = btn.dataset.service;

@@ -95,11 +95,11 @@
                             <% recentActivity.schedules.forEach(schedule => { %>
                                 <div class="activity-item">
                                     <div class="activity-info">
-                                        <h4><%= schedule.customerName %></h4>
-                                        <p><%= schedule.service %></p>
+                                        <h4><%= schedule.name %></h4>
+                                        <p><%= schedule.time || '' %></p>
                                     </div>
                                     <div class="activity-meta">
-                                        <div><%= schedule.scheduledDate.toLocaleDateString() %></div>
+                                        <div><%= schedule.date ? new Date(schedule.date).toLocaleDateString() : 'N/A' %></div>
                                         <div class="status-badge status-<%= schedule.status || 'pending' %>">
                                             <%= (schedule.status || 'pending').toUpperCase() %>
                                         </div>
