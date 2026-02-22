@@ -1,65 +1,101 @@
 const mongoose = require('mongoose');
 
 const QuoteSchema = new mongoose.Schema({
-  quoteNumber: { 
-    type: String, 
-    required: true, 
+  quoteNumber: {
+    type: String,
+    required: true,
     unique: true,
-    index: true 
+    index: true
   },
   customer: {
     name:  { type: String, required: true },
-    email: { type: String, required: true }
+    email: { type: String, required: true },
+    phone: { type: String }
   },
-  packageOption: { 
-    type: String, 
-    required: true,
+
+  // New service type field (required for new quotes)
+  serviceType: {
+    type: String,
+    enum: ['Drops Only', 'Whole-Home']
+  },
+
+  // Legacy field - kept for backward compatibility with old quotes
+  packageOption: {
+    type: String,
     enum: ['Basic', 'Premium']
   },
-  includeSurvey: { type: Boolean, default: false },
-  speedTier: { 
-    type: String,
-    enum: ['1 Gig', '5 Gig', '10 Gig']
-  },
+
   discount: { type: Number, default: 0 },
 
   runs: {
     coax: { type: Number, default: 0 },
-    cat6: { type: Number, default: 0 }
+    cat6: { type: Number, default: 0 },
+    fiber: { type: Number, default: 0 }
   },
 
   services: {
-    deviceMount:     { type: Number, default: 0 },
-    clientDevice:    { type: Number, default: 0 },
-    serverDevice:    { type: Number, default: 0 },
-    mediaPanel:      { type: Number, default: 0 },
-    internalCameras: { type: Number, default: 0 },
-    externalCameras: { type: Number, default: 0 },
-    doorbellCameras: { type: Number, default: 0 }
+    mediaPanel:    { type: Number, default: 0 },
+    apMount:       { type: Number, default: 0 },
+    ethRelocation: { type: Number, default: 0 }
   },
 
-  equipment: [{
-    sku: { type: String, required: true },
-    name: { type: String, required: true },
-    price: { type: Number, required: true },
-    quantity: { type: Number, required: true, min: 1 }
-  }],
+  centralization: {
+    type: String,
+    enum: ['Media Panel', 'Loose Termination', 'Patch Panel']
+  },
 
-  // Package-specific pricing fields
+  // Whole-Home specific fields
+  wholeHome: {
+    scope: {
+      networking: { type: Boolean, default: false },
+      security:   { type: Boolean, default: false },
+      voip:       { type: Boolean, default: false }
+    },
+    internetSpeed:        { type: String },
+    hasOwnEquipment:      { type: Boolean },
+    equipmentDescription: { type: String, maxlength: 2000 },
+    networkingBrand: {
+      type: String,
+      enum: ['Omada', 'UniFi', 'Ruckus', 'No Preference']
+    },
+    securityBrand: {
+      type: String,
+      enum: ['UniFi', 'Reolink', 'No Preference']
+    },
+    surveyPreference: {
+      type: String,
+      enum: ['before-install', 'day-of']
+    },
+    notes: { type: String, maxlength: 2000 }
+  },
+
+  // Home info (both paths)
+  homeInfo: {
+    homeAge: {
+      type: String,
+      enum: ['Pre-1960', '1960-1980', '1980-2000', '2000-2020', '2020+']
+    },
+    stories: { type: Number, min: 1, max: 4 },
+    atticAccess: {
+      type: String,
+      enum: ['Walk-in attic', 'Crawl space', 'Scuttle hole', 'No attic access']
+    },
+    hasMediaPanel:            { type: Boolean },
+    mediaPanelLocation:       { type: String },
+    hasCrawlspaceOrBasement:  { type: Boolean },
+    liabilityAcknowledged:    { type: Boolean }
+  },
+
+  // Pricing
   pricing: {
-    // For Basic package
-    totalCost: { type: Number },
+    totalCost:       { type: Number },
     depositRequired: { type: Number },
-    
-    // For Premium package  
-    estimatedLaborHours: { type: Number },
-    laborRate: { type: Number, default: 50 },
-    estimatedTotal: { type: Number },
-    
-    // Survey and equipment pricing
-    surveyFee: { type: Number, default: 0 },
-    equipmentTotal: { type: Number, default: 0 }
+    depositAmount:   { type: Number }
   },
+
+  // Legacy pricing fields (kept for old quotes)
+  // estimatedLaborHours, laborRate, estimatedTotal, surveyFee, equipmentTotal
+  // are no longer used for new quotes but may exist on old documents
 
   // File attachments
   attachments: [{
@@ -75,7 +111,10 @@ const QuoteSchema = new mongoose.Schema({
   },
   updatedBy: { type: String },
   adminNotes: { type: String, maxlength: 1000 },
-  
+
+  // Admin final quote amount for Whole-Home quotes
+  finalQuoteAmount: { type: Number },
+
   // Invoice reference (when quote is converted to invoice)
   invoiceId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -86,6 +125,14 @@ const QuoteSchema = new mongoose.Schema({
   userAgent: { type: String },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
+});
+
+// Validate that new quotes have serviceType OR old quotes have packageOption
+QuoteSchema.pre('validate', function(next) {
+  if (!this.serviceType && !this.packageOption) {
+    this.invalidate('serviceType', 'Either serviceType or packageOption is required');
+  }
+  next();
 });
 
 // Generate unique 8-digit quote number
@@ -99,7 +146,7 @@ QuoteSchema.statics.generateQuoteNumber = async function() {
     // Generate 8-digit number (10000000 to 99999999)
     quoteNumber = Math.floor(Math.random() * 90000000) + 10000000;
     quoteNumber = quoteNumber.toString();
-    
+
     // Check if this number already exists
     const existing = await this.findOne({ quoteNumber });
     if (!existing) {
@@ -120,5 +167,12 @@ QuoteSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
   next();
 });
+
+// Helper to get display-friendly service type (handles legacy quotes)
+QuoteSchema.methods.getDisplayServiceType = function() {
+  if (this.serviceType) return this.serviceType;
+  if (this.packageOption) return `${this.packageOption} (Legacy)`;
+  return 'Unknown';
+};
 
 module.exports = mongoose.model('Quote', QuoteSchema);

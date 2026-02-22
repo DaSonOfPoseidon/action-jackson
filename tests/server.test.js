@@ -70,7 +70,7 @@ describe('Server Middleware and Routes', () => {
     test('GET /quotes should render quotes page', async () => {
       const response = await request(app).get('/quotes');
       expect(response.status).toBe(200);
-      expect(response.text).toContain('Select Your Package');
+      expect(response.text).toContain('Pick Your Package');
     });
 
     test('GET /about should render about page', async () => {

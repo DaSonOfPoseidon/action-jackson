@@ -53,7 +53,7 @@ router.get('/dashboard', async (req, res) => {
     // Get recent activity
     const [recentQuotes, recentSchedules, recentInvoices] = await Promise.all([
       Quote.find().sort({ createdAt: -1 }).limit(5)
-        .select('customer.name packageOption pricing.totalCost createdAt status'),
+        .select('customer.name serviceType packageOption pricing.totalCost pricing.depositAmount createdAt status'),
       Schedule.find().sort({ createdAt: -1 }).limit(5)
         .select('name date service status createdAt'),
       Invoice.find().sort({ createdAt: -1 }).limit(5)
@@ -320,68 +320,61 @@ router.get('/schedule/:id', async (req, res) => {
 router.put('/quotes/:id', async (req, res) => {
   try {
     const {
-      packageOption,
-      speedTier,
-      includeSurvey,
+      serviceType,
       discount,
       runs,
       services,
-      pricing,
-      adminNotes
+      adminNotes,
+      finalQuoteAmount,
+      centralization
     } = req.body;
 
-    // Validate package option
-    if (!['Basic', 'Premium'].includes(packageOption)) {
+    // Validate service type if provided (may be legacy quote without it)
+    if (serviceType && !['Drops Only', 'Whole-Home'].includes(serviceType)) {
       return res.status(400).json({
-        error: 'Invalid package option'
-      });
-    }
-
-    // Validate speed tier if provided
-    if (speedTier && !['1 Gig', '5 Gig', '10 Gig'].includes(speedTier)) {
-      return res.status(400).json({
-        error: 'Invalid speed tier'
+        error: 'Invalid service type'
       });
     }
 
     // Build update data
     const updateData = {
-      packageOption,
-      includeSurvey: Boolean(includeSurvey),
       discount: Math.max(0, Math.min(100, parseInt(discount) || 0)),
       runs: {
         coax: Math.max(0, parseInt(runs?.coax) || 0),
-        cat6: Math.max(0, parseInt(runs?.cat6) || 0)
+        cat6: Math.max(0, parseInt(runs?.cat6) || 0),
+        fiber: Math.max(0, parseInt(runs?.fiber) || 0)
       },
       services: {
-        deviceMount: Math.max(0, parseInt(services?.deviceMount) || 0),
-        networkSetup: Math.max(0, parseInt(services?.networkSetup) || 0),
-        mediaPanel: Math.max(0, parseInt(services?.mediaPanel) || 0)
+        mediaPanel: Math.max(0, parseInt(services?.mediaPanel) || 0),
+        apMount: Math.max(0, parseInt(services?.apMount) || 0),
+        ethRelocation: Math.max(0, parseInt(services?.ethRelocation) || 0)
       },
-      pricing: {},
       adminNotes: adminNotes || '',
       updatedAt: new Date(),
       updatedBy: req.admin.username
     };
 
-    // Only set speedTier if it has a valid value
-    if (speedTier && ['1 Gig', '5 Gig', '10 Gig'].includes(speedTier)) {
-      updateData.speedTier = speedTier;
-    } else {
-      // Explicitly unset the speedTier field if it's empty/null
-      updateData.$unset = { speedTier: 1 };
+    if (serviceType) {
+      updateData.serviceType = serviceType;
     }
 
-    // Calculate pricing based on package type and services
+    if (centralization && ['Media Panel', 'Loose Termination', 'Patch Panel'].includes(centralization)) {
+      updateData.centralization = centralization;
+    }
+
+    if (finalQuoteAmount !== undefined) {
+      updateData.finalQuoteAmount = parseFloat(finalQuoteAmount) || 0;
+    }
+
+    // Calculate pricing
     const calculatedPricing = calculateQuotePricing({
-      packageOption,
+      serviceType: serviceType || req.body.packageOption || 'Drops Only',
       runs: updateData.runs,
       services: updateData.services,
-      includeSurvey: updateData.includeSurvey,
       discount: updateData.discount,
-      laborRate: req.body.laborRate || 50
+      centralization: updateData.centralization || centralization || null
     });
-    
+
     updateData.pricing = calculatedPricing;
 
     const quote = await Quote.findByIdAndUpdate(
@@ -402,7 +395,7 @@ router.put('/quotes/:id', async (req, res) => {
       success: true,
       quote: {
         id: quote._id,
-        packageOption: quote.packageOption,
+        serviceType: quote.serviceType,
         pricing: quote.pricing,
         updatedAt: quote.updatedAt
       }
@@ -886,73 +879,60 @@ router.delete('/invoices/:id', async (req, res) => {
  */
 function calculateQuotePricing(options) {
   const {
-    packageOption,
-    runs = { coax: 0, cat6: 0 },
-    services = { deviceMount: 0, networkSetup: 0, mediaPanel: 0 },
-    includeSurvey = false,
+    serviceType,
+    runs = { coax: 0, cat6: 0, fiber: 0 },
+    services = { mediaPanel: 0, apMount: 0, ethRelocation: 0 },
     discount = 0,
-    laborRate = 50
+    centralization = null,
+    hasExistingPanel = false
   } = options;
 
-  // Service pricing constants
-  const SERVICE_PRICING = {
-    deviceMount: 10,    // $10 per device mount
-    networkSetup: 20,   // $20 per network setup  
-    mediaPanel: 50,     // $50 per media panel
-    coaxRun: 50,        // $50 per coax run
-    cat6Run: 75         // $75 per cat6 run
+  const ADDON_PRICING = {
+    apMount: 25,         // $25 per AP mount
+    ethRelocation: 20,   // $20 per ethernet relocation
+    costPerRun: { cat6: 100, coax: 150, fiber: 200 }
   };
 
-  const LABOR_RATES = {
-    deviceMount: 0.25,  // 0.25 hours per device mount
-    networkSetup: 0.5,  // 0.5 hours per network setup
-    mediaPanel: 1.0,    // 1.0 hour per media panel
-    coaxRun: 0.5,       // 0.5 hours per coax run
-    cat6Run: 0.75       // 0.75 hours per cat6 run
+  const CENTRALIZATION_PRICING = {
+    'Media Panel': 100,
+    'Patch Panel': 50,
+    'Loose Termination': 0
   };
 
-  const surveyFee = includeSurvey ? 100 : 0;
+  if (serviceType === 'Drops Only' || serviceType === 'Basic') {
+    const runsCost = (runs.cat6 || 0) * ADDON_PRICING.costPerRun.cat6 +
+                     (runs.coax || 0) * ADDON_PRICING.costPerRun.coax +
+                     (runs.fiber || 0) * ADDON_PRICING.costPerRun.fiber;
+    const servicesCost =
+      (services.apMount || 0) * ADDON_PRICING.apMount +
+      (services.ethRelocation || 0) * ADDON_PRICING.ethRelocation;
 
-  if (packageOption === 'Basic') {
-    // Calculate fixed pricing based on services
-    const servicesCost = 
-      (runs.coax * SERVICE_PRICING.coaxRun) +
-      (runs.cat6 * SERVICE_PRICING.cat6Run) +
-      (services.deviceMount * SERVICE_PRICING.deviceMount) +
-      (services.networkSetup * SERVICE_PRICING.networkSetup) +
-      (services.mediaPanel * SERVICE_PRICING.mediaPanel);
-    
-    const subtotal = servicesCost + surveyFee;
+    // Centralization cost (new quotes) or legacy mediaPanel cost
+    let centralizationCost = 0;
+    if (centralization) {
+      if (centralization === 'Media Panel') {
+        centralizationCost = hasExistingPanel ? 0 : CENTRALIZATION_PRICING['Media Panel'];
+      } else {
+        centralizationCost = CENTRALIZATION_PRICING[centralization] || 0;
+      }
+    } else {
+      // Legacy fallback: use services.mediaPanel quantity
+      centralizationCost = (services.mediaPanel || 0) * 100;
+    }
+
+    const subtotal = runsCost + servicesCost + centralizationCost;
     const discountAmount = subtotal * (discount / 100);
-    const totalCost = Math.max(0, subtotal - discountAmount);
-    const depositRequired = Math.round(totalCost * 0.3); // 30% deposit
-    
+    const totalCost = Math.max(0, Math.round((subtotal - discountAmount) * 100) / 100);
+    const depositRequired = totalCost > 100 ? 20 : 0;
+
     return {
       totalCost,
-      depositRequired,
-      surveyFee,
-      equipmentTotal: 0 // Will be calculated separately if equipment is selected
+      depositRequired
     };
   } else {
-    // Premium package - calculate labor hours and pricing
-    const laborHours = 
-      (runs.coax * LABOR_RATES.coaxRun) +
-      (runs.cat6 * LABOR_RATES.cat6Run) +
-      (services.deviceMount * LABOR_RATES.deviceMount) +
-      (services.networkSetup * LABOR_RATES.networkSetup) +
-      (services.mediaPanel * LABOR_RATES.mediaPanel);
-    
-    const laborCost = laborHours * laborRate;
-    const subtotal = laborCost + surveyFee;
-    const discountAmount = subtotal * (discount / 100);
-    const estimatedTotal = Math.max(0, subtotal - discountAmount);
-    
+    // Whole-Home: deposit-based pricing
     return {
-      estimatedLaborHours: Math.round(laborHours * 10) / 10, // Round to 1 decimal
-      laborRate,
-      estimatedTotal,
-      surveyFee,
-      equipmentTotal: 0 // Will be calculated separately if equipment is selected
+      depositAmount: 200
     };
   }
 }

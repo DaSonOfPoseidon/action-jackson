@@ -10,7 +10,6 @@ const validator = require('validator');
 const getClientIP = req => {
   const forwarded = req.headers['x-forwarded-for'];
   if (forwarded) {
-    // Take the first IP from the forwarded list
     return forwarded.split(',')[0].trim();
   }
   return req.socket.remoteAddress || null;
@@ -18,28 +17,26 @@ const getClientIP = req => {
 
 // Rate limiting for quote creation
 const quoteRateLimit = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 3, // limit each IP to 3 quote requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 3,
   message: {
     error: 'Too many quote requests from this IP, please try again in 15 minutes.'
   },
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => {
-    // Skip rate limiting for test and development environments
     return process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development';
   }
 });
 
 // Stricter rate limiting for calculate endpoint
 const calculateRateLimit = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minute
-  max: 30, // limit each IP to 30 calculation requests per minute
+  windowMs: 1 * 60 * 1000,
+  max: 30,
   message: {
     error: 'Too many calculation requests, please slow down.'
   },
   skip: (req) => {
-    // Skip rate limiting for test and development environments
     return process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development';
   }
 });
@@ -50,148 +47,119 @@ const sanitizeString = (str) => {
   return validator.escape(validator.trim(str));
 };
 
-// Email domain validation (basic business email check)
+// Email domain validation
 const isValidBusinessEmail = (email) => {
   if (!validator.isEmail(email)) return false;
-  
-  // Block common disposable email domains
+
   const disposableDomains = [
     '10minutemail.com', 'mailinator.com', 'guerrillamail.com',
     'tempmail.org', 'temp-mail.org', '0-mail.com'
   ];
-  
+
   const domain = email.split('@')[1]?.toLowerCase();
-  
-  // Allow example.com for testing
+
   if (process.env.NODE_ENV === 'test' && domain === 'example.com') {
     return true;
   }
-  
+
   return !disposableDomains.includes(domain);
 };
 
-// Package configuration
-const packageConfig = {
-  Basic: {
-    laborPerRun: 50,
-    installFeePerRun: 50,
+// Service configuration
+const serviceConfig = {
+  'Drops Only': {
+    costPerRun: { cat6: 100, coax: 150, fiber: 200 },
     depositThreshold: 100,
     depositAmount: 20
   },
-  Premium: {
-    laborHourlyRate: 50,
-    estimatedLaborHours: 3,
-    installHours: 2
-  },
-  Survey: {
-    fee: 100,
-    description: "≈2 hrs due up front, applied as credit to install costs"
+  'Whole-Home': {
+    depositAmount: 200
   }
 };
 
-// Calculate pricing based on package
-const calculatePricing = (packageOption, runs, services, includeSurvey = false, equipment = [], discount = 0) => {
-  const config = packageConfig[packageOption];
-  let pricing = {};
-
-  // Calculate equipment total
-  const equipmentTotal = equipment.reduce((total, item) => {
-    return total + (item.price * item.quantity);
-  }, 0);
-
-  if (packageOption === 'Basic') {
-    const totalRuns = (runs.coax || 0) + (runs.cat6 || 0);
-    const runsCost = totalRuns * (config.laborPerRun + config.installFeePerRun);
-    const servicesCost = (services.deviceMount || 0) * 10 + 
-                        (services.clientDevice || 0) * 10 + 
-                        (services.serverDevice || 0) * 50 + 
-                        (services.mediaPanel || 0) * 50 +
-                        (services.internalCameras || 0) * 80 + 
-                        (services.externalCameras || 0) * 100 + 
-                        (services.doorbellCameras || 0) * 150;
-    
-    const subtotal = runsCost + servicesCost;
-    const totalCost = subtotal * (1 - discount / 100);
-    
-    // If survey is included, no basic deposit required - just survey fee
-    const depositRequired = includeSurvey 
-      ? 0 
-      : (totalCost > config.depositThreshold ? config.depositAmount : 0);
-    
-    pricing = {
-      totalCost: Math.round(totalCost * 100) / 100,
-      depositRequired,
-      surveyFee: includeSurvey ? packageConfig.Survey.fee : 0,
-      equipmentTotal: Math.round(equipmentTotal * 100) / 100
-    };
-  } else if (packageOption === 'Premium') {
-    const totalRuns = (runs.coax || 0) + (runs.cat6 || 0);
-    const baseHours = config.estimatedLaborHours + (totalRuns * 0.5); // 0.5hr per run
-    const installHours = config.installHours;
-    const totalHours = baseHours + installHours;
-    
-    const laborCost = totalHours * config.laborHourlyRate;
-    const servicesCost = (services.deviceMount || 0) * 10 + 
-                        (services.clientDevice || 0) * 10 + 
-                        (services.serverDevice || 0) * 50 + 
-                        (services.mediaPanel || 0) * 50 +
-                        (services.internalCameras || 0) * 80 + 
-                        (services.externalCameras || 0) * 100 + 
-                        (services.doorbellCameras || 0) * 150;
-    
-    const subtotal = laborCost + servicesCost;
-    const estimatedTotal = subtotal * (1 - discount / 100);
-    
-    pricing = {
-      estimatedLaborHours: Math.round(totalHours * 100) / 100,
-      laborRate: config.laborHourlyRate,
-      estimatedTotal: Math.round(estimatedTotal * 100) / 100,
-      surveyFee: includeSurvey ? packageConfig.Survey.fee : 0,
-      equipmentTotal: Math.round(equipmentTotal * 100) / 100
-    };
-  }
-
-  return pricing;
+// Add-on service pricing
+const addonPricing = {
+  apMount: 25,         // $25 per AP mount
+  ethRelocation: 20    // $20 per ethernet relocation
 };
 
-// GET route for real-time calculation
+// Centralization pricing
+const centralizationPricing = {
+  'Media Panel': 100,      // $100 if no existing panel
+  'Patch Panel': 50,       // $50 flat fee
+  'Loose Termination': 0   // Free
+};
+
+// Calculate pricing for Drops Only quotes
+const calculateDropsOnlyPricing = (runs, services, discount = 0, centralization = null) => {
+  const costs = serviceConfig['Drops Only'].costPerRun;
+  const runsCost = (runs.cat6 || 0) * costs.cat6 +
+                   (runs.coax || 0) * costs.coax +
+                   (runs.fiber || 0) * costs.fiber;
+
+  const servicesCost =
+    (services.apMount || 0) * addonPricing.apMount +
+    (services.ethRelocation || 0) * addonPricing.ethRelocation;
+
+  // Centralization cost
+  let centralizationCost = 0;
+  if (centralization && centralization.type) {
+    if (centralization.type === 'Media Panel') {
+      centralizationCost = centralization.hasExistingPanel ? 0 : centralizationPricing['Media Panel'];
+    } else {
+      centralizationCost = centralizationPricing[centralization.type] || 0;
+    }
+  }
+
+  const subtotal = runsCost + servicesCost + centralizationCost;
+  const totalCost = Math.round(subtotal * (1 - discount / 100) * 100) / 100;
+
+  const config = serviceConfig['Drops Only'];
+  const depositRequired = totalCost > config.depositThreshold ? config.depositAmount : 0;
+
+  return {
+    totalCost,
+    depositRequired
+  };
+};
+
+// GET route for real-time calculation (Drops Only only)
 router.get('/calculate', calculateRateLimit, (req, res) => {
-  const { packageOption, includeSurvey, discount } = req.query;
+  const { serviceType, discount } = req.query;
 
-  if (!packageOption || !['Basic', 'Premium'].includes(packageOption)) {
-    return res.status(400).json({ error: 'Invalid package option.' });
+  if (serviceType !== 'Drops Only') {
+    return res.status(400).json({ error: 'Calculation only available for Drops Only quotes.' });
   }
 
   try {
-    // Express automatically parses nested query parameters
     const runsData = {
       coax: parseInt(req.query.runs?.coax || '0') || 0,
-      cat6: parseInt(req.query.runs?.cat6 || '0') || 0
+      cat6: parseInt(req.query.runs?.cat6 || '0') || 0,
+      fiber: parseInt(req.query.runs?.fiber || '0') || 0
     };
 
     const servicesData = {
-      deviceMount: parseInt(req.query.services?.deviceMount || '0') || 0,
-      clientDevice: parseInt(req.query.services?.clientDevice || '0') || 0,
-      serverDevice: parseInt(req.query.services?.serverDevice || '0') || 0,
-      mediaPanel: parseInt(req.query.services?.mediaPanel || '0') || 0,
-      internalCameras: parseInt(req.query.services?.internalCameras || '0') || 0,
-      externalCameras: parseInt(req.query.services?.externalCameras || '0') || 0,
-      doorbellCameras: parseInt(req.query.services?.doorbellCameras || '0') || 0
+      apMount: parseInt(req.query.services?.apMount || '0') || 0,
+      ethRelocation: parseInt(req.query.services?.ethRelocation || '0') || 0
     };
 
-    // Handle equipment total from query (for real-time calculation)
-    const equipmentTotal = parseFloat(req.query.equipmentTotal || '0') || 0;
-    const equipmentData = equipmentTotal > 0 ? [{ price: equipmentTotal, quantity: 1 }] : [];
+    // Parse centralization params
+    let centralizationData = null;
+    if (req.query.centralization?.type) {
+      centralizationData = {
+        type: req.query.centralization.type,
+        hasExistingPanel: req.query.centralization.hasExistingPanel === 'true'
+      };
+    }
 
-    const includesSurvey = includeSurvey === 'true';
-    const pricing = calculatePricing(packageOption, runsData, servicesData, includesSurvey, equipmentData, parseInt(discount) || 0);
-    
+    const pricing = calculateDropsOnlyPricing(runsData, servicesData, parseInt(discount) || 0, centralizationData);
+
     res.json({
-      packageOption,
-      includeSurvey: includesSurvey,
+      serviceType,
       pricing,
-      config: packageConfig[packageOption],
-      surveyConfig: packageConfig.Survey
+      config: serviceConfig['Drops Only'],
+      addonPricing,
+      centralizationPricing
     });
   } catch (err) {
     console.error('Calculate error:', err);
@@ -217,9 +185,9 @@ const validateQuote = [
       }
       return true;
     }),
-  body('packageOption')
-    .isIn(['Basic', 'Premium'])
-    .withMessage('Invalid package option'),
+  body('serviceType')
+    .isIn(['Drops Only', 'Whole-Home'])
+    .withMessage('Invalid service type'),
   body('discount')
     .optional()
     .isInt({ min: 0, max: 100 })
@@ -232,42 +200,42 @@ const validateQuote = [
     .optional()
     .isInt({ min: 0, max: 50 })
     .withMessage('Cat6 runs must be between 0 and 50'),
-  body('services.deviceMount')
+  body('runs.fiber')
+    .optional()
+    .isInt({ min: 0, max: 50 })
+    .withMessage('Fiber runs must be between 0 and 50'),
+  body('centralization')
+    .if(body('serviceType').equals('Drops Only'))
+    .isIn(['Media Panel', 'Loose Termination', 'Patch Panel'])
+    .withMessage('Invalid centralization selection'),
+  body('services.apMount')
     .optional()
     .isInt({ min: 0, max: 20 })
-    .withMessage('Device mounts must be between 0 and 20'),
-  body('services.clientDevice')
-    .optional()
-    .isInt({ min: 0, max: 10 })
-    .withMessage('Client device setups must be between 0 and 10'),
-  body('services.serverDevice')
-    .optional()
-    .isInt({ min: 0, max: 10 })
-    .withMessage('Server device setups must be between 0 and 10'),
-  body('services.mediaPanel')
-    .optional()
-    .isInt({ min: 0, max: 10 })
-    .withMessage('Media panels must be between 0 and 10'),
-  body('services.internalCameras')
+    .withMessage('AP mounts must be between 0 and 20'),
+  body('services.ethRelocation')
     .optional()
     .isInt({ min: 0, max: 20 })
-    .withMessage('Internal cameras must be between 0 and 20'),
-  body('services.externalCameras')
+    .withMessage('Ethernet relocations must be between 0 and 20'),
+  body('homeInfo.liabilityAcknowledged')
+    .equals('true')
+    .withMessage('Liability acknowledgment is required'),
+  body('homeInfo.homeAge')
+    .isIn(['Pre-1960', '1960-1980', '1980-2000', '2000-2020', '2020+'])
+    .withMessage('Invalid home age selection'),
+  body('homeInfo.stories')
+    .isInt({ min: 1, max: 4 })
+    .withMessage('Stories must be between 1 and 4'),
+  body('homeInfo.atticAccess')
+    .isIn(['Walk-in attic', 'Crawl space', 'Scuttle hole', 'No attic access'])
+    .withMessage('Invalid attic access selection'),
+  body('wholeHome.equipmentDescription')
     .optional()
-    .isInt({ min: 0, max: 20 })
-    .withMessage('External cameras must be between 0 and 20'),
-  body('services.doorbellCameras')
+    .isLength({ max: 2000 })
+    .withMessage('Equipment description must be under 2000 characters'),
+  body('wholeHome.notes')
     .optional()
-    .isInt({ min: 0, max: 5 })
-    .withMessage('Doorbell cameras must be between 0 and 5'),
-  body('speedTier')
-    .optional()
-    .isIn(['1 Gig', '5 Gig', '10 Gig'])
-    .withMessage('Invalid speed tier'),
-  body('equipment')
-    .optional()
-    .isArray({ max: 20 })
-    .withMessage('Equipment list cannot exceed 20 items'),
+    .isLength({ max: 2000 })
+    .withMessage('Notes must be under 2000 characters'),
   body('honeypot')
     .optional()
     .isEmpty()
@@ -278,73 +246,129 @@ router.post('/create', quoteRateLimit, validateQuote, async (req, res) => {
   // Check validation errors
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({ 
-      error: 'Validation failed', 
+    return res.status(400).json({
+      error: 'Validation failed',
       details: errors.array().map(err => err.msg)
     });
   }
 
-  const { customer, packageOption, discount, runs, services, includeSurvey, speedTier, equipment } = req.body;
+  const { customer, serviceType, discount, runs, services, homeInfo, wholeHome, centralization } = req.body;
   const clientIP = getClientIP(req);
 
   // Sanitize customer data
   const sanitizedCustomer = {
     name: sanitizeString(customer.name),
-    email: customer.email.toLowerCase() // already validated by express-validator
+    email: customer.email.toLowerCase(),
+    phone: customer.phone ? sanitizeString(customer.phone) : undefined
   };
 
-  // Additional business logic validation
-  const totalRuns = (runs?.coax || 0) + (runs?.cat6 || 0);
-  if (totalRuns === 0 && (!services || Object.values(services).every(val => val === 0))) {
-    return res.status(400).json({ error: 'At least one service or cable run must be selected.' });
-  }
-
-  // Check for suspicious patterns
-  if (equipment && equipment.length > 0) {
-    const totalEquipmentCost = equipment.reduce((total, item) => total + (item.price * item.quantity), 0);
-    if (totalEquipmentCost > 50000) { // Reasonable upper limit
-      return res.status(400).json({ error: 'Equipment total exceeds reasonable limits.' });
+  // Business logic validation based on service type
+  if (serviceType === 'Drops Only') {
+    const totalRuns = (runs?.coax || 0) + (runs?.cat6 || 0) + (runs?.fiber || 0);
+    const totalServices = (services?.apMount || 0) + (services?.ethRelocation || 0);
+    if (totalRuns === 0 && totalServices === 0) {
+      return res.status(400).json({ error: 'At least one cable run or service must be selected.' });
+    }
+  } else if (serviceType === 'Whole-Home') {
+    // Validate at least one scope is selected
+    if (!wholeHome?.scope?.networking && !wholeHome?.scope?.security && !wholeHome?.scope?.voip) {
+      return res.status(400).json({ error: 'At least one scope (Networking, Security, or VoIP) must be selected.' });
+    }
+    // Validate brand preferences if no own equipment
+    if (wholeHome && !wholeHome.hasOwnEquipment) {
+      if (wholeHome.scope?.networking && wholeHome.networkingBrand &&
+          !['Omada', 'UniFi', 'Ruckus', 'No Preference'].includes(wholeHome.networkingBrand)) {
+        return res.status(400).json({ error: 'Invalid networking brand preference.' });
+      }
+      if (wholeHome.scope?.security && wholeHome.securityBrand &&
+          !['UniFi', 'Reolink', 'No Preference'].includes(wholeHome.securityBrand)) {
+        return res.status(400).json({ error: 'Invalid security brand preference.' });
+      }
     }
   }
 
   try {
-    // Calculate pricing with equipment
-    const pricing = calculatePricing(packageOption, runs, services, includeSurvey, equipment || [], discount);
+    // Calculate pricing
+    let pricing = {};
+    if (serviceType === 'Drops Only') {
+      const centralizationData = centralization ? {
+        type: centralization,
+        hasExistingPanel: homeInfo?.hasMediaPanel || false
+      } : null;
+      pricing = calculateDropsOnlyPricing(runs || {}, services || {}, discount || 0, centralizationData);
+    } else {
+      // Whole-Home: deposit-based
+      pricing = {
+        depositAmount: serviceConfig['Whole-Home'].depositAmount
+      };
+    }
 
-    // Check for recent quotes from same email (additional spam protection)
+    // Check for recent quotes from same email
     const recentQuote = await Quote.findOne({
       'customer.email': sanitizedCustomer.email,
-      createdAt: { $gte: new Date(Date.now() - 10 * 60 * 1000) } // 10 minutes
+      createdAt: { $gte: new Date(Date.now() - 10 * 60 * 1000) }
     });
-    
+
     if (recentQuote) {
       return res.status(429).json({ error: 'Please wait 10 minutes between quote requests.' });
     }
 
-    // 1) Generate unique quote number and save to Mongo
+    // Generate unique quote number and save
     const quoteNumber = await Quote.generateQuoteNumber();
-    
-    const newQuote = new Quote({
+
+    const quoteData = {
       quoteNumber,
       customer: sanitizedCustomer,
-      packageOption,
-      includeSurvey,
-      speedTier,
-      discount,
-      runs,
-      services,
-      equipment: equipment || [],
+      serviceType,
+      discount: discount || 0,
+      runs: runs || { coax: 0, cat6: 0, fiber: 0 },
+      centralization: centralization || undefined,
+      services: {
+        mediaPanel: 0,
+        apMount: services?.apMount || 0,
+        ethRelocation: services?.ethRelocation || 0
+      },
+      homeInfo: {
+        homeAge: homeInfo?.homeAge,
+        stories: homeInfo?.stories,
+        atticAccess: homeInfo?.atticAccess,
+        hasMediaPanel: homeInfo?.hasMediaPanel || false,
+        mediaPanelLocation: homeInfo?.mediaPanelLocation ? sanitizeString(homeInfo.mediaPanelLocation) : undefined,
+        hasCrawlspaceOrBasement: homeInfo?.hasCrawlspaceOrBasement || false,
+        liabilityAcknowledged: true
+      },
       pricing,
       ip: clientIP,
       userAgent: req.get('User-Agent')?.substring(0, 200) || 'Unknown'
-    });
+    };
+
+    // Add Whole-Home fields if applicable
+    if (serviceType === 'Whole-Home' && wholeHome) {
+      quoteData.wholeHome = {
+        scope: {
+          networking: wholeHome.scope?.networking || false,
+          security: wholeHome.scope?.security || false,
+          voip: wholeHome.scope?.voip || false
+        },
+        internetSpeed: wholeHome.internetSpeed ? sanitizeString(wholeHome.internetSpeed) : undefined,
+        hasOwnEquipment: wholeHome.hasOwnEquipment || false,
+        equipmentDescription: wholeHome.hasOwnEquipment && wholeHome.equipmentDescription
+          ? sanitizeString(wholeHome.equipmentDescription) : undefined,
+        networkingBrand: !wholeHome.hasOwnEquipment ? wholeHome.networkingBrand : undefined,
+        securityBrand: !wholeHome.hasOwnEquipment ? wholeHome.securityBrand : undefined,
+        surveyPreference: wholeHome.surveyPreference || undefined,
+        notes: wholeHome.notes ? sanitizeString(wholeHome.notes) : undefined
+      };
+    }
+
+    const newQuote = new Quote(quoteData);
     await newQuote.save();
 
-    // 2) Notify admin by email (optional - only if email is configured)
-    if (process.env.EMAIL_USER && process.env.EMAIL_PASS && 
-        !process.env.EMAIL_USER.includes('example.com') && 
+    // Notify admin by email
+    if (process.env.EMAIL_USER && process.env.EMAIL_PASS &&
+        !process.env.EMAIL_USER.includes('example.com') &&
         !process.env.EMAIL_USER.includes('your_dev_email')) {
-      
+
       try {
         const transporter = nodemailer.createTransport({
           service: 'gmail',
@@ -358,40 +382,59 @@ router.post('/create', quoteRateLimit, validateQuote, async (req, res) => {
           `New Quote Submission - #${quoteNumber}`,
           `----------------------------------------`,
           `Quote Number: ${quoteNumber}`,
+          `Service Type: ${serviceType}`,
           `Name: ${sanitizedCustomer.name}`,
           `Email: ${sanitizedCustomer.email}`,
-          `Package: ${packageOption}${includeSurvey ? ' + Survey' : ''}`,
-          speedTier ? `Speed Tier: ${speedTier}` : '',
-          `Discount: ${discount}%`,
-          `Coax runs: ${runs.coax}`,
-          `Cat6 runs: ${runs.cat6}`,
-          `Device mounts: ${services.deviceMount}`,
-          `Client device setups: ${services.clientDevice}`,
-          `Server device setups: ${services.serverDevice}`,
-          `Media panels: ${services.mediaPanel}`,
-          `Internal cameras: ${services.internalCameras}`,
-          `External cameras: ${services.externalCameras}`,
-          `Doorbell cameras: ${services.doorbellCameras}`,
-          equipment && equipment.length > 0 ? `Equipment Items: ${equipment.length}` : '',
-          ...(equipment || []).map(item => `  - ${item.name} (${item.quantity}x) @ $${item.price} each`),
-          packageOption === 'Basic' 
-            ? `Total Cost: $${pricing.totalCost}`
-            : `Estimated Hours: ${pricing.estimatedLaborHours}`,
-          packageOption === 'Basic' 
-            ? `Deposit Required: $${pricing.depositRequired}`
-            : `Estimated Total: $${pricing.estimatedTotal}`,
-          includeSurvey ? `Survey Fee: $${pricing.surveyFee}` : '',
-          pricing.equipmentTotal > 0 ? `Equipment Total: $${pricing.equipmentTotal}` : '',
+          sanitizedCustomer.phone ? `Phone: ${sanitizedCustomer.phone}` : ''
+        ];
+
+        if (serviceType === 'Drops Only') {
+          mailLines.push(
+            `Coax runs: ${runs?.coax || 0}`,
+            `Cat6 runs: ${runs?.cat6 || 0}`,
+            `Fiber runs: ${runs?.fiber || 0}`,
+            `Centralization: ${centralization || 'N/A'}`,
+            `AP mounts: ${services?.apMount || 0}`,
+            `Ethernet relocations: ${services?.ethRelocation || 0}`,
+            `Total Cost: $${pricing.totalCost}`,
+            `Deposit Required: $${pricing.depositRequired}`
+          );
+        } else {
+          const scopeParts = [];
+          if (wholeHome?.scope?.networking) scopeParts.push('Networking');
+          if (wholeHome?.scope?.security) scopeParts.push('Security');
+          if (wholeHome?.scope?.voip) scopeParts.push('VoIP');
+          mailLines.push(
+            `Scope: ${scopeParts.join(', ')}`,
+            wholeHome?.internetSpeed ? `Internet Speed: ${wholeHome.internetSpeed}` : '',
+            `Own Equipment: ${wholeHome?.hasOwnEquipment ? 'Yes' : 'No'}`,
+            wholeHome?.hasOwnEquipment ? `Equipment: ${wholeHome.equipmentDescription || 'Not described'}` : '',
+            !wholeHome?.hasOwnEquipment && wholeHome?.networkingBrand ? `Networking Brand: ${wholeHome.networkingBrand}` : '',
+            !wholeHome?.hasOwnEquipment && wholeHome?.securityBrand ? `Security Brand: ${wholeHome.securityBrand}` : '',
+            wholeHome?.surveyPreference ? `Survey Preference: ${wholeHome.surveyPreference}` : '',
+            wholeHome?.notes ? `Notes: ${wholeHome.notes}` : '',
+            `Deposit Amount: $${pricing.depositAmount}`
+          );
+        }
+
+        mailLines.push(
+          ``,
+          `Home Info:`,
+          `  Age: ${homeInfo?.homeAge || 'N/A'}`,
+          `  Stories: ${homeInfo?.stories || 'N/A'}`,
+          `  Attic Access: ${homeInfo?.atticAccess || 'N/A'}`,
+          `  Media Panel: ${homeInfo?.hasMediaPanel ? `Yes (${homeInfo.mediaPanelLocation || 'location not specified'})` : 'No'}`,
+          `  Crawl Space/Basement: ${homeInfo?.hasCrawlspaceOrBasement ? 'Yes' : 'No'}`,
+          ``,
           `IP Address: ${clientIP}`,
-          `User Agent: ${req.get('User-Agent')?.substring(0, 100) || 'Unknown'}`,
           `Timestamp: ${new Date().toISOString()}`
-        ].filter(line => line !== '');
+        );
 
         await transporter.sendMail({
           from: process.env.EMAIL_USER,
           to:   process.env.ADMIN_EMAIL,
-          subject: `📄 New Quote #${quoteNumber} Submitted`,
-          text:     mailLines.join('\n')
+          subject: `New Quote #${quoteNumber} - ${serviceType}`,
+          text: mailLines.filter(line => line !== '').join('\n')
         });
       } catch (emailError) {
         console.error('Email notification failed (quote still saved):', emailError.message);
@@ -400,8 +443,8 @@ router.post('/create', quoteRateLimit, validateQuote, async (req, res) => {
       console.log('Email notification skipped - email not configured');
     }
 
-    // 3) Respond to frontend
-    res.status(201).json({ 
+    // Respond to frontend
+    res.status(201).json({
       id: newQuote._id,
       quoteNumber: quoteNumber,
       message: `Quote #${quoteNumber} created successfully`

@@ -89,8 +89,19 @@
                                             <div class="customer-info"><%= quote.customer.name %></div>
                                             <div><%= quote.customer.email %></div>
                                         </td>
-                                        <td><%= quote.packageOption %></td>
-                                        <td>$<%= quote.pricing.totalCost %></td>
+                                        <td>
+                                            <%= quote.serviceType || (quote.packageOption ? quote.packageOption + ' (Legacy)' : 'Unknown') %>
+                                            <% if (quote.centralization) { %>
+                                                <br><small style="color: var(--text-muted);"><%= quote.centralization %></small>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <% if (quote.serviceType === 'Whole-Home') { %>
+                                                Deposit: $<%= quote.pricing.depositAmount || 200 %>
+                                            <% } else { %>
+                                                $<%= quote.pricing.totalCost || 0 %>
+                                            <% } %>
+                                        </td>
                                         <td>
                                             <span class="status-badge status-<%= quote.status || 'pending' %>">
                                                 <%= (quote.status || 'pending').toUpperCase() %>

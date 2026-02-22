@@ -1,10 +1,15 @@
 const request = require('supertest');
 const mongoose = require('mongoose');
+const { MongoMemoryServer } = require('mongodb-memory-server');
 const app = require('../server');
 const Attachment = require('../models/Attachment');
 const Quote = require('../models/Quote');
 
-// Set up MinIO environment variables for testing
+let mongoServer;
+
+// Set up environment variables for testing
+process.env.ADMIN_JWT_SECRET = 'test-jwt-secret-for-testing-only-64-character-string-here';
+process.env.ADMIN_SESSION_SECRET = 'test-session-secret-for-testing-only-64-character-string';
 process.env.MINIO_ENDPOINT = 'localhost';
 process.env.MINIO_PORT = '9000';
 process.env.MINIO_ACCESS_KEY = 'test-access-key';
@@ -42,6 +47,19 @@ jest.mock('../config/storage', () => {
   };
 });
 
+beforeAll(async () => {
+  mongoServer = await MongoMemoryServer.create();
+  const mongoUri = mongoServer.getUri();
+  await mongoose.disconnect();
+  await mongoose.connect(mongoUri);
+});
+
+afterAll(async () => {
+  await mongoose.connection.dropDatabase();
+  await mongoose.connection.close();
+  await mongoServer.stop();
+});
+
 describe('File Management API', () => {
   let testQuote;
   let testFile;
@@ -53,6 +71,7 @@ describe('File Management API', () => {
 
     // Create test quote
     testQuote = new Quote({
+      quoteNumber: String(Math.floor(Math.random() * 90000000) + 10000000),
       customer: {
         name: 'Test Customer',
         email: 'test@example.com'

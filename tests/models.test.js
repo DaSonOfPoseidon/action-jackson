@@ -75,78 +75,130 @@ describe('Data Models', () => {
   });
 
   describe('Quote Model', () => {
-    test('should create a quote with all fields including new package features', async () => {
+    test('should create a Drops Only quote with all fields', async () => {
       const quoteData = {
         customer: {
           name: 'John Doe',
           email: 'john@example.com'
         },
-        packageOption: 'Premium',
-        includeSurvey: true,
-        discount: 15,
-        runs: {
-          coax: 5,
-          cat6: 8
-        },
-        services: {
-          deviceMount: 3,
-          networkSetup: 2,
-          mediaPanel: 1
+        serviceType: 'Drops Only',
+        runs: { coax: 2, cat6: 3, fiber: 1 },
+        services: { mediaPanel: 1, apMount: 2, ethRelocation: 1 },
+        homeInfo: {
+          homeAge: '2000-2020',
+          stories: 2,
+          atticAccess: 'Walk-in attic',
+          hasMediaPanel: true,
+          mediaPanelLocation: 'Garage',
+          hasCrawlspaceOrBasement: true,
+          liabilityAcknowledged: true
         },
         pricing: {
-          estimatedLaborHours: 8.5,
-          laborRate: 50,
-          estimatedTotal: 495,
-          surveyFee: 100
+          totalCost: 670,
+          depositRequired: 20
         },
         ip: '192.168.1.100'
       };
 
+      quoteData.quoteNumber = quoteData.quoteNumber || String(Math.floor(Math.random() * 90000000) + 10000000);
       const quote = new Quote(quoteData);
       const savedQuote = await quote.save();
 
       expect(savedQuote._id).toBeDefined();
+      expect(savedQuote.serviceType).toBe('Drops Only');
       expect(savedQuote.customer.name).toBe('John Doe');
-      expect(savedQuote.customer.email).toBe('john@example.com');
-      expect(savedQuote.packageOption).toBe('Premium');
-      expect(savedQuote.includeSurvey).toBe(true);
-      expect(savedQuote.discount).toBe(15);
-      expect(savedQuote.runs.coax).toBe(5);
-      expect(savedQuote.runs.cat6).toBe(8);
-      expect(savedQuote.services.deviceMount).toBe(3);
-      expect(savedQuote.pricing.estimatedLaborHours).toBe(8.5);
-      expect(savedQuote.pricing.laborRate).toBe(50);
-      expect(savedQuote.pricing.estimatedTotal).toBe(495);
-      expect(savedQuote.pricing.surveyFee).toBe(100);
-      expect(savedQuote.ip).toBe('192.168.1.100');
-      expect(savedQuote.createdAt).toBeDefined();
+      expect(savedQuote.runs.coax).toBe(2);
+      expect(savedQuote.runs.cat6).toBe(3);
+      expect(savedQuote.runs.fiber).toBe(1);
+      expect(savedQuote.services.mediaPanel).toBe(1);
+      expect(savedQuote.services.apMount).toBe(2);
+      expect(savedQuote.services.ethRelocation).toBe(1);
+      expect(savedQuote.homeInfo.homeAge).toBe('2000-2020');
+      expect(savedQuote.homeInfo.stories).toBe(2);
+      expect(savedQuote.homeInfo.atticAccess).toBe('Walk-in attic');
+      expect(savedQuote.homeInfo.hasMediaPanel).toBe(true);
+      expect(savedQuote.homeInfo.mediaPanelLocation).toBe('Garage');
+      expect(savedQuote.homeInfo.hasCrawlspaceOrBasement).toBe(true);
+      expect(savedQuote.homeInfo.liabilityAcknowledged).toBe(true);
+      expect(savedQuote.pricing.totalCost).toBe(670);
+      expect(savedQuote.pricing.depositRequired).toBe(20);
     });
 
-    test('should create Basic package quote with cost pricing', async () => {
+    test('should create a Whole-Home quote with all fields', async () => {
       const quoteData = {
         customer: {
           name: 'Jane Smith',
-          email: 'jane@example.com'
+          email: 'jane@example.com',
+          phone: '555-1234'
         },
-        packageOption: 'Basic',
-        includeSurvey: false,
-        runs: { coax: 2, cat6: 3 },
-        services: { deviceMount: 1, networkSetup: 1, mediaPanel: 0 },
+        serviceType: 'Whole-Home',
+        wholeHome: {
+          scope: { networking: true, security: true, voip: false },
+          internetSpeed: '1 Gig',
+          hasOwnEquipment: false,
+          networkingBrand: 'UniFi',
+          securityBrand: 'Reolink',
+          surveyPreference: 'before-install',
+          notes: 'Two-story home, need full coverage'
+        },
+        homeInfo: {
+          homeAge: '1980-2000',
+          stories: 2,
+          atticAccess: 'Scuttle hole',
+          hasMediaPanel: false,
+          hasCrawlspaceOrBasement: true,
+          liabilityAcknowledged: true
+        },
         pricing: {
-          totalCost: 530,
-          depositRequired: 20,
-          surveyFee: 0
+          depositAmount: 200
         }
       };
 
+      quoteData.quoteNumber = quoteData.quoteNumber || String(Math.floor(Math.random() * 90000000) + 10000000);
       const quote = new Quote(quoteData);
       const savedQuote = await quote.save();
 
-      expect(savedQuote.packageOption).toBe('Basic');
-      expect(savedQuote.includeSurvey).toBe(false);
-      expect(savedQuote.pricing.totalCost).toBe(530);
-      expect(savedQuote.pricing.depositRequired).toBe(20);
-      expect(savedQuote.pricing.surveyFee).toBe(0);
+      expect(savedQuote.serviceType).toBe('Whole-Home');
+      expect(savedQuote.wholeHome.scope.networking).toBe(true);
+      expect(savedQuote.wholeHome.scope.security).toBe(true);
+      expect(savedQuote.wholeHome.scope.voip).toBe(false);
+      expect(savedQuote.wholeHome.internetSpeed).toBe('1 Gig');
+      expect(savedQuote.wholeHome.hasOwnEquipment).toBe(false);
+      expect(savedQuote.wholeHome.networkingBrand).toBe('UniFi');
+      expect(savedQuote.wholeHome.securityBrand).toBe('Reolink');
+      expect(savedQuote.wholeHome.surveyPreference).toBe('before-install');
+      expect(savedQuote.wholeHome.notes).toBe('Two-story home, need full coverage');
+      expect(savedQuote.pricing.depositAmount).toBe(200);
+      expect(savedQuote.customer.phone).toBe('555-1234');
+    });
+
+    test('should create Whole-Home quote with own equipment', async () => {
+      const quoteData = {
+        customer: { name: 'Equipment Owner', email: 'equip@example.com' },
+        serviceType: 'Whole-Home',
+        wholeHome: {
+          scope: { networking: true, security: false, voip: false },
+          hasOwnEquipment: true,
+          equipmentDescription: 'UniFi Dream Machine SE, 2x U7 Pro APs, USW-24-PoE switch'
+        },
+        homeInfo: {
+          homeAge: '2020+',
+          stories: 1,
+          atticAccess: 'Walk-in attic',
+          hasMediaPanel: true,
+          mediaPanelLocation: 'Utility closet',
+          hasCrawlspaceOrBasement: false,
+          liabilityAcknowledged: true
+        },
+        pricing: { depositAmount: 200 }
+      };
+
+      quoteData.quoteNumber = quoteData.quoteNumber || String(Math.floor(Math.random() * 90000000) + 10000000);
+      const quote = new Quote(quoteData);
+      const savedQuote = await quote.save();
+
+      expect(savedQuote.wholeHome.hasOwnEquipment).toBe(true);
+      expect(savedQuote.wholeHome.equipmentDescription).toBe('UniFi Dream Machine SE, 2x U7 Pro APs, USW-24-PoE switch');
     });
 
     test('should use default values for optional fields', async () => {
@@ -155,85 +207,62 @@ describe('Data Models', () => {
           name: 'Default User',
           email: 'default@example.com'
         },
-        packageOption: 'Basic'
+        serviceType: 'Drops Only'
       };
 
+      quoteData.quoteNumber = quoteData.quoteNumber || String(Math.floor(Math.random() * 90000000) + 10000000);
       const quote = new Quote(quoteData);
       const savedQuote = await quote.save();
 
-      expect(savedQuote.includeSurvey).toBe(false);
       expect(savedQuote.discount).toBe(0);
       expect(savedQuote.runs.coax).toBe(0);
       expect(savedQuote.runs.cat6).toBe(0);
-      expect(savedQuote.services.deviceMount).toBe(0);
-      expect(savedQuote.services.networkSetup).toBe(0);
+      expect(savedQuote.runs.fiber).toBe(0);
       expect(savedQuote.services.mediaPanel).toBe(0);
+      expect(savedQuote.services.apMount).toBe(0);
+      expect(savedQuote.services.ethRelocation).toBe(0);
     });
 
-    test('should validate packageOption enum values', async () => {
-      const quoteWithInvalidPackage = new Quote({
-        customer: {
-          name: 'Test User',
-          email: 'test@example.com'
-        },
-        packageOption: 'InvalidPackage'
+    test('should validate serviceType enum values', async () => {
+      const quoteWithInvalid = new Quote({
+        customer: { name: 'Test', email: 'test@example.com' },
+        serviceType: 'InvalidType'
       });
 
-      await expect(quoteWithInvalidPackage.save()).rejects.toThrow();
+      await expect(quoteWithInvalid.save()).rejects.toThrow();
     });
 
-    test('should accept valid packageOption enum values', async () => {
-      const basicQuote = new Quote({
-        customer: {
-          name: 'Basic User',
-          email: 'basic@example.com'
-        },
-        packageOption: 'Basic'
+    test('should accept valid serviceType enum values', async () => {
+      const dropsQuote = new Quote({
+        customer: { name: 'Drops User', email: 'drops@example.com' },
+        serviceType: 'Drops Only',
+        quoteNumber: String(Math.floor(Math.random() * 90000000) + 10000000)
+      });
+      const wholeHomeQuote = new Quote({
+        customer: { name: 'WH User', email: 'wh@example.com' },
+        serviceType: 'Whole-Home',
+        quoteNumber: String(Math.floor(Math.random() * 90000000) + 10000000)
       });
 
-      const premiumQuote = new Quote({
-        customer: {
-          name: 'Premium User',
-          email: 'premium@example.com'
-        },
-        packageOption: 'Premium'
-      });
+      const savedDrops = await dropsQuote.save();
+      const savedWH = await wholeHomeQuote.save();
 
-      const savedBasic = await basicQuote.save();
-      const savedPremium = await premiumQuote.save();
-
-      expect(savedBasic.packageOption).toBe('Basic');
-      expect(savedPremium.packageOption).toBe('Premium');
+      expect(savedDrops.serviceType).toBe('Drops Only');
+      expect(savedWH.serviceType).toBe('Whole-Home');
     });
 
-    test('should handle survey pricing correctly', async () => {
-      const quoteWithSurvey = new Quote({
-        customer: {
-          name: 'Survey User',
-          email: 'survey@example.com'
-        },
-        packageOption: 'Basic',
-        includeSurvey: true,
-        pricing: {
-          totalCost: 200,
-          depositRequired: 0, // Survey waives deposit
-          surveyFee: 100
-        }
+    test('should require either serviceType or packageOption', async () => {
+      const quote = new Quote({
+        customer: { name: 'Test', email: 'test@example.com' }
       });
 
-      const savedQuote = await quoteWithSurvey.save();
-
-      expect(savedQuote.includeSurvey).toBe(true);
-      expect(savedQuote.pricing.depositRequired).toBe(0);
-      expect(savedQuote.pricing.surveyFee).toBe(100);
+      await expect(quote.save()).rejects.toThrow();
     });
 
     test('should require customer name', async () => {
       const quote = new Quote({
-        customer: {
-          email: 'test@example.com'
-        },
-        packageOption: 'Basic'
+        customer: { email: 'test@example.com' },
+        serviceType: 'Drops Only'
       });
 
       await expect(quote.save()).rejects.toThrow();
@@ -241,66 +270,128 @@ describe('Data Models', () => {
 
     test('should require customer email', async () => {
       const quote = new Quote({
-        customer: {
-          name: 'Test User'
-        },
-        packageOption: 'Basic'
+        customer: { name: 'Test User' },
+        serviceType: 'Drops Only'
       });
 
       await expect(quote.save()).rejects.toThrow();
     });
 
-    test('should require packageOption', async () => {
+    test('should validate homeInfo enum values', async () => {
       const quote = new Quote({
-        customer: {
-          name: 'Test User',
-          email: 'test@example.com'
+        customer: { name: 'Test', email: 'test@example.com' },
+        serviceType: 'Drops Only',
+        homeInfo: {
+          homeAge: 'Invalid Age',
+          stories: 2,
+          atticAccess: 'Walk-in attic',
+          liabilityAcknowledged: true
         }
       });
 
       await expect(quote.save()).rejects.toThrow();
     });
 
-    test('should handle premium pricing fields correctly', async () => {
-      const premiumQuote = new Quote({
-        customer: {
-          name: 'Premium Test',
-          email: 'premium@example.com'
-        },
-        packageOption: 'Premium',
-        includeSurvey: true,
-        runs: { coax: 2, cat6: 2 },
-        pricing: {
-          estimatedLaborHours: 7,
-          laborRate: 50,
-          estimatedTotal: 420,
-          surveyFee: 100
+    test('should validate wholeHome brand enums', async () => {
+      const quote = new Quote({
+        customer: { name: 'Test', email: 'test@example.com' },
+        serviceType: 'Whole-Home',
+        wholeHome: {
+          scope: { networking: true },
+          networkingBrand: 'InvalidBrand'
         }
       });
 
-      const savedQuote = await premiumQuote.save();
+      await expect(quote.save()).rejects.toThrow();
+    });
 
-      expect(savedQuote.pricing.estimatedLaborHours).toBe(7);
-      expect(savedQuote.pricing.laborRate).toBe(50);
-      expect(savedQuote.pricing.estimatedTotal).toBe(420);
-      expect(savedQuote.pricing.surveyFee).toBe(100);
+    test('backward compat: should still accept old packageOption quotes', async () => {
+      const quoteData = {
+        customer: { name: 'Legacy User', email: 'legacy@example.com' },
+        packageOption: 'Basic',
+        runs: { coax: 1, cat6: 1 },
+        pricing: { totalCost: 200, depositRequired: 20 }
+      };
+
+      quoteData.quoteNumber = quoteData.quoteNumber || String(Math.floor(Math.random() * 90000000) + 10000000);
+      const quote = new Quote(quoteData);
+      const savedQuote = await quote.save();
+
+      expect(savedQuote.packageOption).toBe('Basic');
+      expect(savedQuote.serviceType).toBeUndefined();
+    });
+
+    test('should save centralization field', async () => {
+      const quoteData = {
+        customer: { name: 'Central User', email: 'central@example.com' },
+        serviceType: 'Drops Only',
+        centralization: 'Patch Panel',
+        quoteNumber: String(Math.floor(Math.random() * 90000000) + 10000000)
+      };
+
+      const quote = new Quote(quoteData);
+      const savedQuote = await quote.save();
+      expect(savedQuote.centralization).toBe('Patch Panel');
+    });
+
+    test('should validate centralization enum values', async () => {
+      const quote = new Quote({
+        customer: { name: 'Test', email: 'test@example.com' },
+        serviceType: 'Drops Only',
+        centralization: 'Invalid Type',
+        quoteNumber: String(Math.floor(Math.random() * 90000000) + 10000000)
+      });
+
+      await expect(quote.save()).rejects.toThrow();
+    });
+
+    test('should allow null centralization for backward compat', async () => {
+      const quoteData = {
+        customer: { name: 'Legacy Central', email: 'legacycentral@example.com' },
+        serviceType: 'Drops Only',
+        quoteNumber: String(Math.floor(Math.random() * 90000000) + 10000000)
+      };
+
+      const quote = new Quote(quoteData);
+      const savedQuote = await quote.save();
+      expect(savedQuote.centralization).toBeUndefined();
+    });
+
+    test('getDisplayServiceType helper works for new and legacy quotes', async () => {
+      const newQuote = new Quote({
+        customer: { name: 'New', email: 'new@example.com' },
+        serviceType: 'Drops Only',
+        quoteNumber: String(Math.floor(Math.random() * 90000000) + 10000000)
+      });
+      await newQuote.save();
+
+      const legacyQuote = new Quote({
+        customer: { name: 'Old', email: 'old@example.com' },
+        packageOption: 'Premium',
+        quoteNumber: String(Math.floor(Math.random() * 90000000) + 10000000)
+      });
+      await legacyQuote.save();
+
+      expect(newQuote.getDisplayServiceType()).toBe('Drops Only');
+      expect(legacyQuote.getDisplayServiceType()).toBe('Premium (Legacy)');
     });
   });
 
   describe('Schedule Model', () => {
     test('should create a schedule entry', async () => {
-      // Use a future weekday date
       const futureDate = new Date();
-      futureDate.setDate(futureDate.getDate() + 7); // Next week
+      futureDate.setDate(futureDate.getDate() + 7);
       while (futureDate.getDay() === 0 || futureDate.getDay() === 6) {
-        futureDate.setDate(futureDate.getDate() + 1); // Skip to weekday
+        futureDate.setDate(futureDate.getDate() + 1);
       }
-      
+
       const scheduleData = {
         name: 'John Doe',
         email: 'john@example.com',
         date: futureDate,
-        time: '10:00'
+        time: '10:00',
+        quoteNumber: String(Math.floor(Math.random() * 90000000) + 10000000),
+        quoteId: new mongoose.Types.ObjectId()
       };
 
       const schedule = new Schedule(scheduleData);
@@ -315,7 +406,7 @@ describe('Data Models', () => {
 
     test('should reject past dates', async () => {
       const pastDate = new Date('2020-01-01');
-      
+
       const scheduleData = {
         name: 'John Doe',
         email: 'john@example.com',
@@ -330,12 +421,12 @@ describe('Data Models', () => {
     test('should validate time format', async () => {
       const futureDate = new Date();
       futureDate.setDate(futureDate.getDate() + 7);
-      
+
       const scheduleData = {
         name: 'John Doe',
         email: 'john@example.com',
         date: futureDate,
-        time: '25:00' // Invalid time
+        time: '25:00'
       };
 
       const schedule = new Schedule(scheduleData);
@@ -345,10 +436,10 @@ describe('Data Models', () => {
     test('should validate email format', async () => {
       const futureDate = new Date();
       futureDate.setDate(futureDate.getDate() + 7);
-      
+
       const scheduleData = {
         name: 'John Doe',
-        email: 'invalid-email', // Invalid email
+        email: 'invalid-email',
         date: futureDate,
         time: '10:00'
       };

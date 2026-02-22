@@ -154,6 +154,7 @@ describe('Essential Admin System Tests', () => {
     test('Quote and Schedule data structures work with admin system', async () => {
       // Create test data
       const quote = await Quote.create({
+        quoteNumber: String(Math.floor(Math.random() * 90000000) + 10000000),
         customer: {
           name: 'Test Customer',
           email: 'test@example.com'
@@ -167,6 +168,8 @@ describe('Essential Admin System Tests', () => {
       });
 
       const schedule = await Schedule.create({
+        quoteNumber: quote.quoteNumber,
+        quoteId: quote._id,
         name: 'Test Customer',
         email: 'test@example.com',
         phone: '1234567890',

@@ -43,13 +43,13 @@ app.use(session({
   name: 'admin-session',
   resave: false,
   saveUninitialized: false,
-  store: MongoStore.create({
+  store: process.env.MONGO_URI ? MongoStore.create({
     mongoUrl: process.env.MONGO_URI,
     touchAfter: 24 * 3600, // lazy session update (24 hours)
     crypto: {
       secret: process.env.ADMIN_SESSION_SECRET || 'fallback-secret-change-immediately'
     }
-  }),
+  }) : undefined,
   cookie: {
     secure: process.env.NODE_ENV === 'production', // HTTPS only in production
     httpOnly: true,

@@ -786,6 +786,7 @@ describe('Admin System Tests', () => {
       test('should show stats from last 30 days', async () => {
         // Create some test data
         await Quote.create({
+          quoteNumber: String(Math.floor(Math.random() * 90000000) + 10000000),
           customer: {
             name: 'Test Customer',
             email: 'test@example.com'
@@ -808,6 +809,7 @@ describe('Admin System Tests', () => {
     describe('GET /admin/quotes', () => {
       beforeEach(async () => {
         await Quote.create({
+          quoteNumber: String(Math.floor(Math.random() * 90000000) + 10000000),
           customer: {
             name: 'John Doe',
             email: 'john@example.com'
@@ -860,6 +862,7 @@ describe('Admin System Tests', () => {
 
       beforeEach(async () => {
         const quote = await Quote.create({
+          quoteNumber: String(Math.floor(Math.random() * 90000000) + 10000000),
           customer: {
             name: 'John Doe',
             email: 'john@example.com'
@@ -913,6 +916,7 @@ describe('Admin System Tests', () => {
 
       beforeEach(async () => {
         const quote = await Quote.create({
+          quoteNumber: String(Math.floor(Math.random() * 90000000) + 10000000),
           customer: {
             name: 'John Doe',
             email: 'john@example.com'
@@ -1004,6 +1008,7 @@ describe('Admin System Tests', () => {
 
       // Create a quote to update
       const quote = await Quote.create({
+        quoteNumber: String(Math.floor(Math.random() * 90000000) + 10000000),
         customer: {
           name: 'Test Customer',
           email: 'test@example.com'

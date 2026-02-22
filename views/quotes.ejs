@@ -1,338 +1,355 @@
 <%- include('partials/header', { title: 'Request a Quote' }) %>
 
   <main class="container">
-    <!-- Step 1: Package Selection -->
+    <!-- Step 1: Pick Your Package -->
     <section id="step-1-package">
-      <h2>Step 1: Select Your Package</h2>
+      <h2>Step 1: Pick Your Package</h2>
       <div class="package-cards grid">
-        
-        <article class="card package-card" data-package="Basic">
-          <h3>Basic</h3>
-          <p class="package-price" data-price="basic"></p>
+
+        <article class="card package-card" data-service="Drops Only">
+          <h3>Drops Only</h3>
+          <p class="package-price">Starting at $100 per drop</p>
           <ul class="package-features">
-            <li>Install lines A to B</li>
-            <li>Standard termination (RJ45/11 or punch down)</li>
-            <li>Testing and verification</li>
+            <li>Cable drops ran and terminated</li>
+            <li>Cat6 for internet or phone</li>
+            <li>Coax cable runs</li>
+            <li>Fiber optic runs</li>
             <li>Low-voltage box, plate, keystone included</li>
+            <li>Testing and verification</li>
           </ul>
-          <p class="package-deposit" data-deposit="basic"></p>
-          <button type="button" class="package-select-btn" data-package="Basic">Select Basic</button>
+          <p class="package-note">Add-ons: AP mounting, ethernet relocation, centralization options</p>
+          <button type="button" class="service-select-btn" data-service="Drops Only">Select Drops Only</button>
         </article>
 
-        <article class="card package-card" data-package="Premium">
-          <h3>Premium</h3>
-          <p class="package-price" data-price="premium"></p>
+        <article class="card package-card" data-service="Whole-Home">
+          <h3>Whole-Home Setup</h3>
+          <p class="package-price">Deposit-based, quoted on-site</p>
           <ul class="package-features">
-            <li>Everything in Basic</li>
-            <li>All labor included</li>
-            <li>Mount & install routers, switches, APs, cameras, panel hardware</li>
-            <li>Cable management and setup</li>
+            <li>Drops + full network installation</li>
+            <li>Security camera systems</li>
+            <li>VoIP phone systems</li>
+            <li>Includes site survey</li>
+            <li>Professional equipment recommendations</li>
           </ul>
-          <p class="package-note">Highly recommended for complex setups</p>
-          <button type="button" class="package-select-btn" data-package="Premium">Select Premium</button>
+          <p class="package-note">Final pricing determined after site survey</p>
+          <button type="button" class="service-select-btn" data-service="Whole-Home">Select Whole-Home</button>
         </article>
 
-      </div>
-
-      <!-- Survey Add-on -->
-      <div class="survey-option">
-        <article class="card survey-card">
-          <h3>Site Survey Add-on</h3>
-          <p class="survey-price" data-price="survey"></p>
-          <ul class="survey-features">
-            <li>On-site walk-through and discussion of goals & budget</li>
-            <li>Advise on placements and specs</li>
-            <li>Provide recommended parts list upon request</li>
-            <li>Estimate provided at the end</li>
-            <li>Applied as credit to install costs</li>
-          </ul>
-          <p class="survey-note">Replaces Basic package deposit requirement</p>
-          <label for="includeSurvey" class="survey-checkbox">
-            <input type="checkbox" id="includeSurvey" name="includeSurvey" />
-            Include Site Survey
-          </label>
-        </article>
       </div>
     </section>
 
-    <!-- Step 2: Drop Info and Pricing -->
-    <section id="step-2-drop-info" style="display: none;">
-      <h2>Step 2: Cable Runs & Services</h2>
-      
-      <div id="selectedPackageDisplay">
-        <strong>Selected Package: <span id="packageDisplayName"></span></strong>
-        <button type="button" id="changePackageBtn" style="margin-left: 1rem; font-size: 0.9rem;">Change Package</button>
+    <!-- Step 2: Service Details -->
+    <section id="step-2-details" style="display: none;">
+      <h2>Step 2: Service Details</h2>
+
+      <div id="selectedServiceDisplay">
+        <strong>Selected: <span id="serviceDisplayName"></span></strong>
+        <button type="button" id="changeServiceBtn">Change</button>
       </div>
 
-      <!-- Cable Runs -->
-      <fieldset id="runsSection">
-        <legend>Cable Runs (In-House RJ45 Ports)</legend>
+      <!-- Drops Only Details -->
+      <div id="drops-only-details" style="display: none;">
+        <fieldset>
+          <legend>Cable Runs</legend>
 
-        <label for="coaxRuns">
-          <span class="cable-label" data-cable="coax">Coaxial runs</span>:
-          <input
-            type="number"
-            id="coaxRuns"
-            name="coaxRuns"
-            min="0"
-            value="0"
-          />
-        </label>
+          <div class="cable-run-row">
+            <label for="cat6Runs">
+              Cat6 runs - $100/run:
+              <input type="number" id="cat6Runs" name="cat6Runs" min="0" value="0" />
+            </label>
+            <button type="button" class="info-btn" data-cable="cat6" aria-label="Cat6 info"><i class="fas fa-info-circle"></i></button>
+          </div>
+          <div class="cable-info" id="cat6-info">
+            <strong>CAT6 550MHz UTP</strong> &mdash; typically used for ethernet, can also be used for landline phones. Cat6a available upon request at additional cost.
+          </div>
 
-        <label for="cat6Runs">
-          <span class="cable-label" data-cable="cat6">Cat6 Ethernet runs</span>:
-          <input
-            type="number"
-            id="cat6Runs"
-            name="cat6Runs"
-            min="0"
-            value="0"
-          />
-        </label>
-      </fieldset>
+          <div class="cable-run-row">
+            <label for="coaxRuns">
+              Coax runs - $150/run:
+              <input type="number" id="coaxRuns" name="coaxRuns" min="0" value="0" />
+            </label>
+            <button type="button" class="info-btn" data-cable="coax" aria-label="Coax info"><i class="fas fa-info-circle"></i></button>
+          </div>
+          <div class="cable-info" id="coax-info">
+            <strong>RG-6 Coaxial</strong> &mdash; used for transmitting video signals and by legacy internet providers.
+          </div>
 
-      <!-- Security Camera Installation -->
-      <fieldset id="securitySection">
-        <legend>Security Camera Installation</legend>
-        
-        <label for="internalCamerasQty">
-          <span class="service-label" data-service="internalCameras">Internal cameras</span>:
-          <input
-            type="number"
-            id="internalCamerasQty"
-            name="internalCamerasQty"
-            min="0"
-            value="0"
-          />
-        </label>
+          <div class="cable-run-row">
+            <label for="fiberRuns">
+              Fiber runs - $200/run:
+              <input type="number" id="fiberRuns" name="fiberRuns" min="0" value="0" />
+            </label>
+            <button type="button" class="info-btn" data-cable="fiber" aria-label="Fiber info"><i class="fas fa-info-circle"></i></button>
+          </div>
+          <div class="cable-info" id="fiber-info">
+            <strong>OS2 Single-Mode Fiber</strong> &mdash; terminated to match your use case. Ideal for relocating fiber ONTs, high-speed connections over long distances, and future-proofing your infrastructure.
+          </div>
+        </fieldset>
 
-        <label for="externalCamerasQty">
-          <span class="service-label" data-service="externalCameras">External cameras</span>:
-          <input
-            type="number"
-            id="externalCamerasQty"
-            name="externalCamerasQty"
-            min="0"
-            value="0"
-          />
-        </label>
+        <fieldset>
+          <legend>Drop Centralization</legend>
+          <p>Where should your drops be centralized?</p>
 
-        <label for="doorbellCamerasQty">
-          <span class="service-label" data-service="doorbellCameras">Doorbell cameras</span>:
-          <input
-            type="number"
-            id="doorbellCamerasQty"
-            name="doorbellCamerasQty"
-            min="0"
-            value="0"
-          />
-        </label>
-      </fieldset>
+          <label class="radio-label" for="centralizationMediaPanel">
+            <input type="radio" id="centralizationMediaPanel" name="centralization" value="Media Panel" /> Media Panel
+          </label>
+          <label class="radio-label" for="centralizationPatchPanel">
+            <input type="radio" id="centralizationPatchPanel" name="centralization" value="Patch Panel" /> Patch Panel (+$50)
+          </label>
+          <label class="radio-label" for="centralizationLoose">
+            <input type="radio" id="centralizationLoose" name="centralization" value="Loose Termination" /> Loose Termination (Free)
+          </label>
 
-      <!-- Additional Services with quantities -->
-      <fieldset id="servicesSection">
-        <legend>Additional Services</legend>
+          <div id="mediaPanelInlineQuestion" style="display: none; margin-top: 1rem; padding: 1rem; background: var(--surface-light); border-radius: var(--radius); border-left: 3px solid var(--accent);">
+            <p><strong>Do you have an existing media panel?</strong></p>
+            <label class="radio-label" for="inlineHasPanelYes">
+              <input type="radio" id="inlineHasPanelYes" name="inlineHasMediaPanel" value="yes" /> Yes ($0)
+            </label>
+            <label class="radio-label" for="inlineHasPanelNo">
+              <input type="radio" id="inlineHasPanelNo" name="inlineHasMediaPanel" value="no" checked /> No (+$100 install)
+            </label>
+          </div>
+        </fieldset>
 
-        <label for="deviceMountQty">
-          <span class="service-label" data-service="deviceMount">Device mounting</span>:
-          <input
-            type="number"
-            id="deviceMountQty"
-            name="deviceMountQty"
-            min="0"
-            value="0"
-          />
-        </label>
+        <fieldset>
+          <legend>Add-on Services</legend>
 
-        <label for="clientDeviceQty">
-          <span class="service-label" data-service="clientDevice">Client device setup</span>:
-          <input
-            type="number"
-            id="clientDeviceQty"
-            name="clientDeviceQty"
-            min="0"
-            value="0"
-          />
-        </label>
+          <label for="apMountQty">
+            AP mounting ($25/each):
+            <input type="number" id="apMountQty" name="apMountQty" min="0" value="0" />
+          </label>
 
-        <label for="serverDeviceQty">
-          <span class="service-label" data-service="serverDevice">Host/server device setup</span>:
-          <input
-            type="number"
-            id="serverDeviceQty"
-            name="serverDeviceQty"
-            min="0"
-            value="0"
-          />
-        </label>
+          <label for="ethRelocationQty">
+            Ethernet relocation ($20/drop):
+            <input type="number" id="ethRelocationQty" name="ethRelocationQty" min="0" value="0" />
+          </label>
+        </fieldset>
 
-        <label for="mediaPanelQty">
-          <span class="service-label" data-service="mediaPanel">Media panel install</span>:
-          <input
-            type="number"
-            id="mediaPanelQty"
-            name="mediaPanelQty"
-            min="0"
-            value="0"
-          />
-        </label>
-      </fieldset>
-
-      <!-- Dynamic Pricing Display -->
-      <fieldset id="pricingSection">
-        <legend>Estimated Pricing</legend>
-        
-        <div id="basicPricing" style="display: none;">
+        <fieldset id="pricingSection">
+          <legend>Estimated Pricing</legend>
           <p><strong>Total Cost: $<span id="totalCost">0</span></strong></p>
-          <p id="equipmentCostBasic" style="display: none;">Equipment: $<span id="equipmentCostBasicAmount">0</span></p>
-          <p id="depositInfo">Deposit Required: $<span id="depositAmount">0</span></p>
-          <p id="surveyFeeInfo" style="display: none;">Site Survey Fee: $<span id="surveyFee">0</span></p>
-        </div>
-        
-        <div id="premiumPricing" style="display: none;">
-          <p><strong>Estimated Hours: <span id="estimatedHours">0</span> hrs @ $<span id="laborRate">50</span>/hr</strong></p>
-          <p><strong>Estimated Total: $<span id="estimatedTotal">0</span></strong></p>
-          <p id="equipmentCostPremium" style="display: none;">Equipment: $<span id="equipmentCostPremiumAmount">0</span></p>
-          <p id="premiumSurveyFeeInfo" style="display: none;">Site Survey Fee: $<span id="premiumSurveyFee">0</span></p>
-        </div>
-        
-        <p><em>Note: Final pricing may vary based on site conditions and specific requirements.</em></p>
-      </fieldset>
+          <p>Deposit Required: $<span id="depositAmount">0</span></p>
+          <p><em>Final pricing may vary based on site conditions.</em></p>
+        </fieldset>
+      </div>
+
+      <!-- Whole-Home Details -->
+      <div id="whole-home-details" style="display: none;">
+        <fieldset>
+          <legend>Scope of Work</legend>
+          <p>Select all that apply (at least one required):</p>
+
+          <label class="checkbox-label" for="scopeNetworking">
+            <input type="checkbox" id="scopeNetworking" name="scopeNetworking" /> Networking
+          </label>
+
+          <label class="checkbox-label" for="scopeSecurity">
+            <input type="checkbox" id="scopeSecurity" name="scopeSecurity" /> Security
+          </label>
+
+          <label class="checkbox-label" for="scopeVoip">
+            <input type="checkbox" id="scopeVoip" name="scopeVoip" /> VoIP
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Internet & Equipment</legend>
+
+          <label for="internetSpeed">
+            Internet speed (e.g., "500 Mbps", "1 Gig"):
+            <input type="text" id="internetSpeed" name="internetSpeed" placeholder="e.g., 1 Gig" maxlength="50" />
+          </label>
+
+          <div class="equipment-toggle">
+            <p><strong>Do you have your own equipment picked out?</strong></p>
+            <label class="radio-label" for="ownEquipmentYes">
+              <input type="radio" id="ownEquipmentYes" name="ownEquipment" value="yes" /> Yes
+            </label>
+            <label class="radio-label" for="ownEquipmentNo">
+              <input type="radio" id="ownEquipmentNo" name="ownEquipment" value="no" checked /> No
+            </label>
+          </div>
+
+          <div id="equipmentDescriptionSection" style="display: none;">
+            <label for="equipmentDescription">
+              Describe your equipment:
+              <textarea id="equipmentDescription" name="equipmentDescription" maxlength="2000"
+                        placeholder="List your equipment (brand, model, quantity)..." rows="4"></textarea>
+            </label>
+          </div>
+
+          <div id="brandPreferencesSection">
+            <div class="brand-group">
+              <p><strong>Networking brand preference:</strong></p>
+              <label class="radio-label"><input type="radio" name="networkingBrand" value="Omada" /> Omada</label>
+              <label class="radio-label"><input type="radio" name="networkingBrand" value="UniFi" /> UniFi</label>
+              <label class="radio-label"><input type="radio" name="networkingBrand" value="Ruckus" /> Ruckus</label>
+              <label class="radio-label"><input type="radio" name="networkingBrand" value="No Preference" checked /> No Preference</label>
+            </div>
+
+            <div class="brand-group">
+              <p><strong>Security brand preference:</strong></p>
+              <label class="radio-label"><input type="radio" name="securityBrand" value="UniFi" /> UniFi</label>
+              <label class="radio-label"><input type="radio" name="securityBrand" value="Reolink" /> Reolink</label>
+              <label class="radio-label"><input type="radio" name="securityBrand" value="No Preference" checked /> No Preference</label>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Site Survey Preference</legend>
+          <label class="radio-label">
+            <input type="radio" name="surveyPreference" value="before-install" checked /> Schedule before install
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="surveyPreference" value="day-of" /> Day of install
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Additional Notes</legend>
+          <label for="wholeHomeNotes">
+            <textarea id="wholeHomeNotes" name="wholeHomeNotes" maxlength="2000"
+                      placeholder="Anything else we should know about your project..." rows="4"></textarea>
+          </label>
+        </fieldset>
+
+        <fieldset id="wholeHomePricingSection">
+          <legend>Pricing</legend>
+          <p><strong>Deposit: $200</strong></p>
+          <p><em>Final pricing will be determined after your site survey. The deposit is applied toward your total cost.</em></p>
+        </fieldset>
+      </div>
 
       <div class="step-nav">
-        <button type="button" id="to-step-3">Next: Equipment</button>
+        <button type="button" id="to-step-3">Next: Home Info</button>
       </div>
     </section>
 
-    <!-- Step 3: Equipment Selection -->
-    <section id="step-3-equipment" style="display: none;">
-      <h2>Step 3: Equipment Selection</h2>
-      <p>Select your target speed tier to see compatible equipment options:</p>
-      
-      <!-- Speed Tier Selection -->
-      <div class="speed-tier-selection">
-        <h3>Target Speed Tier</h3>
-        <div class="speed-tier-options">
-          <label class="speed-tier-option">
-            <input type="radio" name="speedTier" value="1 Gig" id="speedTier1Gig">
-            <span class="speed-tier-label">1 Gig</span>
-          </label>
-          <label class="speed-tier-option">
-            <input type="radio" name="speedTier" value="5 Gig" id="speedTier5Gig">
-            <span class="speed-tier-label">5 Gig</span>
-          </label>
-          <label class="speed-tier-option">
-            <input type="radio" name="speedTier" value="10 Gig" id="speedTier10Gig">
-            <span class="speed-tier-label">10 Gig</span>
-          </label>
-        </div>
-      </div>
+    <!-- Step 3: Tell Us About Your Home -->
+    <section id="step-3-home-info" style="display: none;">
+      <h2>Step 3: Tell Us About Your Home</h2>
 
-      <!-- Equipment Options (dynamically populated) -->
-      <div id="equipmentOptions" style="display: none;">
-        <h3>Available Equipment</h3>
-        <div id="equipmentCards" class="equipment-grid">
-          <!-- Equipment cards will be populated by JavaScript -->
-        </div>
-      </div>
+      <fieldset>
+        <legend>Home Details</legend>
 
-      <!-- Shopping Cart -->
-      <div id="equipmentCart" style="display: none;">
-        <h3>Selected Equipment</h3>
-        <div id="cartItems">
-          <!-- Cart items will be populated by JavaScript -->
+        <label for="homeAge">
+          Home age:
+          <select id="homeAge" name="homeAge" required>
+            <option value="">Select...</option>
+            <option value="Pre-1960">Pre-1960</option>
+            <option value="1960-1980">1960-1980</option>
+            <option value="1980-2000">1980-2000</option>
+            <option value="2000-2020">2000-2020</option>
+            <option value="2020+">2020+</option>
+          </select>
+        </label>
+
+        <label for="stories">
+          Number of stories:
+          <select id="stories" name="stories" required>
+            <option value="">Select...</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3+</option>
+          </select>
+        </label>
+
+        <label for="atticAccess">
+          Attic access:
+          <select id="atticAccess" name="atticAccess" required>
+            <option value="">Select...</option>
+            <option value="Walk-in attic">Walk-in attic</option>
+            <option value="Crawl space">Crawl space</option>
+            <option value="Scuttle hole">Scuttle hole</option>
+            <option value="No attic access">No attic access</option>
+          </select>
+        </label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Access & Infrastructure</legend>
+
+        <div class="toggle-group">
+          <p><strong>Existing media panel?</strong></p>
+          <label class="radio-label" for="hasMediaPanelYes">
+            <input type="radio" id="hasMediaPanelYes" name="hasMediaPanel" value="yes" /> Yes
+          </label>
+          <label class="radio-label" for="hasMediaPanelNo">
+            <input type="radio" id="hasMediaPanelNo" name="hasMediaPanel" value="no" checked /> No
+          </label>
+
+          <label for="mediaPanelLocation" id="mediaPanelLocationLabel" style="display: none;">
+            Location:
+            <input type="text" id="mediaPanelLocation" name="mediaPanelLocation" placeholder="e.g., Garage, Basement, Utility closet" maxlength="100" />
+          </label>
         </div>
-        <div class="cart-total">
-          <strong>Equipment Total: $<span id="equipmentTotal">0</span></strong>
+
+        <div class="toggle-group">
+          <p><strong>Crawl space or basement access?</strong></p>
+          <label class="radio-label" for="hasCrawlspaceYes">
+            <input type="radio" id="hasCrawlspaceYes" name="hasCrawlspace" value="yes" /> Yes
+          </label>
+          <label class="radio-label" for="hasCrawlspaceNo">
+            <input type="radio" id="hasCrawlspaceNo" name="hasCrawlspace" value="no" checked /> No
+          </label>
         </div>
-      </div>
+      </fieldset>
+
+      <fieldset class="liability-fieldset">
+        <legend>Safety & Liability Acknowledgment</legend>
+        <div class="liability-text">
+          <p>By checking this box, you acknowledge and understand that:</p>
+          <ul>
+            <li>Work may involve cutting drywall, drilling through walls/floors/ceilings, and working in attic spaces</li>
+            <li>You are responsible for any pre-existing conditions (e.g., old wiring, asbestos concerns in older homes)</li>
+            <li>Reasonable care will be taken, but minor cosmetic imperfections near work areas are possible</li>
+            <li>Any concerns about hazardous materials should be addressed before work begins</li>
+          </ul>
+        </div>
+        <label class="checkbox-label liability-checkbox" for="liabilityAcknowledged">
+          <input type="checkbox" id="liabilityAcknowledged" name="liabilityAcknowledged" required />
+          I acknowledge and accept the above
+        </label>
+      </fieldset>
 
       <div class="step-nav">
         <button type="button" id="back-to-step-2">Back</button>
-        <button type="button" id="to-step-4">Next: Contact</button>
+        <button type="button" id="to-step-4">Next: Review & Submit</button>
       </div>
     </section>
 
-    <!-- Step 4: Contact Information -->
+    <!-- Step 4: Contact Info & Summary -->
     <section id="step-4-contact" style="display: none;">
       <h2>Step 4: Contact Information & Final Quote</h2>
-      
+
       <!-- Final Quote Summary -->
       <div id="finalQuoteSummary">
         <h3>Quote Summary</h3>
-        
-        <div class="quote-summary-section">
-          <h4>Selected Package</h4>
-          <div id="summaryPackage">
-            <span id="summaryPackageName">-</span>
-            <span id="summaryPackagePrice">-</span>
-          </div>
-        </div>
-
-        <div class="quote-summary-section" id="summaryCableRuns" style="display: none;">
-          <h4>Cable Runs</h4>
-          <div id="summaryRuns">
-            <!-- Will be populated by JavaScript -->
-          </div>
-        </div>
-
-        <div class="quote-summary-section" id="summaryServices" style="display: none;">
-          <h4>Additional Services</h4>
-          <div id="summaryServicesList">
-            <!-- Will be populated by JavaScript -->
-          </div>
-        </div>
-
-        <div class="quote-summary-section" id="summaryEquipment" style="display: none;">
-          <h4>Equipment</h4>
-          <div id="summaryEquipmentList">
-            <!-- Will be populated by JavaScript -->
-          </div>
-        </div>
-
-        <div class="quote-summary-section" id="summarySurvey" style="display: none;">
-          <h4>Add-ons</h4>
-          <div class="summary-item">
-            <span>Site Survey</span>
-            <span class="summary-price">$100</span>
-          </div>
-        </div>
-
-        <div class="quote-summary-total">
-          <div class="total-line" id="summarySubtotal" style="display: none;">
-            <span>Subtotal:</span>
-            <span id="summarySubtotalAmount">$0</span>
-          </div>
-          <div class="total-line" id="summaryEquipmentTotal" style="display: none;">
-            <span>Equipment Total:</span>
-            <span id="summaryEquipmentAmount">$0</span>
-          </div>
-          <div class="total-line final-total">
-            <span>Final Quote Total:</span>
-            <span id="summaryFinalTotal">$0</span>
-          </div>
-          <div class="total-note" id="summaryNote">
-            <em>Final pricing may vary based on site conditions and specific requirements.</em>
-          </div>
+        <div id="summaryContent">
+          <!-- Populated by JavaScript -->
         </div>
       </div>
-      
+
       <!-- Quote Request Form -->
       <form id="quoteForm">
-        <!-- Honeypot field - hidden from users but visible to bots -->
+        <!-- Honeypot field -->
         <input type="text" name="honeypot" style="display:none !important;" tabindex="-1" autocomplete="off" />
-        
+
         <fieldset>
           <legend>Contact Information</legend>
-          <label for="name">Name</label>
+          <label for="name">Name *</label>
           <input id="name" name="name" required maxlength="100" />
 
-          <label for="email">Email</label>
+          <label for="email">Email *</label>
           <input id="email" name="email" type="email" required maxlength="254" />
+
+          <label for="phone">Phone (optional)</label>
+          <input id="phone" name="phone" type="tel" maxlength="20" />
         </fieldset>
 
-        <!-- Hidden inputs for selected package -->
-        <input type="hidden" id="selectedPackage" name="package" required />
+        <!-- Hidden inputs -->
+        <input type="hidden" id="selectedServiceType" name="serviceType" required />
 
         <div class="step-nav">
           <button type="button" id="back-to-step-3">Back</button>
@@ -370,11 +387,6 @@
       box-shadow: var(--shadow-lg);
     }
 
-    .package-card.selected {
-      border-color: var(--accent);
-      background: var(--surface-light);
-    }
-
     .package-card h3 {
       color: var(--primary);
       font-size: 1.5rem;
@@ -400,20 +412,20 @@
     }
 
     .package-features li:before {
-      content: "✓";
+      content: "\2713";
       color: var(--accent);
       font-weight: bold;
       margin-right: 0.5rem;
     }
 
-    .package-deposit, .package-note {
+    .package-note {
       font-style: italic;
       color: var(--text-muted);
       font-size: 0.9rem;
       margin: 1rem 0;
     }
 
-    .package-select-btn {
+    .service-select-btn {
       background: var(--primary-dark);
       color: white;
       border: none;
@@ -425,70 +437,9 @@
       transition: var(--transition);
     }
 
-    .package-select-btn:hover {
+    .service-select-btn:hover {
       background: var(--accent-dark);
       transform: translateY(-2px);
-    }
-
-    /* Survey Card */
-    .survey-card {
-      background: var(--surface);
-      border: 2px solid var(--secondary);
-      border-radius: var(--radius);
-      padding: 2rem;
-      margin-top: 2rem;
-    }
-
-    .survey-card h3 {
-      color: var(--secondary);
-      margin-bottom: 1rem;
-    }
-
-    .survey-price {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: var(--secondary);
-      margin-bottom: 1rem;
-    }
-
-    .survey-features {
-      list-style: none;
-      padding: 0;
-      margin: 1rem 0;
-    }
-
-    .survey-features li {
-      padding: 0.5rem 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .survey-features li:before {
-      content: "★";
-      color: var(--secondary);
-      font-weight: bold;
-      margin-right: 0.5rem;
-    }
-
-    .survey-note {
-      font-style: italic;
-      color: var(--text-muted);
-      font-size: 0.9rem;
-      margin: 1rem 0;
-    }
-
-    .survey-checkbox {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin-top: 1rem;
-      cursor: pointer;
-      font-weight: 500;
-      color: var(--secondary);
-    }
-
-    .survey-checkbox input[type="checkbox"] {
-      width: auto;
-      margin: 0;
     }
 
     /* Step Navigation */
@@ -524,16 +475,8 @@
       box-shadow: var(--shadow-lg);
     }
 
-    .step-nav button:disabled {
-      background: var(--surface);
-      color: var(--text-muted);
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
-    }
-
-    /* Selected Package Display */
-    #selectedPackageDisplay {
+    /* Selected Service Display */
+    #selectedServiceDisplay {
       margin-bottom: 1rem;
       padding: 1rem;
       background: var(--surface);
@@ -542,7 +485,7 @@
       color: var(--text);
     }
 
-    #changePackageBtn {
+    #changeServiceBtn {
       background: var(--surface-light);
       color: var(--primary);
       border: 1px solid var(--primary);
@@ -550,10 +493,11 @@
       border-radius: var(--radius);
       cursor: pointer;
       font-size: 0.9rem;
+      margin-left: 1rem;
       transition: var(--transition);
     }
 
-    #changePackageBtn:hover {
+    #changeServiceBtn:hover {
       background: var(--primary);
       color: white;
     }
@@ -575,7 +519,6 @@
       font-weight: 600;
     }
 
-    /* Form Labels and Inputs */
     label {
       display: block;
       margin-bottom: 1rem;
@@ -583,398 +526,167 @@
       font-weight: 500;
     }
 
-    input[type="number"] {
+    input[type="number"],
+    input[type="text"],
+    input[type="tel"],
+    select,
+    textarea {
       background: var(--surface-light);
       border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: var(--radius);
       padding: 0.75rem;
       color: var(--text);
-      width: 100px;
-      margin-left: 1rem;
+      margin-left: 0.5rem;
     }
 
-    input[type="number"]:focus {
+    input[type="number"] { width: 100px; }
+    input[type="text"],
+    input[type="tel"] { width: 100%; max-width: 400px; }
+    select { min-width: 200px; }
+    textarea { width: 100%; resize: vertical; }
+
+    input:focus, select:focus, textarea:focus {
       border-color: var(--primary);
       box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.3);
       outline: none;
     }
 
+    /* Checkbox and Radio labels on same line */
+    .checkbox-label, .radio-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-right: 1.5rem;
+      margin-bottom: 0.5rem;
+      cursor: pointer;
+    }
+
+    .checkbox-label input[type="checkbox"],
+    .radio-label input[type="radio"] {
+      width: auto;
+      margin: 0;
+    }
+
+    /* Cable Run Rows with Info Buttons */
+    .cable-run-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .cable-run-row label {
+      flex: 1;
+      margin-bottom: 0;
+    }
+
+    .info-btn {
+      background: transparent;
+      border: none;
+      color: var(--primary);
+      cursor: pointer;
+      font-size: 1.2rem;
+      padding: 0.25rem;
+      transition: var(--transition);
+      flex-shrink: 0;
+    }
+
+    .info-btn:hover {
+      color: var(--accent);
+      transform: scale(1.15);
+    }
+
+    .cable-info {
+      display: none;
+      background: var(--surface-light);
+      border-left: 3px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 0.75rem 1rem;
+      margin: 0 0 1rem 0;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .cable-info.active {
+      display: block;
+    }
+
+    /* Toggle Groups */
+    .toggle-group {
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .toggle-group:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    /* Brand Groups */
+    .brand-group {
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .brand-group:last-child {
+      border-bottom: none;
+    }
+
+    /* Equipment toggle */
+    .equipment-toggle {
+      margin: 1.5rem 0;
+      padding: 1rem;
+      background: var(--surface);
+      border-radius: var(--radius);
+    }
+
     /* Pricing Section */
-    #pricingSection {
+    #pricingSection, #wholeHomePricingSection {
       background: var(--surface-light);
       border: 2px solid var(--accent);
     }
 
-    #basicPricing p, #premiumPricing p {
+    #pricingSection p, #wholeHomePricingSection p {
       font-size: 1.1rem;
       margin: 0.5rem 0;
     }
 
-    #basicPricing p strong, #premiumPricing p strong {
+    #pricingSection p strong, #wholeHomePricingSection p strong {
       color: var(--accent);
     }
 
-    /* Speed Tier Selection */
-    .speed-tier-options {
-      display: flex;
-      gap: 1rem;
-      margin: 1rem 0;
-      flex-wrap: wrap;
-    }
-
-    .speed-tier-option {
-      background: var(--surface);
-      border: 2px solid transparent;
-      border-radius: var(--radius);
-      padding: 1rem;
-      cursor: pointer;
-      transition: var(--transition);
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .speed-tier-option:hover {
-      border-color: var(--primary);
-    }
-
-    .speed-tier-option input[type="radio"]:checked + .speed-tier-label {
-      color: var(--accent);
-      font-weight: 700;
-    }
-
-    .speed-tier-option:has(input:checked) {
+    /* Liability Section */
+    .liability-fieldset {
       border-color: var(--accent);
-      background: var(--surface-light);
     }
 
-    .speed-tier-label {
-      font-weight: 500;
-      color: var(--text);
-    }
-
-    /* Equipment Grid */
-    .equipment-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 2rem;
-      margin: 2rem 0;
-    }
-
-    /* Equipment Recommendations */
-    .equipment-recommendations {
-      background: var(--surface-light);
-      border: 2px solid var(--secondary);
-      border-radius: var(--radius);
-      padding: 2rem;
-      margin-bottom: 2rem;
-    }
-
-    .equipment-recommendations h4 {
-      color: var(--secondary);
-      margin-bottom: 1rem;
-      text-align: center;
-    }
-
-    .recommendations-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1rem;
-      margin-top: 1rem;
-    }
-
-    .recommendation-card {
-      background: var(--surface);
-      border: 2px solid var(--secondary);
-      border-radius: var(--radius);
+    .liability-text {
+      margin-bottom: 1.5rem;
       padding: 1rem;
-      position: relative;
-      transition: var(--transition);
-    }
-
-    .recommendation-card:hover {
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-lg);
-    }
-
-    .rec-badge {
-      position: absolute;
-      top: -10px;
-      right: 10px;
-      background: var(--secondary);
-      color: var(--background);
-      padding: 0.25rem 0.75rem;
+      background: rgba(255, 255, 255, 0.05);
       border-radius: var(--radius);
-      font-size: 0.8rem;
-      font-weight: 600;
+      font-size: 0.95rem;
+      line-height: 1.6;
     }
 
-    .rec-price {
-      color: var(--accent);
-      font-size: 1.25rem;
-      font-weight: 700;
-      margin: 0.5rem 0;
-    }
-
-    .rec-description {
-      font-size: 0.9rem;
-      color: var(--text-muted);
-      margin-bottom: 1rem;
-    }
-
-    /* Equipment Category Sections */
-    .equipment-category-section {
-      margin-bottom: 3rem;
-    }
-
-    .equipment-category-header {
-      color: var(--primary);
-      font-size: 1.5rem;
-      margin-bottom: 1rem;
-      padding-bottom: 0.5rem;
-      border-bottom: 2px solid var(--primary);
-    }
-
-    .equipment-category-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 1.5rem;
-    }
-
-    /* Enhanced Equipment Cards */
-    .equipment-card {
-      background: var(--surface);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: var(--radius);
-      overflow: hidden;
-      transition: var(--transition);
-      display: flex;
-      flex-direction: column;
-    }
-
-    .equipment-card:hover {
-      border-color: var(--primary);
-      transform: translateY(-4px);
-      box-shadow: var(--shadow-lg);
-    }
-
-    .equipment-card .card-header {
-      padding: 1.5rem 1.5rem 1rem 1.5rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .equipment-card .card-header h4 {
-      margin-bottom: 0.5rem;
-      color: var(--text);
-    }
-
-    .equipment-subcategory {
-      color: var(--primary);
-      font-size: 0.9rem;
-      margin-bottom: 1rem;
-      font-weight: 500;
-    }
-
-    .feature-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-    }
-
-    .feature-tag {
-      background: var(--primary-dark);
-      color: white;
-      font-size: 0.75rem;
-      padding: 0.25rem 0.5rem;
-      border-radius: 12px;
-      font-weight: 500;
-    }
-
-    .equipment-card .card-body {
-      padding: 1rem 1.5rem;
-      flex-grow: 1;
-    }
-
-    .equipment-description {
-      color: var(--text-muted);
-      font-size: 0.9rem;
-      line-height: 1.4;
-      margin-bottom: 1rem;
-    }
-
-    .key-features {
-      list-style: none;
+    .liability-text ul {
+      margin: 0.5rem 0 0 1.5rem;
       padding: 0;
-      margin: 1rem 0;
     }
 
-    .key-features li {
-      color: var(--text);
-      font-size: 0.9rem;
-      padding: 0.25rem 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    }
-
-    .key-features li:before {
-      content: "▸";
-      color: var(--accent);
-      font-weight: bold;
-      margin-right: 0.5rem;
-    }
-
-    .equipment-specs {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-      margin-top: 1rem;
-    }
-
-    .spec {
-      background: var(--surface-light);
-      color: var(--text-muted);
-      font-size: 0.8rem;
-      padding: 0.25rem 0.5rem;
-      border-radius: var(--radius);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .equipment-card .card-footer {
-      padding: 1rem 1.5rem 1.5rem 1.5rem;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-      background: var(--surface-light);
-    }
-
-    .equipment-price {
-      color: var(--accent);
-      font-size: 1.25rem;
-      font-weight: 700;
+    .liability-text li {
       margin-bottom: 0.5rem;
     }
 
-    .equipment-sku {
-      color: var(--text-muted);
-      font-size: 0.85rem;
-      margin-bottom: 1rem;
-    }
-
-    /* Cart Items */
-    #equipmentCart {
-      background: var(--surface);
-      border-radius: var(--radius);
-      padding: 2rem;
-      margin: 2rem 0;
-    }
-
-    .cart-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 1rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .cart-item:last-child {
-      border-bottom: none;
-    }
-
-    .cart-item-controls {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .quantity-input {
-      width: 60px;
-      text-align: center;
-      background: var(--surface-light);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: var(--text);
-      padding: 0.5rem;
-      border-radius: var(--radius);
-    }
-
-    .remove-btn {
-      background: var(--error);
-      color: white;
-      border: none;
-      padding: 0.25rem 0.5rem;
-      border-radius: var(--radius);
-      cursor: pointer;
-      font-size: 0.8rem;
-      transition: var(--transition);
-    }
-
-    .remove-btn:hover {
-      opacity: 0.8;
-    }
-
-    .add-to-cart-btn {
-      background: var(--accent-dark);
-      color: white;
-      border: none;
-      padding: 0.5rem 1rem;
-      border-radius: var(--radius);
-      cursor: pointer;
-      font-weight: 500;
-      transition: var(--transition);
-    }
-
-    .add-to-cart-btn:hover {
-      background: var(--accent);
-      transform: translateY(-1px);
-    }
-
-    .cart-total {
-      margin-top: 1rem;
-      padding: 1rem;
-      background: var(--surface-light);
-      border-radius: var(--radius);
-      text-align: right;
-      border: 2px solid var(--accent);
-    }
-
-    .cart-total strong {
+    .liability-checkbox {
+      font-weight: 600;
       color: var(--accent);
-      font-size: 1.25rem;
-    }
-
-    /* Contact Form */
-    #quoteForm fieldset {
-      background: var(--surface);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    #quoteForm input {
-      background: var(--surface-light);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: var(--radius);
-      padding: 0.75rem;
-      color: var(--text);
-      width: 100%;
-    }
-
-    #quoteForm input:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.3);
-      outline: none;
-    }
-
-    /* Status Messages */
-    #quoteStatus {
-      text-align: center;
-      margin-top: 1rem;
       padding: 1rem;
+      background: var(--surface-light);
       border-radius: var(--radius);
-    }
-
-    #quoteStatus.success {
-      background: var(--accent);
-      color: white;
-    }
-
-    #quoteStatus.error {
-      background: var(--error);
-      color: white;
+      border: 1px solid var(--accent);
     }
 
     /* Final Quote Summary */
@@ -993,81 +705,20 @@
       font-size: 1.5rem;
     }
 
-    .quote-summary-section {
-      margin-bottom: 1.5rem;
-      padding-bottom: 1rem;
+    #finalQuoteSummary h4 {
+      color: var(--accent);
+      margin: 1.5rem 0 0.75rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      padding-bottom: 0.5rem;
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
 
-    .quote-summary-section:last-of-type {
-      border-bottom: none;
+    .summary-items {
+      margin-bottom: 1rem;
     }
 
-    .quote-summary-section h4 {
-      color: var(--accent);
-      margin-bottom: 0.75rem;
-      font-size: 1.1rem;
-      font-weight: 600;
-    }
-
-    .summary-item, #summaryPackage {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0.5rem 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    }
-
-    .summary-item:last-child {
-      border-bottom: none;
-    }
-
-    .summary-price, #summaryPackagePrice {
-      font-weight: 600;
-      color: var(--accent);
-    }
-
-    .quote-summary-total {
-      background: var(--surface-light);
-      border-radius: var(--radius);
-      padding: 1.5rem;
-      margin-top: 1.5rem;
-      border: 1px solid var(--accent);
-    }
-
-    .total-line {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0.5rem 0;
-      font-size: 1.1rem;
-    }
-
-    .final-total {
-      border-top: 2px solid var(--accent);
-      margin-top: 1rem;
-      padding-top: 1rem;
-      font-weight: 700;
-      font-size: 1.25rem;
-      color: var(--accent);
-    }
-
-    .final-total span:last-child {
-      font-size: 1.5rem;
-      color: var(--accent);
-    }
-
-    .total-note {
-      margin-top: 1rem;
-      padding-top: 1rem;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-      text-align: center;
-      font-size: 0.9rem;
-      color: var(--text-muted);
-    }
-
-    /* Summary item styling for runs and services */
-    .summary-run-item, .summary-service-item, .summary-equipment-item {
+    .summary-line {
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -1075,30 +726,73 @@
       font-size: 0.95rem;
     }
 
-    .summary-run-item span:first-child,
-    .summary-service-item span:first-child,
-    .summary-equipment-item span:first-child {
+    .summary-line span:first-child {
       color: var(--text);
     }
 
-    .summary-run-item span:last-child,
-    .summary-service-item span:last-child,
-    .summary-equipment-item span:last-child {
+    .summary-line span:last-child {
       color: var(--accent);
       font-weight: 500;
     }
 
+    .summary-total {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: var(--surface-light);
+      border-radius: var(--radius);
+      border: 2px solid var(--accent);
+    }
+
+    .summary-total .summary-line {
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+
+    .summary-total .summary-line span:last-child {
+      font-size: 1.4rem;
+    }
+
+    .summary-deposit {
+      margin-top: 0.5rem;
+      padding: 0.75rem 1rem;
+      background: var(--surface-light);
+      border-radius: var(--radius);
+    }
+
+    .summary-note {
+      margin-top: 1rem;
+      text-align: center;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    /* Contact Form */
+    #quoteForm fieldset {
+      background: var(--surface);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    #quoteForm input[type="text"],
+    #quoteForm input[type="email"],
+    #quoteForm input[type="tel"] {
+      width: 100%;
+      max-width: 100%;
+    }
+
+    /* Status Messages */
+    #quoteStatus {
+      text-align: center;
+      margin-top: 1rem;
+      padding: 1rem;
+      border-radius: var(--radius);
+    }
 
     /* Mobile Responsive */
     @media (max-width: 768px) {
       .package-cards {
         grid-template-columns: 1fr;
       }
-      
-      .speed-tier-options {
-        flex-direction: column;
-      }
-      
+
       .step-nav button {
         margin: 0.25rem;
         width: 100%;
@@ -1110,11 +804,31 @@
         margin: 1rem 0;
       }
 
-      .final-total span:last-child {
-        font-size: 1.25rem;
+      .checkbox-label, .radio-label {
+        display: flex;
+        margin-right: 0;
       }
     }
   </style>
 
+  <script>
+    // Media panel location toggle
+    document.addEventListener('DOMContentLoaded', () => {
+      const mediaPanelYes = document.getElementById('hasMediaPanelYes');
+      const mediaPanelNo = document.getElementById('hasMediaPanelNo');
+      const locationLabel = document.getElementById('mediaPanelLocationLabel');
+
+      if (mediaPanelYes) {
+        mediaPanelYes.addEventListener('change', () => {
+          if (locationLabel) locationLabel.style.display = 'block';
+        });
+      }
+      if (mediaPanelNo) {
+        mediaPanelNo.addEventListener('change', () => {
+          if (locationLabel) locationLabel.style.display = 'none';
+        });
+      }
+    });
+  </script>
   <script src="/scripts/quotes.js"></script>
   <%- include('partials/footer') %>
