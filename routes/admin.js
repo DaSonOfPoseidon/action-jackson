@@ -5,6 +5,7 @@ const { adminPageAuth, adminSecurityHeaders } = require('../middleware/auth');
 const Quote = require('../models/Quote');
 const Schedule = require('../models/Schedule');
 const Invoice = require('../models/Invoice');
+const CostItem = require('../models/CostItem');
 
 // Rate limiting for admin operations
 const adminRateLimit = rateLimit({
@@ -870,6 +871,358 @@ router.delete('/invoices/:id', async (req, res) => {
     console.error('Invoice deletion error:', error);
     res.status(500).json({
       error: 'Error deleting invoice'
+    });
+  }
+});
+
+// ============================================================
+// Cost Item Management Routes
+// ============================================================
+
+/**
+ * GET /admin/cost-items - Cost item management page
+ */
+router.get('/cost-items', async (req, res) => {
+  try {
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(parseInt(req.query.limit) || 20, 50);
+    const skip = (page - 1) * limit;
+
+    const search = req.query.search ? req.query.search.trim() : '';
+    const category = req.query.category || '';
+    const status = req.query.status || '';
+    const sort = req.query.sort || 'category';
+
+    let filter = {};
+
+    if (search) {
+      filter.$or = [
+        { code: { $regex: search, $options: 'i' } },
+        { name: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    if (category) {
+      filter.category = category;
+    }
+
+    if (status === 'active') {
+      filter.isActive = true;
+    } else if (status === 'inactive') {
+      filter.isActive = false;
+    }
+
+    let sortQuery = {};
+    switch (sort) {
+      case 'name':
+        sortQuery = { name: 1 };
+        break;
+      case 'price_high':
+        sortQuery = { price: -1 };
+        break;
+      case 'price_low':
+        sortQuery = { price: 1 };
+        break;
+      case 'newest':
+        sortQuery = { createdAt: -1 };
+        break;
+      default: // category
+        sortQuery = { category: 1, sortOrder: 1, name: 1 };
+    }
+
+    const [costItems, totalCount] = await Promise.all([
+      CostItem.find(filter)
+        .sort(sortQuery)
+        .skip(skip)
+        .limit(limit),
+      CostItem.countDocuments(filter)
+    ]);
+
+    const totalPages = Math.ceil(totalCount / limit);
+
+    res.render('admin/cost-items', {
+      title: 'Cost Item Management',
+      costItems,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalCount,
+        limit,
+        hasNext: page < totalPages,
+        hasPrev: page > 1
+      },
+      filters: { search, category, status, sort },
+      user: {
+        username: req.admin.username,
+        role: req.admin.role
+      }
+    });
+
+  } catch (error) {
+    console.error('Cost item management error:', error);
+    res.status(500).render('error', {
+      title: 'Cost Item Management Error',
+      message: 'Error loading cost item management page',
+      statusCode: 500,
+      variant: 'business',
+      switcherUrl: 'https://dev.actionjacksoninstalls.com'
+    });
+  }
+});
+
+/**
+ * POST /admin/cost-items/seed - Seed default cost items (superadmin only)
+ * Must be registered before /cost-items/:id routes
+ */
+router.post('/cost-items/seed', async (req, res) => {
+  try {
+    if (req.admin.role !== 'superadmin') {
+      return res.status(403).json({
+        error: 'Insufficient privileges - superadmin required'
+      });
+    }
+
+    const defaults = [
+      { code: 'CAT6-RUN', name: 'Cat6 Cable Run', category: 'Cable Runs', unitType: 'per-run', unitLabel: 'per run', price: 100, sortOrder: 0 },
+      { code: 'COAX-RUN', name: 'Coax Cable Run', category: 'Cable Runs', unitType: 'per-run', unitLabel: 'per run', price: 150, sortOrder: 1 },
+      { code: 'FIBER-RUN', name: 'Fiber Cable Run', category: 'Cable Runs', unitType: 'per-run', unitLabel: 'per run', price: 200, sortOrder: 2 },
+      { code: 'AP-MOUNT', name: 'Access Point Mount', category: 'Services', unitType: 'per-unit', unitLabel: 'per mount', price: 25, sortOrder: 0 },
+      { code: 'ETH-RELOCATION', name: 'Ethernet Relocation', category: 'Services', unitType: 'per-unit', unitLabel: 'per relocation', price: 20, sortOrder: 1 },
+      { code: 'MEDIA-PANEL', name: 'Media Panel Install', category: 'Centralization', unitType: 'flat-fee', unitLabel: 'flat fee', price: 100, sortOrder: 0 },
+      { code: 'PATCH-PANEL', name: 'Patch Panel', category: 'Centralization', unitType: 'flat-fee', unitLabel: 'flat fee', price: 50, sortOrder: 1 },
+      { code: 'LOOSE-TERM', name: 'Loose Termination', category: 'Centralization', unitType: 'flat-fee', unitLabel: 'flat fee', price: 0, sortOrder: 2 },
+      { code: 'DEPOSIT-DROPS', name: 'Drops Only Deposit', category: 'Deposits', unitType: 'threshold', unitLabel: 'deposit', price: 20, thresholdAmount: 100, sortOrder: 0 },
+      { code: 'DEPOSIT-WHOLE', name: 'Whole-Home Deposit', category: 'Deposits', unitType: 'flat-fee', unitLabel: 'flat fee', price: 200, sortOrder: 1 }
+    ];
+
+    let created = 0;
+    let skipped = 0;
+
+    for (const item of defaults) {
+      const existing = await CostItem.findOne({ code: item.code });
+      if (existing) {
+        skipped++;
+      } else {
+        await CostItem.create({
+          ...item,
+          createdBy: req.admin.username,
+          updatedBy: req.admin.username
+        });
+        created++;
+      }
+    }
+
+    console.log(`Cost items seeded by ${req.admin.username}: ${created} created, ${skipped} skipped`);
+
+    res.json({
+      success: true,
+      message: `Seeded ${created} cost items, ${skipped} already existed`,
+      created,
+      skipped
+    });
+
+  } catch (error) {
+    console.error('Cost item seed error:', error);
+    res.status(500).json({
+      error: 'Error seeding cost items'
+    });
+  }
+});
+
+/**
+ * POST /admin/cost-items - Create a new cost item
+ */
+router.post('/cost-items', async (req, res) => {
+  try {
+    const { code, name, description, category, unitType, unitLabel, price, cost, thresholdAmount, sortOrder } = req.body;
+
+    if (!code || !name || !category || !unitType || price == null) {
+      return res.status(400).json({
+        error: 'Missing required fields: code, name, category, unitType, price'
+      });
+    }
+
+    const costItem = new CostItem({
+      code,
+      name,
+      description,
+      category,
+      unitType,
+      unitLabel,
+      price,
+      cost,
+      thresholdAmount,
+      sortOrder: sortOrder || 0,
+      createdBy: req.admin.username,
+      updatedBy: req.admin.username
+    });
+
+    await costItem.save();
+
+    console.log(`Cost item ${costItem.code} created by ${req.admin.username}`);
+
+    res.status(201).json({
+      success: true,
+      message: 'Cost item created successfully',
+      costItem: {
+        id: costItem._id,
+        code: costItem.code,
+        name: costItem.name
+      }
+    });
+
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({
+        error: 'A cost item with that code already exists'
+      });
+    }
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(e => e.message);
+      return res.status(400).json({
+        error: messages.join(', ')
+      });
+    }
+    console.error('Cost item creation error:', error);
+    res.status(500).json({
+      error: 'Error creating cost item'
+    });
+  }
+});
+
+/**
+ * PUT /admin/cost-items/:id - Update a cost item
+ */
+router.put('/cost-items/:id', async (req, res) => {
+  try {
+    const { code, name, description, category, unitType, unitLabel, price, cost, thresholdAmount, sortOrder } = req.body;
+
+    const updateData = {
+      updatedBy: req.admin.username,
+      updatedAt: new Date()
+    };
+
+    if (code !== undefined) updateData.code = code;
+    if (name !== undefined) updateData.name = name;
+    if (description !== undefined) updateData.description = description;
+    if (category !== undefined) updateData.category = category;
+    if (unitType !== undefined) updateData.unitType = unitType;
+    if (unitLabel !== undefined) updateData.unitLabel = unitLabel;
+    if (price !== undefined) updateData.price = price;
+    if (cost !== undefined) updateData.cost = cost;
+    if (thresholdAmount !== undefined) updateData.thresholdAmount = thresholdAmount;
+    if (sortOrder !== undefined) updateData.sortOrder = sortOrder;
+
+    const costItem = await CostItem.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    if (!costItem) {
+      return res.status(404).json({
+        error: 'Cost item not found'
+      });
+    }
+
+    console.log(`Cost item ${costItem.code} updated by ${req.admin.username}`);
+
+    res.json({
+      success: true,
+      message: 'Cost item updated successfully',
+      costItem: {
+        id: costItem._id,
+        code: costItem.code,
+        name: costItem.name
+      }
+    });
+
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({
+        error: 'A cost item with that code already exists'
+      });
+    }
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(e => e.message);
+      return res.status(400).json({
+        error: messages.join(', ')
+      });
+    }
+    console.error('Cost item update error:', error);
+    res.status(500).json({
+      error: 'Error updating cost item'
+    });
+  }
+});
+
+/**
+ * PUT /admin/cost-items/:id/toggle - Toggle active/inactive
+ */
+router.put('/cost-items/:id/toggle', async (req, res) => {
+  try {
+    const costItem = await CostItem.findById(req.params.id);
+
+    if (!costItem) {
+      return res.status(404).json({
+        error: 'Cost item not found'
+      });
+    }
+
+    costItem.isActive = !costItem.isActive;
+    costItem.updatedBy = req.admin.username;
+    await costItem.save();
+
+    console.log(`Cost item ${costItem.code} ${costItem.isActive ? 'activated' : 'deactivated'} by ${req.admin.username}`);
+
+    res.json({
+      success: true,
+      message: `Cost item ${costItem.isActive ? 'activated' : 'deactivated'} successfully`,
+      costItem: {
+        id: costItem._id,
+        code: costItem.code,
+        isActive: costItem.isActive
+      }
+    });
+
+  } catch (error) {
+    console.error('Cost item toggle error:', error);
+    res.status(500).json({
+      error: 'Error toggling cost item'
+    });
+  }
+});
+
+/**
+ * DELETE /admin/cost-items/:id - Delete cost item (superadmin only)
+ */
+router.delete('/cost-items/:id', async (req, res) => {
+  try {
+    if (req.admin.role !== 'superadmin') {
+      return res.status(403).json({
+        error: 'Insufficient privileges - superadmin required'
+      });
+    }
+
+    const costItem = await CostItem.findByIdAndDelete(req.params.id);
+
+    if (!costItem) {
+      return res.status(404).json({
+        error: 'Cost item not found'
+      });
+    }
+
+    console.log(`Cost item ${costItem.code} deleted by ${req.admin.username}`);
+
+    res.json({
+      success: true,
+      message: 'Cost item deleted successfully'
+    });
+
+  } catch (error) {
+    console.error('Cost item deletion error:', error);
+    res.status(500).json({
+      error: 'Error deleting cost item'
     });
   }
 });

@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - Action Jackson Admin</title>
+
+    <!-- Security Headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="/styles/business.css">
+    <link rel="stylesheet" href="/styles/admin.css">
+    <!-- Font Awesome Kit  -->
+    <script src="https://kit.fontawesome.com/8623ae8306.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="admin-layout">
+        <%- include('../partials/admin-sidebar', { currentPage: 'cost-items' }) %>
+
+        <main class="admin-content">
+            <div class="content-header">
+                <h1>Cost Item Management</h1>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <% if (user.role === 'superadmin') { %>
+                        <button class="action-btn success" id="seedBtn">
+                            <i class="fas fa-database"></i> Seed Defaults
+                        </button>
+                    <% } %>
+                    <button class="action-btn" id="addBtn">
+                        <i class="fas fa-plus"></i> Add Cost Item
+                    </button>
+                    <button class="logout-btn" id="logoutBtn">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </div>
+
+            <div class="filters-section">
+                <form class="filters-grid" method="GET">
+                    <div class="filter-group">
+                        <label class="filter-label" for="search">Search</label>
+                        <input
+                            type="text"
+                            id="search"
+                            name="search"
+                            class="filter-input"
+                            placeholder="Name or code..."
+                            value="<%= filters.search %>"
+                        >
+                    </div>
+
+                    <div class="filter-group">
+                        <label class="filter-label" for="category">Category</label>
+                        <select id="category" name="category" class="filter-input">
+                            <option value="">All Categories</option>
+                            <option value="Cable Runs" <%= filters.category === 'Cable Runs' ? 'selected' : '' %>>Cable Runs</option>
+                            <option value="Services" <%= filters.category === 'Services' ? 'selected' : '' %>>Services</option>
+                            <option value="Centralization" <%= filters.category === 'Centralization' ? 'selected' : '' %>>Centralization</option>
+                            <option value="Equipment" <%= filters.category === 'Equipment' ? 'selected' : '' %>>Equipment</option>
+                            <option value="Deposits" <%= filters.category === 'Deposits' ? 'selected' : '' %>>Deposits</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label class="filter-label" for="status">Status</label>
+                        <select id="status" name="status" class="filter-input">
+                            <option value="" <%= filters.status === '' ? 'selected' : '' %>>All</option>
+                            <option value="active" <%= filters.status === 'active' ? 'selected' : '' %>>Active</option>
+                            <option value="inactive" <%= filters.status === 'inactive' ? 'selected' : '' %>>Inactive</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label class="filter-label" for="sort">Sort By</label>
+                        <select id="sort" name="sort" class="filter-input">
+                            <option value="category" <%= filters.sort === 'category' ? 'selected' : '' %>>Category</option>
+                            <option value="name" <%= filters.sort === 'name' ? 'selected' : '' %>>Name</option>
+                            <option value="price_high" <%= filters.sort === 'price_high' ? 'selected' : '' %>>Price (High to Low)</option>
+                            <option value="price_low" <%= filters.sort === 'price_low' ? 'selected' : '' %>>Price (Low to High)</option>
+                            <option value="newest" <%= filters.sort === 'newest' ? 'selected' : '' %>>Newest</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="filter-btn">
+                        <i class="fas fa-search"></i> Filter
+                    </button>
+                </form>
+            </div>
+
+            <div class="cost-items-table">
+                <div class="table-header">
+                    <h3 class="table-title">
+                        <i class="fas fa-tags"></i>
+                        Cost Items
+                        <span style="font-weight: normal; color: var(--text-muted);">
+                            (<%= pagination.totalCount %> total)
+                        </span>
+                    </h3>
+                </div>
+
+                <div class="cost-items-grid">
+                    <% if (costItems.length > 0) { %>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Name</th>
+                                    <th>Category</th>
+                                    <th>Unit Type</th>
+                                    <th>Price</th>
+                                    <th>Cost</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% costItems.forEach(function(item) { %>
+                                    <tr>
+                                        <td>
+                                            <span class="cost-item-code"><%= item.code %></span>
+                                        </td>
+                                        <td>
+                                            <strong><%= item.name %></strong>
+                                            <% if (item.description) { %>
+                                                <br><small style="color: var(--text-muted);"><%= item.description %></small>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <span class="category-badge category-<%= item.category.toLowerCase().replace(/\s+/g, '-') %>">
+                                                <%= item.category %>
+                                            </span>
+                                        </td>
+                                        <td><%= item.unitLabel || item.unitType %></td>
+                                        <td>
+                                            <span class="amount">$<%= item.price.toFixed(2) %></span>
+                                            <% if (item.thresholdAmount) { %>
+                                                <br><small style="color: var(--text-muted);">above $<%= item.thresholdAmount %></small>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <% if (item.cost != null) { %>
+                                                $<%= item.cost.toFixed(2) %>
+                                            <% } else { %>
+                                                <span style="color: var(--text-muted);">—</span>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <span class="status-badge <%= item.isActive ? 'status-active' : 'status-inactive' %>">
+                                                <i class="fas <%= item.isActive ? 'fa-check-circle' : 'fa-times-circle' %>"></i>
+                                                <%= item.isActive ? 'Active' : 'Inactive' %>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <button class="action-btn edit-btn" data-item='<%- JSON.stringify({ _id: item._id, code: item.code, name: item.name, description: item.description || "", category: item.category, unitType: item.unitType, unitLabel: item.unitLabel || "", price: item.price, cost: item.cost, thresholdAmount: item.thresholdAmount, sortOrder: item.sortOrder }) %>'>
+                                                <i class="fas fa-edit"></i> Edit
+                                            </button>
+                                            <button class="action-btn warning toggle-btn" data-item-id="<%= item._id %>" data-active="<%= item.isActive %>">
+                                                <i class="fas <%= item.isActive ? 'fa-toggle-off' : 'fa-toggle-on' %>"></i>
+                                                <%= item.isActive ? 'Disable' : 'Enable' %>
+                                            </button>
+                                            <% if (user.role === 'superadmin') { %>
+                                                <button class="action-btn danger delete-btn" data-item-id="<%= item._id %>" data-item-code="<%= item.code %>">
+                                                    <i class="fas fa-trash"></i> Delete
+                                                </button>
+                                            <% } %>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    <% } else { %>
+                        <div class="empty-state">
+                            <div class="empty-icon">
+                                <i class="fas fa-tags"></i>
+                            </div>
+                            <h3>No Cost Items Found</h3>
+                            <p>No cost items match your current filters. Click "Add Cost Item" to create one or "Seed Defaults" to load standard pricing.</p>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <% if (pagination.totalPages > 1) { %>
+                <div class="pagination">
+                    <% if (pagination.hasPrev) { %>
+                        <a href="?page=<%= pagination.currentPage - 1 %>&search=<%= filters.search %>&category=<%= filters.category %>&status=<%= filters.status %>&sort=<%= filters.sort %>">
+                            <i class="fas fa-chevron-left"></i> Previous
+                        </a>
+                    <% } %>
+
+                    <% for (let i = 1; i <= pagination.totalPages; i++) { %>
+                        <% if (i === pagination.currentPage) { %>
+                            <span class="current"><%= i %></span>
+                        <% } else { %>
+                            <a href="?page=<%= i %>&search=<%= filters.search %>&category=<%= filters.category %>&status=<%= filters.status %>&sort=<%= filters.sort %>">
+                                <%= i %>
+                            </a>
+                        <% } %>
+                    <% } %>
+
+                    <% if (pagination.hasNext) { %>
+                        <a href="?page=<%= pagination.currentPage + 1 %>&search=<%= filters.search %>&category=<%= filters.category %>&status=<%= filters.status %>&sort=<%= filters.sort %>">
+                            Next <i class="fas fa-chevron-right"></i>
+                        </a>
+                    <% } %>
+                </div>
+            <% } %>
+        </main>
+    </div>
+
+    <!-- Create/Edit Modal -->
+    <div id="costItemModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add Cost Item</h2>
+                <button class="close" id="closeModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="costItemForm" class="invoice-form">
+                    <input type="hidden" id="itemId" value="">
+
+                    <div class="form-group">
+                        <label for="itemCode">Code</label>
+                        <input type="text" id="itemCode" class="form-input" placeholder="e.g. CAT6-RUN" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="itemName">Name</label>
+                        <input type="text" id="itemName" class="form-input" placeholder="e.g. Cat6 Cable Run" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="itemDescription">Description</label>
+                        <textarea id="itemDescription" class="form-input" placeholder="Optional details..." rows="2"></textarea>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label for="itemCategory">Category</label>
+                            <select id="itemCategory" class="form-input" required>
+                                <option value="">Select...</option>
+                                <option value="Cable Runs">Cable Runs</option>
+                                <option value="Services">Services</option>
+                                <option value="Centralization">Centralization</option>
+                                <option value="Equipment">Equipment</option>
+                                <option value="Deposits">Deposits</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="itemUnitType">Unit Type</label>
+                            <select id="itemUnitType" class="form-input" required>
+                                <option value="">Select...</option>
+                                <option value="per-foot">Per Foot</option>
+                                <option value="per-run">Per Run</option>
+                                <option value="per-unit">Per Unit</option>
+                                <option value="flat-fee">Flat Fee</option>
+                                <option value="threshold">Threshold</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="itemUnitLabel">Unit Label</label>
+                        <input type="text" id="itemUnitLabel" class="form-input" placeholder="e.g. per run, per mount, flat fee">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label for="itemPrice">Price ($)</label>
+                            <input type="number" id="itemPrice" class="form-input" step="0.01" min="0" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="itemCost">Cost ($)</label>
+                            <input type="number" id="itemCost" class="form-input" step="0.01" min="0" placeholder="Optional">
+                        </div>
+                    </div>
+
+                    <div class="form-group" id="thresholdGroup" style="display: none;">
+                        <label for="itemThreshold">Threshold Amount ($)</label>
+                        <input type="number" id="itemThreshold" class="form-input" step="0.01" min="0" placeholder="Deposit kicks in above this amount">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="itemSortOrder">Sort Order</label>
+                        <input type="number" id="itemSortOrder" class="form-input" value="0" min="0">
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" id="cancelBtn">Cancel</button>
+                        <button type="submit" class="btn-primary" id="saveBtn">
+                            <i class="fas fa-save"></i> Save
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('costItemModal');
+            const form = document.getElementById('costItemForm');
+            const unitTypeSelect = document.getElementById('itemUnitType');
+            const thresholdGroup = document.getElementById('thresholdGroup');
+
+            // Logout
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+
+            // Add button
+            document.getElementById('addBtn').addEventListener('click', function() {
+                openModal();
+            });
+
+            // Seed button
+            const seedBtn = document.getElementById('seedBtn');
+            if (seedBtn) {
+                seedBtn.addEventListener('click', seedDefaults);
+            }
+
+            // Close modal
+            document.getElementById('closeModal').addEventListener('click', closeModal);
+            document.getElementById('cancelBtn').addEventListener('click', closeModal);
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) closeModal();
+            });
+
+            // Toggle threshold field visibility
+            unitTypeSelect.addEventListener('change', function() {
+                thresholdGroup.style.display = this.value === 'threshold' ? 'block' : 'none';
+            });
+
+            // Edit buttons
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const item = JSON.parse(this.getAttribute('data-item'));
+                    openModal(item);
+                });
+            });
+
+            // Toggle buttons
+            document.querySelectorAll('.toggle-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.getAttribute('data-item-id');
+                    const isActive = this.getAttribute('data-active') === 'true';
+                    toggleItem(id, isActive);
+                });
+            });
+
+            // Delete buttons
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.getAttribute('data-item-id');
+                    const code = this.getAttribute('data-item-code');
+                    deleteItem(id, code);
+                });
+            });
+
+            // Form submit
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveItem();
+            });
+
+            function openModal(item) {
+                document.getElementById('modalTitle').textContent = item ? 'Edit Cost Item' : 'Add Cost Item';
+                document.getElementById('itemId').value = item ? item._id : '';
+                document.getElementById('itemCode').value = item ? item.code : '';
+                document.getElementById('itemName').value = item ? item.name : '';
+                document.getElementById('itemDescription').value = item ? item.description : '';
+                document.getElementById('itemCategory').value = item ? item.category : '';
+                document.getElementById('itemUnitType').value = item ? item.unitType : '';
+                document.getElementById('itemUnitLabel').value = item ? item.unitLabel : '';
+                document.getElementById('itemPrice').value = item ? item.price : '';
+                document.getElementById('itemCost').value = item && item.cost != null ? item.cost : '';
+                document.getElementById('itemThreshold').value = item && item.thresholdAmount != null ? item.thresholdAmount : '';
+                document.getElementById('itemSortOrder').value = item ? item.sortOrder : 0;
+
+                // Show/hide threshold
+                thresholdGroup.style.display = (item && item.unitType === 'threshold') ? 'block' : 'none';
+
+                modal.style.display = 'block';
+            }
+
+            function closeModal() {
+                modal.style.display = 'none';
+                form.reset();
+            }
+
+            async function saveItem() {
+                const id = document.getElementById('itemId').value;
+                const data = {
+                    code: document.getElementById('itemCode').value.trim(),
+                    name: document.getElementById('itemName').value.trim(),
+                    description: document.getElementById('itemDescription').value.trim(),
+                    category: document.getElementById('itemCategory').value,
+                    unitType: document.getElementById('itemUnitType').value,
+                    unitLabel: document.getElementById('itemUnitLabel').value.trim(),
+                    price: parseFloat(document.getElementById('itemPrice').value),
+                    sortOrder: parseInt(document.getElementById('itemSortOrder').value) || 0
+                };
+
+                const costVal = document.getElementById('itemCost').value;
+                if (costVal !== '') data.cost = parseFloat(costVal);
+
+                const thresholdVal = document.getElementById('itemThreshold').value;
+                if (thresholdVal !== '') data.thresholdAmount = parseFloat(thresholdVal);
+
+                try {
+                    const url = id ? '/admin/cost-items/' + id : '/admin/cost-items';
+                    const method = id ? 'PUT' : 'POST';
+
+                    const response = await fetch(url, {
+                        method: method,
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify(data)
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + (result.error || 'Unknown error'));
+                    }
+                } catch (error) {
+                    console.error('Save error:', error);
+                    alert('Error saving cost item. Please try again.');
+                }
+            }
+
+            async function toggleItem(id, currentActive) {
+                const action = currentActive ? 'disable' : 'enable';
+                if (!confirm('Are you sure you want to ' + action + ' this cost item?')) return;
+
+                try {
+                    const response = await fetch('/admin/cost-items/' + id + '/toggle', {
+                        method: 'PUT',
+                        credentials: 'include'
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + (data.error || 'Unknown error'));
+                    }
+                } catch (error) {
+                    console.error('Toggle error:', error);
+                    alert('Error toggling cost item. Please try again.');
+                }
+            }
+
+            async function deleteItem(id, code) {
+                if (!confirm('Are you sure you want to delete ' + code + '? This action cannot be undone.')) return;
+
+                try {
+                    const response = await fetch('/admin/cost-items/' + id, {
+                        method: 'DELETE',
+                        credentials: 'include'
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + (data.error || 'Unknown error'));
+                    }
+                } catch (error) {
+                    console.error('Delete error:', error);
+                    alert('Error deleting cost item. Please try again.');
+                }
+            }
+
+            async function seedDefaults() {
+                if (!confirm('This will add default cost items based on current hardcoded pricing. Existing items with the same code will be skipped. Continue?')) return;
+
+                try {
+                    const response = await fetch('/admin/cost-items/seed', {
+                        method: 'POST',
+                        credentials: 'include'
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        alert('Seeded ' + data.created + ' items. ' + data.skipped + ' already existed.');
+                        location.reload();
+                    } else {
+                        alert('Error: ' + (data.error || 'Unknown error'));
+                    }
+                } catch (error) {
+                    console.error('Seed error:', error);
+                    alert('Error seeding defaults. Please try again.');
+                }
+            }
+
+            async function logout() {
+                if (confirm('Are you sure you want to logout?')) {
+                    try {
+                        const response = await fetch('/auth/logout', {
+                            method: 'POST',
+                            credentials: 'include'
+                        });
+
+                        if (response.ok) {
+                            window.location.href = '/';
+                        } else {
+                            alert('Logout failed. Please try again.');
+                        }
+                    } catch (error) {
+                        console.error('Logout error:', error);
+                        alert('Logout error. Please try again.');
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

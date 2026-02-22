@@ -282,7 +282,8 @@ body {
 /* Tables */
 .quotes-table,
 .schedule-table,
-.invoices-table {
+.invoices-table,
+.cost-items-table {
     background: var(--surface);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: var(--radius);
@@ -308,7 +309,8 @@ body {
 }
 
 .table-responsive,
-.invoices-grid {
+.invoices-grid,
+.cost-items-grid {
     overflow-x: auto;
 }
 
@@ -389,6 +391,27 @@ td {
 .status-sent { background: rgba(37, 99, 235, 0.1); color: #3b82f6; }
 .status-paid { background: rgba(5, 150, 105, 0.1); color: #10b981; }
 .status-overdue { background: rgba(220, 38, 38, 0.1); color: #ef4444; }
+
+/* Cost item status colors */
+.status-active { background: rgba(5, 150, 105, 0.1); color: #10b981; }
+.status-inactive { background: rgba(156, 163, 175, 0.1); color: #9ca3af; }
+
+/* Category badges */
+.category-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.category-cable-runs { background: rgba(37, 99, 235, 0.1); color: #3b82f6; }
+.category-services { background: rgba(5, 150, 105, 0.1); color: #10b981; }
+.category-centralization { background: rgba(156, 163, 175, 0.1); color: #9ca3af; }
+.category-equipment { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
+.category-deposits { background: rgba(217, 119, 6, 0.1); color: #fbbf24; }
 
 /* Action Buttons */
 .action-btn {
@@ -487,7 +510,8 @@ td {
     color: var(--admin-success);
 }
 
-.invoice-number {
+.invoice-number,
+.cost-item-code {
     font-family: var(--font-mono, 'IBM Plex Mono', monospace);
     font-weight: 600;
     color: var(--admin-primary);
