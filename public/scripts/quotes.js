@@ -47,6 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initializeCentralizationToggle();
   initializeInfoButtons();
   initializeSchedulingIntegration();
+  initializeMediaPanelToggle();
 });
 
 // ─── Progress Indicator ───
@@ -194,7 +195,7 @@ function initializeServiceTypeSelection() {
   const serviceButtons = document.querySelectorAll('.service-select-btn');
   serviceButtons.forEach(btn => {
     btn.addEventListener('click', (e) => {
-      const type = e.target.dataset.service;
+      const type = btn.dataset.service;
       selectServiceType(type);
     });
   });
@@ -796,6 +797,23 @@ function buildHomeInfoSummaryDOM(container) {
   items.appendChild(createSummaryLine('Crawl Space / Basement:', hasCrawlspace ? 'Yes' : 'No'));
 
   container.appendChild(items);
+}
+
+function initializeMediaPanelToggle() {
+  const mediaPanelYes = document.getElementById('hasMediaPanelYes');
+  const mediaPanelNo = document.getElementById('hasMediaPanelNo');
+  const locationLabel = document.getElementById('mediaPanelLocationLabel');
+
+  if (mediaPanelYes) {
+    mediaPanelYes.addEventListener('change', () => {
+      if (locationLabel) locationLabel.style.display = 'block';
+    });
+  }
+  if (mediaPanelNo) {
+    mediaPanelNo.addEventListener('change', () => {
+      if (locationLabel) locationLabel.style.display = 'none';
+    });
+  }
 }
 
 function initializeInfoButtons() {

@@ -1129,24 +1129,5 @@
     }
   </style>
 
-  <script>
-    // Media panel location toggle
-    document.addEventListener('DOMContentLoaded', () => {
-      const mediaPanelYes = document.getElementById('hasMediaPanelYes');
-      const mediaPanelNo = document.getElementById('hasMediaPanelNo');
-      const locationLabel = document.getElementById('mediaPanelLocationLabel');
-
-      if (mediaPanelYes) {
-        mediaPanelYes.addEventListener('change', () => {
-          if (locationLabel) locationLabel.style.display = 'block';
-        });
-      }
-      if (mediaPanelNo) {
-        mediaPanelNo.addEventListener('change', () => {
-          if (locationLabel) locationLabel.style.display = 'none';
-        });
-      }
-    });
-  </script>
   <script src="/scripts/quotes.js"></script>
   <%- include('partials/footer') %>
