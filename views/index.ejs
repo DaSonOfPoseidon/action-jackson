@@ -1,29 +1,363 @@
 <%- include('partials/header', { title: 'Home' }) %>
 
-<main class="container">
-  <section class="hero">
-    <div class="container">
-      <h1>Welcome to Action Jacksons Installs</h1>
-      <p>Affordable, reliable networking installations. Get a quote online today!</p>
-      <a href="/scheduling" class="contrast">Schedule Now</a>
+<main>
+  <!-- Hero -->
+  <section class="home-hero">
+    <div class="hero-grid-bg"></div>
+    <div class="container hero-inner">
+      <span class="location-badge animate-in"><i class="fas fa-map-marker-alt"></i> Columbia, Missouri</span>
+      <h1 class="animate-in">Your Network,<br><span class="text-amber">Built Right.</span></h1>
+      <p class="hero-sub animate-in">Premium cable drops, whole-home networking, and security systems — installed by a craftsman, not a call center.</p>
+      <div class="hero-ctas animate-in">
+        <a href="/quotes" class="btn-primary-lg">Get Connected</a>
+        <a href="/about" class="btn-outline-lg">Learn More</a>
+      </div>
     </div>
   </section>
 
-  <section class="features container">
-    <article class="card">
-      <h2>Safe &amp; Secure</h2>
-      <p>Professional Security and Network installations</p>
-    </article>
-    <article class="card">
-      <h2>Quality Gear</h2>
-      <p>Latest cables and hardware</p>
-    </article>
-    <article class="card">
-      <h2>Expert Installation</h2>
-      <p>Trained and knowledgable technicians at your service</p>
-    </article>
+  <!-- Trust Strip -->
+  <section class="trust-strip">
+    <div class="container trust-inner">
+      <div class="trust-item animate-in">
+        <span class="trust-number font-mono">100+</span>
+        <span class="trust-label">Drops Installed</span>
+      </div>
+      <div class="trust-item animate-in">
+        <span class="trust-number font-mono">5-Star</span>
+        <span class="trust-label">Rated Service</span>
+      </div>
+      <div class="trust-item animate-in">
+        <span class="trust-number font-mono">Same Day</span>
+        <span class="trust-label">Quotes Available</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Services -->
+  <section class="home-services container">
+    <h2 class="section-title animate-in">What We Do</h2>
+    <div class="services-grid">
+      <article class="service-card animate-in">
+        <div class="service-icon-wrap"><i class="fas fa-ethernet"></i></div>
+        <h3>Cable Drops</h3>
+        <p>Cat6, coax, and fiber runs — terminated, tested, and labeled. Every drop done right.</p>
+      </article>
+      <article class="service-card animate-in">
+        <div class="service-icon-wrap"><i class="fas fa-network-wired"></i></div>
+        <h3>Whole-Home Networking</h3>
+        <p>Routers, switches, access points, and structured cabling for seamless coverage everywhere.</p>
+      </article>
+      <article class="service-card animate-in">
+        <div class="service-icon-wrap"><i class="fas fa-video"></i></div>
+        <h3>Security Systems</h3>
+        <p>IP camera installation, NVR setup, and remote monitoring so you can watch from anywhere.</p>
+      </article>
+      <article class="service-card animate-in">
+        <div class="service-icon-wrap"><i class="fas fa-laptop"></i></div>
+        <h3>Device Setup</h3>
+        <p>Client and server device configuration — computers, NAS, smart home, and more.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section class="home-steps">
+    <div class="container">
+      <h2 class="section-title animate-in">How It Works</h2>
+      <div class="steps-row">
+        <div class="step-item animate-in">
+          <span class="step-num font-mono">01</span>
+          <h4>Get Connected</h4>
+          <p>Tell us about your project and get an instant estimate.</p>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-item animate-in">
+          <span class="step-num font-mono">02</span>
+          <h4>Site Survey</h4>
+          <p>We visit your home to plan the cleanest cable routes.</p>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-item animate-in">
+          <span class="step-num font-mono">03</span>
+          <h4>Installation</h4>
+          <p>Professional install with testing and verification on every drop.</p>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-item animate-in">
+          <span class="step-num font-mono">04</span>
+          <h4>Enjoy</h4>
+          <p>Fast, reliable connectivity throughout your entire home.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Band -->
+  <section class="cta-band">
+    <div class="container cta-band-inner">
+      <h2>Ready to upgrade your network?</h2>
+      <p>Get a free estimate in minutes — no call centers, no runaround.</p>
+      <a href="/quotes" class="btn-primary-lg">Get Connected</a>
+    </div>
   </section>
 </main>
+
+<style>
+/* ─── Hero ─── */
+.home-hero {
+  position: relative;
+  padding: 6rem 0 5rem;
+  overflow: hidden;
+  background: var(--background);
+}
+
+.hero-grid-bg {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(245, 158, 11, 0.08) 1px, transparent 1px);
+  background-size: 24px 24px;
+  pointer-events: none;
+}
+
+.hero-inner {
+  position: relative;
+  max-width: 720px;
+}
+
+.location-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--surface);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  padding: 0.4rem 1rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+}
+
+.location-badge i {
+  color: var(--primary);
+}
+
+.home-hero h1 {
+  font-size: clamp(2.5rem, 6vw, 4rem);
+  line-height: 1.1;
+  margin-bottom: 1.5rem;
+}
+
+.hero-sub {
+  font-size: 1.15rem;
+  color: var(--text-muted);
+  max-width: 540px;
+  line-height: 1.7;
+  margin-bottom: 2rem;
+}
+
+.hero-ctas {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* ─── Trust Strip ─── */
+.trust-strip {
+  background: var(--surface);
+  border-top: 1px solid rgba(245, 158, 11, 0.12);
+  border-bottom: 1px solid rgba(245, 158, 11, 0.12);
+  padding: 2.5rem 0;
+}
+
+.trust-inner {
+  display: flex;
+  justify-content: center;
+  gap: 4rem;
+  flex-wrap: wrap;
+  text-align: center;
+}
+
+.trust-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.trust-number {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.trust-label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ─── Services ─── */
+.home-services {
+  padding: 5rem 0;
+}
+
+.section-title {
+  text-align: center;
+  margin-bottom: 3rem;
+  font-size: 2rem;
+}
+
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 2rem;
+}
+
+.service-card {
+  background: var(--surface);
+  border: 1px solid rgba(245, 158, 11, 0.12);
+  border-radius: var(--radius);
+  padding: 2rem;
+  transition: var(--transition);
+}
+
+.service-card:hover {
+  border-color: rgba(245, 158, 11, 0.35);
+  box-shadow: var(--glow-amber);
+  transform: translateY(-4px);
+}
+
+.service-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(245, 158, 11, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+  font-size: 1.25rem;
+  color: var(--primary);
+}
+
+.service-card h3 {
+  margin-bottom: 0.5rem;
+  font-size: 1.15rem;
+}
+
+.service-card p {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ─── Steps ─── */
+.home-steps {
+  background: var(--surface);
+  padding: 5rem 0;
+}
+
+.steps-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0;
+}
+
+.step-item {
+  flex: 1;
+  max-width: 220px;
+  text-align: center;
+  padding: 0 1rem;
+}
+
+.step-num {
+  display: inline-block;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 0.75rem;
+}
+
+.step-item h4 {
+  margin-bottom: 0.5rem;
+  font-size: 1.05rem;
+}
+
+.step-item p {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.step-connector {
+  width: 48px;
+  height: 2px;
+  background: rgba(245, 158, 11, 0.25);
+  margin-top: 1.5rem;
+  flex-shrink: 0;
+}
+
+/* ─── CTA Band ─── */
+.cta-band {
+  background: linear-gradient(135deg, #D97706, #F59E0B);
+  padding: 4rem 0;
+}
+
+.cta-band-inner {
+  text-align: center;
+}
+
+.cta-band h2 {
+  color: #0C0A09;
+  margin-bottom: 0.75rem;
+  font-size: 2rem;
+}
+
+.cta-band p {
+  color: rgba(12, 10, 9, 0.8);
+  margin-bottom: 2rem;
+  font-size: 1.1rem;
+}
+
+.cta-band .btn-primary-lg {
+  background: #0C0A09;
+  color: var(--primary);
+}
+
+.cta-band .btn-primary-lg:hover {
+  background: var(--surface);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* ─── Mobile ─── */
+@media (max-width: 768px) {
+  .home-hero { padding: 4rem 0 3rem; }
+
+  .trust-inner { gap: 2rem; }
+
+  .steps-row {
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .step-connector {
+    width: 2px;
+    height: 32px;
+    margin: 0;
+  }
+
+  .step-item {
+    max-width: 100%;
+  }
+
+  .home-services { padding: 3rem 0; }
+  .home-steps { padding: 3rem 0; }
+}
+</style>
 
 <script src="/scripts/home.js"></script>
 <%- include('partials/footer') %>

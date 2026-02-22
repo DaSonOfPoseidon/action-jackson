@@ -1,6 +1,34 @@
-<%- include('partials/header', { title: 'Request a Quote' }) %>
+<%- include('partials/header', { title: 'Get Connected' }) %>
 
   <main class="container">
+    <!-- Progress Indicator -->
+    <div class="quote-progress">
+      <div class="progress-step active" data-step="1">
+        <span class="progress-num font-mono">1</span>
+        <span class="progress-label">Package</span>
+      </div>
+      <div class="progress-connector active"></div>
+      <div class="progress-step" data-step="2">
+        <span class="progress-num font-mono">2</span>
+        <span class="progress-label">Details</span>
+      </div>
+      <div class="progress-connector"></div>
+      <div class="progress-step" data-step="3">
+        <span class="progress-num font-mono">3</span>
+        <span class="progress-label">Home Info</span>
+      </div>
+      <div class="progress-connector"></div>
+      <div class="progress-step" data-step="4">
+        <span class="progress-num font-mono">4</span>
+        <span class="progress-label">Submit</span>
+      </div>
+      <div class="progress-connector"></div>
+      <div class="progress-step" data-step="5">
+        <span class="progress-num font-mono">5</span>
+        <span class="progress-label">Schedule</span>
+      </div>
+    </div>
+
     <!-- Step 1: Pick Your Package -->
     <section id="step-1-package">
       <h2>Step 1: Pick Your Package</h2>
@@ -8,7 +36,7 @@
 
         <article class="card package-card" data-service="Drops Only">
           <h3>Drops Only</h3>
-          <p class="package-price">Starting at $100 per drop</p>
+          <p class="package-price font-mono">Starting at $100 per drop</p>
           <ul class="package-features">
             <li>Cable drops ran and terminated</li>
             <li>Cat6 for internet or phone</li>
@@ -23,7 +51,7 @@
 
         <article class="card package-card" data-service="Whole-Home">
           <h3>Whole-Home Setup</h3>
-          <p class="package-price">Deposit-based, quoted on-site</p>
+          <p class="package-price font-mono">Deposit-based, quoted on-site</p>
           <ul class="package-features">
             <li>Drops + full network installation</li>
             <li>Security camera systems</li>
@@ -100,7 +128,7 @@
             <input type="radio" id="centralizationLoose" name="centralization" value="Loose Termination" /> Loose Termination (Free)
           </label>
 
-          <div id="mediaPanelInlineQuestion" style="display: none; margin-top: 1rem; padding: 1rem; background: var(--surface-light); border-radius: var(--radius); border-left: 3px solid var(--accent);">
+          <div id="mediaPanelInlineQuestion" style="display: none; margin-top: 1rem; padding: 1rem; background: var(--surface-light); border-radius: var(--radius); border-left: 3px solid var(--primary);">
             <p><strong>Do you have an existing media panel?</strong></p>
             <label class="radio-label" for="inlineHasPanelYes">
               <input type="radio" id="inlineHasPanelYes" name="inlineHasMediaPanel" value="yes" /> Yes ($0)
@@ -127,8 +155,8 @@
 
         <fieldset id="pricingSection">
           <legend>Estimated Pricing</legend>
-          <p><strong>Total Cost: $<span id="totalCost">0</span></strong></p>
-          <p>Deposit Required: $<span id="depositAmount">0</span></p>
+          <p><strong>Total Cost: $<span id="totalCost" class="font-mono">0</span></strong></p>
+          <p>Deposit Required: $<span id="depositAmount" class="font-mono">0</span></p>
           <p><em>Final pricing may vary based on site conditions.</em></p>
         </fieldset>
       </div>
@@ -216,7 +244,7 @@
 
         <fieldset id="wholeHomePricingSection">
           <legend>Pricing</legend>
-          <p><strong>Deposit: $200</strong></p>
+          <p><strong>Deposit: <span class="font-mono">$200</span></strong></p>
           <p><em>Final pricing will be determined after your site survey. The deposit is applied toward your total cost.</em></p>
         </fieldset>
       </div>
@@ -359,10 +387,143 @@
       <p id="quoteStatus"></p>
     </section>
 
+    <!-- Step 5: Success + Schedule -->
+    <section id="step-5-success" style="display: none;">
+      <div class="success-banner">
+        <i class="fas fa-check-circle"></i>
+        <h2>Quote Submitted!</h2>
+        <p>Your quote number is <strong class="font-mono" id="successQuoteNumber"></strong></p>
+        <p class="success-sub">We'll be in touch soon. In the meantime, want to schedule your appointment?</p>
+      </div>
+
+      <div class="schedule-prompt">
+        <h3>Schedule Your Appointment</h3>
+        <p>Pick a date and time that works for you. We'll confirm within 24 hours.</p>
+
+        <form id="scheduleForm">
+          <div class="schedule-fields">
+            <div class="schedule-field">
+              <label for="scheduleDate">Preferred Date</label>
+              <input type="date" id="scheduleDate" name="scheduleDate" required />
+            </div>
+
+            <div class="schedule-field" id="timeSlotsContainer" style="display: none;">
+              <label>Available Time Slots</label>
+              <div class="time-slots-grid" id="timeSlotsGrid">
+                <!-- Populated by JavaScript -->
+              </div>
+              <input type="hidden" id="selectedTime" name="selectedTime" />
+            </div>
+
+            <div class="schedule-field">
+              <label for="schedulePhone">Phone (optional)</label>
+              <input type="tel" id="schedulePhone" name="schedulePhone" maxlength="20" placeholder="+1..." />
+            </div>
+
+            <div class="schedule-field">
+              <label for="scheduleNotes">Notes (optional)</label>
+              <textarea id="scheduleNotes" name="scheduleNotes" maxlength="500" rows="3" placeholder="Any special instructions or access details..."></textarea>
+            </div>
+          </div>
+
+          <div class="step-nav">
+            <button type="button" id="skipScheduleBtn">Maybe Later</button>
+            <button type="submit" id="bookAppointmentBtn" disabled>Book Appointment</button>
+          </div>
+        </form>
+
+        <div id="scheduleConfirmation" style="display: none;">
+          <div class="confirmation-banner">
+            <i class="fas fa-calendar-check"></i>
+            <h3>Appointment Booked!</h3>
+            <p id="confirmationDetails"></p>
+            <a href="/" class="btn-primary-lg" style="margin-top: 1rem;">Back to Home</a>
+          </div>
+        </div>
+
+        <p id="scheduleStatus"></p>
+      </div>
+    </section>
+
   </main>
 
   <style>
     .hidden { display: none; }
+
+    /* ─── Progress Indicator ─── */
+    .quote-progress {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      margin: 2rem 0 3rem;
+      padding: 0 1rem;
+    }
+
+    .progress-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.4rem;
+      position: relative;
+    }
+
+    .progress-num {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 600;
+      background: var(--surface-light);
+      color: var(--text-muted);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      transition: var(--transition);
+    }
+
+    .progress-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      transition: var(--transition);
+      white-space: nowrap;
+    }
+
+    .progress-step.active .progress-num {
+      background: var(--primary);
+      color: #0C0A09;
+      border-color: var(--primary);
+      box-shadow: 0 0 12px rgba(245, 158, 11, 0.3);
+    }
+
+    .progress-step.active .progress-label {
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .progress-step.completed .progress-num {
+      background: var(--primary-dark);
+      color: #0C0A09;
+      border-color: var(--primary-dark);
+    }
+
+    .progress-step.completed .progress-label {
+      color: var(--text);
+    }
+
+    .progress-connector {
+      width: 48px;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.1);
+      margin: 0 0.25rem;
+      margin-bottom: 1.25rem;
+      transition: var(--transition);
+    }
+
+    .progress-connector.active {
+      background: var(--primary);
+    }
 
     /* Package Cards */
     .package-cards {
@@ -374,7 +535,7 @@
 
     .package-card {
       background: var(--surface);
-      border: 2px solid transparent;
+      border: 2px solid rgba(245, 158, 11, 0.12);
       border-radius: var(--radius);
       padding: 2rem;
       transition: var(--transition);
@@ -384,7 +545,7 @@
     .package-card:hover {
       border-color: var(--primary);
       transform: translateY(-2px);
-      box-shadow: var(--shadow-lg);
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.15);
     }
 
     .package-card h3 {
@@ -396,7 +557,7 @@
     .package-price {
       font-size: 1.25rem;
       font-weight: 700;
-      color: var(--accent);
+      color: var(--primary);
       margin-bottom: 1rem;
     }
 
@@ -408,12 +569,12 @@
 
     .package-features li {
       padding: 0.5rem 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     }
 
     .package-features li:before {
       content: "\2713";
-      color: var(--accent);
+      color: var(--primary);
       font-weight: bold;
       margin-right: 0.5rem;
     }
@@ -426,20 +587,21 @@
     }
 
     .service-select-btn {
-      background: var(--primary-dark);
-      color: white;
+      background: var(--primary);
+      color: #0C0A09;
       border: none;
       padding: 0.75rem 1.5rem;
       border-radius: var(--radius);
-      font-weight: 500;
+      font-weight: 600;
       cursor: pointer;
       width: 100%;
       transition: var(--transition);
     }
 
     .service-select-btn:hover {
-      background: var(--accent-dark);
+      background: var(--primary-dark);
       transform: translateY(-2px);
+      box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
     }
 
     /* Step Navigation */
@@ -462,12 +624,13 @@
     .step-nav button[type="button"] {
       background: var(--surface-light);
       color: var(--text);
-      border: 1px solid var(--primary);
+      border: 1px solid rgba(245, 158, 11, 0.25);
     }
 
     .step-nav button[type="submit"] {
-      background: var(--primary-dark);
-      color: white;
+      background: var(--primary);
+      color: #0C0A09;
+      font-weight: 600;
     }
 
     .step-nav button:hover {
@@ -481,7 +644,7 @@
       padding: 1rem;
       background: var(--surface);
       border-radius: var(--radius);
-      border-left: 4px solid var(--accent);
+      border-left: 4px solid var(--primary);
       color: var(--text);
     }
 
@@ -499,21 +662,21 @@
 
     #changeServiceBtn:hover {
       background: var(--primary);
-      color: white;
+      color: #0C0A09;
     }
 
     /* Form Fieldsets */
     fieldset {
       background: var(--surface);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: var(--radius);
       padding: 2rem;
       margin: 2rem 0;
     }
 
     legend {
-      background: var(--primary-dark);
-      color: white;
+      background: var(--primary);
+      color: #0C0A09;
       padding: 0.5rem 1rem;
       border-radius: var(--radius);
       font-weight: 600;
@@ -529,10 +692,12 @@
     input[type="number"],
     input[type="text"],
     input[type="tel"],
+    input[type="date"],
+    input[type="email"],
     select,
     textarea {
       background: var(--surface-light);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.15);
       border-radius: var(--radius);
       padding: 0.75rem;
       color: var(--text);
@@ -541,13 +706,15 @@
 
     input[type="number"] { width: 100px; }
     input[type="text"],
-    input[type="tel"] { width: 100%; max-width: 400px; }
+    input[type="tel"],
+    input[type="email"] { width: 100%; max-width: 400px; }
+    input[type="date"] { width: auto; }
     select { min-width: 200px; }
     textarea { width: 100%; resize: vertical; }
 
     input:focus, select:focus, textarea:focus {
       border-color: var(--primary);
-      box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.3);
+      box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25);
       outline: none;
     }
 
@@ -591,14 +758,14 @@
     }
 
     .info-btn:hover {
-      color: var(--accent);
+      color: var(--primary-dark);
       transform: scale(1.15);
     }
 
     .cable-info {
       display: none;
       background: var(--surface-light);
-      border-left: 3px solid var(--accent);
+      border-left: 3px solid var(--primary);
       border-radius: var(--radius);
       padding: 0.75rem 1rem;
       margin: 0 0 1rem 0;
@@ -615,7 +782,7 @@
     .toggle-group {
       margin-bottom: 1.5rem;
       padding-bottom: 1rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     }
 
     .toggle-group:last-child {
@@ -627,7 +794,7 @@
     .brand-group {
       margin-bottom: 1.5rem;
       padding-bottom: 1rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     }
 
     .brand-group:last-child {
@@ -645,7 +812,7 @@
     /* Pricing Section */
     #pricingSection, #wholeHomePricingSection {
       background: var(--surface-light);
-      border: 2px solid var(--accent);
+      border: 2px solid var(--primary);
     }
 
     #pricingSection p, #wholeHomePricingSection p {
@@ -654,18 +821,18 @@
     }
 
     #pricingSection p strong, #wholeHomePricingSection p strong {
-      color: var(--accent);
+      color: var(--primary);
     }
 
     /* Liability Section */
     .liability-fieldset {
-      border-color: var(--accent);
+      border-color: var(--primary);
     }
 
     .liability-text {
       margin-bottom: 1.5rem;
       padding: 1rem;
-      background: rgba(255, 255, 255, 0.05);
+      background: rgba(255, 255, 255, 0.03);
       border-radius: var(--radius);
       font-size: 0.95rem;
       line-height: 1.6;
@@ -682,11 +849,11 @@
 
     .liability-checkbox {
       font-weight: 600;
-      color: var(--accent);
+      color: var(--primary);
       padding: 1rem;
       background: var(--surface-light);
       border-radius: var(--radius);
-      border: 1px solid var(--accent);
+      border: 1px solid var(--primary);
     }
 
     /* Final Quote Summary */
@@ -706,12 +873,12 @@
     }
 
     #finalQuoteSummary h4 {
-      color: var(--accent);
+      color: var(--primary);
       margin: 1.5rem 0 0.75rem;
       font-size: 1.1rem;
       font-weight: 600;
       padding-bottom: 0.5rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     }
 
     .summary-items {
@@ -731,8 +898,9 @@
     }
 
     .summary-line span:last-child {
-      color: var(--accent);
+      color: var(--primary);
       font-weight: 500;
+      font-family: var(--font-mono);
     }
 
     .summary-total {
@@ -740,7 +908,7 @@
       padding: 1rem;
       background: var(--surface-light);
       border-radius: var(--radius);
-      border: 2px solid var(--accent);
+      border: 2px solid var(--primary);
     }
 
     .summary-total .summary-line {
@@ -769,7 +937,7 @@
     /* Contact Form */
     #quoteForm fieldset {
       background: var(--surface);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     #quoteForm input[type="text"],
@@ -780,11 +948,139 @@
     }
 
     /* Status Messages */
-    #quoteStatus {
+    #quoteStatus, #scheduleStatus {
       text-align: center;
       margin-top: 1rem;
       padding: 1rem;
       border-radius: var(--radius);
+    }
+
+    /* ─── Step 5: Success + Scheduling ─── */
+    .success-banner {
+      text-align: center;
+      padding: 2.5rem 2rem;
+      background: var(--surface);
+      border: 2px solid rgba(34, 197, 94, 0.3);
+      border-radius: var(--radius);
+      margin-bottom: 2rem;
+    }
+
+    .success-banner i {
+      font-size: 3rem;
+      color: #22c55e;
+      margin-bottom: 1rem;
+    }
+
+    .success-banner h2 {
+      color: #22c55e;
+      margin-bottom: 0.5rem;
+    }
+
+    .success-banner .font-mono {
+      font-size: 1.3rem;
+      color: var(--primary);
+    }
+
+    .success-sub {
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+    }
+
+    .schedule-prompt {
+      background: var(--surface);
+      border: 1px solid rgba(245, 158, 11, 0.2);
+      border-radius: var(--radius);
+      padding: 2rem;
+    }
+
+    .schedule-prompt h3 {
+      color: var(--primary);
+      margin-bottom: 0.5rem;
+    }
+
+    .schedule-prompt > p {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+    }
+
+    .schedule-fields {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .schedule-field label {
+      display: block;
+      margin-bottom: 0.4rem;
+      font-weight: 500;
+    }
+
+    .schedule-field input,
+    .schedule-field textarea {
+      margin-left: 0;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    /* Time Slots Grid */
+    .time-slots-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .time-slot-btn {
+      padding: 0.6rem 0.5rem;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: var(--radius);
+      background: var(--surface-light);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: var(--transition);
+      text-align: center;
+    }
+
+    .time-slot-btn:hover:not(.booked) {
+      border-color: var(--primary);
+      background: rgba(245, 158, 11, 0.1);
+    }
+
+    .time-slot-btn.selected {
+      background: var(--primary);
+      color: #0C0A09;
+      border-color: var(--primary);
+      font-weight: 600;
+    }
+
+    .time-slot-btn.booked {
+      opacity: 0.4;
+      cursor: not-allowed;
+      text-decoration: line-through;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    /* Confirmation Banner */
+    .confirmation-banner {
+      text-align: center;
+      padding: 2rem;
+      background: var(--surface-light);
+      border: 2px solid rgba(34, 197, 94, 0.3);
+      border-radius: var(--radius);
+      margin-top: 1rem;
+    }
+
+    .confirmation-banner i {
+      font-size: 2.5rem;
+      color: #22c55e;
+      margin-bottom: 0.75rem;
+    }
+
+    .confirmation-banner h3 {
+      color: #22c55e;
+      margin-bottom: 0.5rem;
     }
 
     /* Mobile Responsive */
@@ -807,6 +1103,28 @@
       .checkbox-label, .radio-label {
         display: flex;
         margin-right: 0;
+      }
+
+      .quote-progress {
+        margin: 1.5rem 0 2rem;
+      }
+
+      .progress-connector {
+        width: 24px;
+      }
+
+      .progress-label {
+        font-size: 0.65rem;
+      }
+
+      .progress-num {
+        width: 30px;
+        height: 30px;
+        font-size: 0.75rem;
+      }
+
+      .time-slots-grid {
+        grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
       }
     }
   </style>

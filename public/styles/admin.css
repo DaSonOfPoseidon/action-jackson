@@ -2,20 +2,20 @@
 
 :root {
     /* Admin-specific variables */
-    --admin-primary: #2563eb;
-    --admin-accent: #1e40af;
+    --admin-primary: #F59E0B;
+    --admin-accent: #D97706;
     --admin-success: #059669;
     --admin-warning: #d97706;
     --admin-danger: #dc2626;
-    --admin-sidebar: #1e293b;
-    --admin-nav: #0f172a;
+    --admin-sidebar: #1C1917;
+    --admin-nav: #0C0A09;
 }
 
 /* Base Admin Layout */
 body {
     background: var(--background);
     margin: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: var(--font-body, 'Figtree', sans-serif);
 }
 
 .admin-layout {
@@ -76,7 +76,7 @@ body {
 
 .admin-nav a:hover,
 .admin-nav a.active {
-    background: rgba(37, 99, 235, 0.1);
+    background: rgba(245, 158, 11, 0.1);
     color: var(--admin-primary);
     border-right: 3px solid var(--admin-primary);
 }
@@ -327,7 +327,8 @@ th {
     background: var(--surface-light);
     color: var(--text);
     font-weight: 600;
-    font-size: 0.875rem;
+    font-size: 0.8rem;
+    font-family: var(--font-mono, 'IBM Plex Mono', monospace);
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
@@ -454,11 +455,11 @@ td {
 
 .pagination a {
     color: var(--admin-primary);
-    border: 1px solid rgba(37, 99, 235, 0.3);
+    border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
 .pagination a:hover {
-    background: rgba(37, 99, 235, 0.1);
+    background: rgba(245, 158, 11, 0.1);
 }
 
 .pagination .current {
@@ -487,7 +488,7 @@ td {
 }
 
 .invoice-number {
-    font-family: 'Courier New', monospace;
+    font-family: var(--font-mono, 'IBM Plex Mono', monospace);
     font-weight: 600;
     color: var(--admin-primary);
 }

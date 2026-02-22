@@ -13,7 +13,7 @@ html {
 body {
   margin: 0;
   padding: 0;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-body, 'Figtree', sans-serif);
   background-color: var(--background);
   color: var(--text);
 }
@@ -28,7 +28,7 @@ body {
 /* Navigation */
 header {
   background-color: var(--surface);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   padding: 1rem 0;
 }
 
@@ -44,6 +44,7 @@ nav ul {
   padding: 0;
   display: flex;
   gap: 2rem;
+  align-items: center;
 }
 
 nav a {
@@ -58,24 +59,30 @@ nav a:hover {
 }
 
 nav a.contrast {
-  background: var(--primary-dark);
-  color: var(--background);
-  padding: 0.5rem 1rem;
+  background: var(--primary);
+  color: #0C0A09;
+  padding: 0.6rem 1.25rem;
   border-radius: var(--radius);
+  font-weight: 600;
+  font-family: var(--font-heading, 'Syne', sans-serif);
+  letter-spacing: -0.01em;
 }
 
 nav a.contrast:hover {
-  background: var(--accent-dark);
-  color: var(--background);
+  background: var(--primary-dark);
+  color: #0C0A09;
+  box-shadow: var(--glow-amber);
 }
 
 .brand {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #000000 !important;
-  background: var(--accent);
+  font-family: var(--font-heading, 'Syne', sans-serif);
+  color: #0C0A09 !important;
+  background: var(--primary);
   padding: 0.5rem 1rem;
   border-radius: var(--radius);
+  letter-spacing: -0.02em;
 }
 
 /* Typography */
@@ -83,6 +90,8 @@ h1, h2, h3, h4, h5, h6 {
   margin: 0 0 1rem 0;
   color: var(--text);
   font-weight: 700;
+  font-family: var(--font-heading, 'Syne', sans-serif);
+  letter-spacing: -0.02em;
 }
 
 h1 { font-size: 2.5rem; }
@@ -96,29 +105,30 @@ p {
 
 /* Buttons */
 button, .button, input[type="submit"] {
-  background: var(--primary-dark);
-  color: var(--background);
+  background: var(--primary);
+  color: #0C0A09;
   border: none;
   padding: 0.75rem 1.5rem;
   border-radius: var(--radius);
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   text-decoration: none;
   display: inline-block;
   transition: var(--transition);
+  font-family: inherit;
 }
 
 button:hover, .button:hover, input[type="submit"]:hover {
-  background: var(--accent-dark);
+  background: var(--primary-dark);
   transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--glow-amber);
 }
 
 /* Forms */
 input, textarea, select {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: var(--radius);
   background: var(--surface);
   color: var(--text);
@@ -128,7 +138,7 @@ input, textarea, select {
 input:focus, textarea:focus, select:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 2px rgba(125, 211, 252, 0.3);
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25);
 }
 
 label {
@@ -150,7 +160,7 @@ a {
 }
 
 a:hover {
-  color: var(--accent);
+  color: var(--primary-dark);
 }
 
 /* Grid Layouts */
@@ -190,56 +200,134 @@ a:hover {
     flex-direction: column;
     gap: 1rem;
   }
-  
+
   nav ul {
     gap: 1rem;
     flex-wrap: wrap;
     justify-content: center;
   }
-  
+
   .container {
     padding: 0 0.5rem;
   }
-  
+
   h1 { font-size: 2rem; }
   h2 { font-size: 1.75rem; }
-  
+
   .hero h1 {
     font-size: 2.5rem;
   }
-  
+
   .grid {
     grid-template-columns: 1fr;
     gap: 1.5rem;
   }
 }
 
-:root {
-  /* Accessible Color Palette */
-  --background: #121212; /* deep charcoal background */
-  --surface: #1e1e1e; /* card & form bg - dark grey */
-  --surface-light: #2a2a2a; /* lighter surface for contrast */
-  --text: #f5f5f5; /* high contrast white text */
-  --text-muted: #b3b3b3; /* muted text with good contrast */
-  --primary: #7dd3fc; /* accessible pastel blue */
-  --primary-dark: #0ea5e9; /* darker blue for buttons */
-  --accent: #a7f3d0; /* accessible pastel green accent */
-  --accent-dark: #10b981; /* darker green for interactions */
-  --warning: #fde68a; /* accessible pastel yellow */
-  --error: #fca5a5; /* accessible pastel red */
+/* ─── Utility Classes ─── */
 
-  /* Shared design tokens */
-  --radius: 8px;
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.6);
-  --transition: all 0.2s ease-in-out;
+.font-mono {
+  font-family: var(--font-mono, 'IBM Plex Mono', monospace);
 }
 
+.text-amber {
+  color: var(--primary);
+}
+
+/* Entrance animations */
+.animate-in {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.animate-in.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Stagger delays */
+.animate-in:nth-child(1) { transition-delay: 0s; }
+.animate-in:nth-child(2) { transition-delay: 0.1s; }
+.animate-in:nth-child(3) { transition-delay: 0.2s; }
+.animate-in:nth-child(4) { transition-delay: 0.3s; }
+.animate-in:nth-child(5) { transition-delay: 0.4s; }
+.animate-in:nth-child(6) { transition-delay: 0.5s; }
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Grain texture overlay */
+.grain-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+}
+
+/* Large button variants */
+.btn-primary-lg {
+  display: inline-block;
+  background: var(--primary);
+  color: #0C0A09;
+  padding: 1rem 2.5rem;
+  border-radius: var(--radius);
+  font-weight: 700;
+  font-family: var(--font-heading, 'Syne', sans-serif);
+  font-size: 1.1rem;
+  text-decoration: none;
+  transition: var(--transition);
+  border: none;
+  cursor: pointer;
+  letter-spacing: -0.01em;
+}
+
+.btn-primary-lg:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: var(--glow-amber-strong);
+  color: #0C0A09;
+}
+
+.btn-outline-lg {
+  display: inline-block;
+  background: transparent;
+  color: var(--text);
+  padding: 1rem 2.5rem;
+  border-radius: var(--radius);
+  font-weight: 600;
+  font-size: 1.1rem;
+  text-decoration: none;
+  transition: var(--transition);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+}
+
+.btn-outline-lg:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  transform: translateY(-2px);
+}
+
+/* ─── Reused page elements ─── */
+
 .hero {
-  background: linear-gradient(135deg, var(--primary), var(--accent)), 
-              url('/images/hero-bg.jpg') center/cover no-repeat;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(59, 130, 246, 0.1)),
+              var(--surface);
   color: white;
-  text-shadow: 0 2px 6px rgba(0,0,0,0.6);
   padding: 6rem 0;
 }
 .hero .container {
@@ -264,18 +352,20 @@ a:hover {
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
   transition: var(--transition);
+  border: 1px solid rgba(245, 158, 11, 0.12);
 }
 .card:hover,
 .card:focus-within {
   transform: scale(1.02);
-  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+  box-shadow: var(--glow-amber);
+  border-color: rgba(245, 158, 11, 0.3);
 }
 
 footer {
   padding: 2rem 0;
   font-size: 0.9rem;
   background: var(--surface);
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 footer .container {
@@ -294,7 +384,7 @@ footer .container {
 .brand-block strong {
   display: block;
   margin-bottom: 0.5rem;
-  color: var(--accent);
+  color: var(--primary);
 }
 
 .brand-block p {
@@ -305,7 +395,7 @@ footer .container {
 .brand-block a {
   display: inline-block;
   margin: 1rem 0 0.5rem 0;
-  color: var(--contrast);
+  color: var(--primary);
   text-decoration: none;
   font-weight: 500;
   transition: var(--transition);
@@ -342,15 +432,16 @@ nav[aria-label="Social links"] {
   height: 40px;
   border-radius: 50%;
   background: var(--primary);
-  color: white;
+  color: #0C0A09;
   text-decoration: none;
   font-size: 1.25rem;
   transition: var(--transition);
 }
 
 .social a:hover {
-  background: var(--contrast);
+  background: var(--primary-dark);
   transform: translateY(-2px);
+  box-shadow: var(--glow-amber);
 }
 
 /* Mobile responsiveness */
@@ -360,11 +451,11 @@ nav[aria-label="Social links"] {
     text-align: center;
     gap: 1.5rem;
   }
-  
+
   .brand-block {
     min-width: auto;
   }
-  
+
   .social {
     justify-content: center;
   }
@@ -388,8 +479,10 @@ button:focus,
 a.contrast:hover,
 a.contrast:focus {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  box-shadow: var(--glow-amber);
 }
+
+/* ─── Error pages ─── */
 
 .error-hero {
   display: grid;
@@ -405,7 +498,7 @@ a.contrast:focus {
 }
 
 .error-icon {
-  color: var(--contrast);
+  color: var(--primary);
   font-size: 3rem;
   margin-bottom: 1rem;
   animation: pulse 2s infinite;
@@ -431,8 +524,8 @@ a.contrast:focus {
   border-radius: var(--radius);
   display: inline-block;
   margin-bottom: 2rem;
-  font-family: 'Courier New', monospace;
-  border: 1px solid rgba(0,0,0,0.1);
+  font-family: var(--font-mono, 'IBM Plex Mono', monospace);
+  border: 1px solid rgba(245, 158, 11, 0.2);
 }
 
 .error-actions {
@@ -458,8 +551,8 @@ a.contrast:focus {
 }
 
 .error-btn-primary {
-  background: var(--contrast);
-  color: white;
+  background: var(--primary);
+  color: #0C0A09;
 }
 
 .error-btn-secondary {
@@ -471,7 +564,7 @@ a.contrast:focus {
 .error-btn-primary:hover,
 .error-btn-secondary:hover {
   transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--glow-amber);
 }
 
 .error-details {
@@ -479,7 +572,7 @@ a.contrast:focus {
   padding: 1rem;
   background: var(--surface);
   border-radius: var(--radius);
-  border: 1px solid rgba(0,0,0,0.1);
+  border: 1px solid rgba(245, 158, 11, 0.15);
 }
 
 .error-details summary {
@@ -490,7 +583,7 @@ a.contrast:focus {
 
 .tech-info {
   margin-top: 1rem;
-  font-family: 'Courier New', monospace;
+  font-family: var(--font-mono, 'IBM Plex Mono', monospace);
   font-size: 0.9rem;
 }
 
@@ -521,12 +614,12 @@ a.contrast:focus {
 
 .terminal-dot.red { background: #ff6b6b; }
 .terminal-dot.yellow { background: var(--warning); }
-.terminal-dot.green { background: var(--accent); }
+.terminal-dot.green { background: var(--primary); }
 
 .terminal-body {
   padding: 1rem;
-  font-family: 'Courier New', monospace;
-  color: var(--accent);
+  font-family: var(--font-mono, 'IBM Plex Mono', monospace);
+  color: var(--primary);
 }
 
 .terminal-line {
@@ -534,7 +627,7 @@ a.contrast:focus {
 }
 
 .prompt {
-  color: var(--primary);
+  color: var(--accent);
 }
 
 .error-line {
@@ -568,7 +661,7 @@ a.contrast:focus {
   position: absolute;
   width: 4px;
   height: 4px;
-  background: var(--contrast);
+  background: var(--primary);
   border-radius: 50%;
   animation: sparkle 1.5s infinite;
 }
@@ -611,16 +704,17 @@ a.contrast:focus {
   box-shadow: var(--shadow-sm);
   text-align: center;
   transition: var(--transition);
+  border: 1px solid rgba(245, 158, 11, 0.12);
 }
 
 .help-card:hover {
   transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--glow-amber);
 }
 
 .help-card i {
   font-size: 2rem;
-  color: var(--contrast);
+  color: var(--primary);
   margin-bottom: 1rem;
 }
 
@@ -641,11 +735,11 @@ a.contrast:focus {
 }
 
 @keyframes sparkle {
-  0%, 100% { 
+  0%, 100% {
     opacity: 0;
     transform: scale(0);
   }
-  50% { 
+  50% {
     opacity: 1;
     transform: scale(1);
   }
@@ -658,19 +752,19 @@ a.contrast:focus {
     text-align: center;
     gap: 2rem;
   }
-  
+
   .error-title {
     font-size: 2rem;
   }
-  
+
   .error-actions {
     justify-content: center;
   }
-  
+
   .help-cards {
     grid-template-columns: 1fr;
   }
-  
+
   .tool-icon {
     font-size: 6rem;
   }

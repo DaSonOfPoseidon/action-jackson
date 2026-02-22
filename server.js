@@ -127,14 +127,14 @@ app.get('/', (req, res) => {
   }
 });
 
-// Scheduling
+// Scheduling - redirect to quotes flow
 app.get('/scheduling', (req, res) => {
-  res.render('scheduling', { title: 'Schedule' });
+  res.redirect('/quotes');
 });
 
 // Quotes
 app.get('/quotes', (req, res) => {
-  res.render('quotes', { title: 'Quotes' });
+  res.render('quotes', { title: 'Get Connected' });
 });
 
 // About

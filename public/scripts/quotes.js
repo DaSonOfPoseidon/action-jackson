@@ -1,6 +1,9 @@
 // public/scripts/quotes.js
 
 let selectedServiceType = null;
+let lastQuoteNumber = null;
+let lastQuoteEmail = null;
+let lastQuoteName = null;
 
 // Pricing configuration
 const pricing = {
@@ -43,7 +46,30 @@ document.addEventListener('DOMContentLoaded', () => {
   initializeWholeHomeToggles();
   initializeCentralizationToggle();
   initializeInfoButtons();
+  initializeSchedulingIntegration();
 });
+
+// ─── Progress Indicator ───
+
+function updateProgressIndicator(stepNumber) {
+  const steps = document.querySelectorAll('.progress-step');
+  const connectors = document.querySelectorAll('.progress-connector');
+
+  steps.forEach((step) => {
+    const num = parseInt(step.dataset.step);
+    step.classList.remove('active', 'completed');
+    if (num === stepNumber) {
+      step.classList.add('active');
+    } else if (num < stepNumber) {
+      step.classList.add('completed');
+    }
+  });
+
+  connectors.forEach((conn, i) => {
+    // Connector i sits between step i+1 and step i+2
+    conn.classList.toggle('active', i + 1 < stepNumber);
+  });
+}
 
 // Step Navigation
 function initializeStepNavigation() {
@@ -51,18 +77,27 @@ function initializeStepNavigation() {
   const step2 = document.getElementById('step-2-details');
   const step3 = document.getElementById('step-3-home-info');
   const step4 = document.getElementById('step-4-contact');
+  const step5 = document.getElementById('step-5-success');
 
   if (step1) step1.style.display = 'block';
   if (step2) step2.style.display = 'none';
   if (step3) step3.style.display = 'none';
   if (step4) step4.style.display = 'none';
+  if (step5) step5.style.display = 'none';
 
   const showStep = (step) => {
-    [step1, step2, step3, step4].forEach(s => { if (s) s.style.display = 'none'; });
+    [step1, step2, step3, step4, step5].forEach(s => { if (s) s.style.display = 'none'; });
     if (step) {
       step.style.display = 'block';
       step.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+
+    // Update progress indicator
+    if (step === step1) updateProgressIndicator(1);
+    else if (step === step2) updateProgressIndicator(2);
+    else if (step === step3) updateProgressIndicator(3);
+    else if (step === step4) updateProgressIndicator(4);
+    else if (step === step5) updateProgressIndicator(5);
   };
 
   // Step 2 -> Step 3
@@ -143,8 +178,16 @@ function initializeStepNavigation() {
     changeServiceBtn.onclick = () => showStep(step1);
   }
 
+  // Skip scheduling button
+  const skipBtn = document.getElementById('skipScheduleBtn');
+  if (skipBtn) {
+    skipBtn.onclick = () => {
+      window.location.href = '/';
+    };
+  }
+
   window.showStep = showStep;
-  window.steps = { step1, step2, step3, step4 };
+  window.steps = { step1, step2, step3, step4, step5 };
 }
 
 function initializeServiceTypeSelection() {
@@ -365,11 +408,21 @@ async function handleSubmit(event) {
     const data = await res.json();
 
     if (res.ok) {
-      alert(`Quote submitted successfully! Your quote number is: #${data.quoteNumber}`);
-      document.getElementById('quoteForm')?.reset();
-      selectedServiceType = null;
+      // Store quote info for scheduling
+      lastQuoteNumber = data.quoteNumber;
+      lastQuoteEmail = email;
+      lastQuoteName = name;
+
+      // Show step 5 with quote number
+      const quoteNumEl = document.getElementById('successQuoteNumber');
+      if (quoteNumEl) quoteNumEl.textContent = '#' + data.quoteNumber;
+
+      // Pre-fill scheduling phone if provided
+      const schedPhone = document.getElementById('schedulePhone');
+      if (schedPhone && phone) schedPhone.value = phone;
+
       if (window.showStep && window.steps) {
-        window.showStep(window.steps.step1);
+        window.showStep(window.steps.step5);
       }
     } else {
       alert(`Error creating quote: ${data.error || data.details?.join(', ') || 'Unknown error'}`);
@@ -379,6 +432,185 @@ async function handleSubmit(event) {
     alert(`Network error: ${err.message}`);
   }
 }
+
+// ─── Scheduling Integration ───
+
+function initializeSchedulingIntegration() {
+  const dateInput = document.getElementById('scheduleDate');
+  if (!dateInput) return;
+
+  // Set min date to tomorrow
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  dateInput.min = tomorrow.toISOString().split('T')[0];
+
+  // Set max date to 90 days from now
+  const maxDate = new Date();
+  maxDate.setDate(maxDate.getDate() + 90);
+  dateInput.max = maxDate.toISOString().split('T')[0];
+
+  dateInput.addEventListener('change', async () => {
+    const dateVal = dateInput.value;
+    if (!dateVal) return;
+
+    // Check if weekend
+    const selectedDate = new Date(dateVal + 'T12:00:00');
+    const day = selectedDate.getDay();
+    if (day === 0 || day === 6) {
+      alert('Appointments are only available Monday through Friday.');
+      dateInput.value = '';
+      document.getElementById('timeSlotsContainer').style.display = 'none';
+      return;
+    }
+
+    // Fetch booked slots for this date
+    try {
+      const res = await fetch(`/api/scheduling/slots?date=${dateVal}`);
+      const data = await res.json();
+
+      if (res.ok) {
+        renderTimeSlots(data.bookedSlots || []);
+        document.getElementById('timeSlotsContainer').style.display = 'block';
+      }
+    } catch (err) {
+      console.error('Error fetching slots:', err);
+    }
+  });
+
+  // Schedule form submission
+  const scheduleForm = document.getElementById('scheduleForm');
+  if (scheduleForm) {
+    scheduleForm.addEventListener('submit', handleScheduleSubmit);
+  }
+}
+
+function renderTimeSlots(bookedSlots) {
+  const grid = document.getElementById('timeSlotsGrid');
+  if (!grid) return;
+
+  // Clear existing
+  while (grid.firstChild) {
+    grid.removeChild(grid.firstChild);
+  }
+
+  // Reset selected time
+  const hiddenTime = document.getElementById('selectedTime');
+  if (hiddenTime) hiddenTime.value = '';
+  const bookBtn = document.getElementById('bookAppointmentBtn');
+  if (bookBtn) bookBtn.disabled = true;
+
+  const bookedTimes = bookedSlots.map(s => s.time);
+
+  // Generate 30-min slots from 8:00 to 17:30
+  for (let h = 8; h < 18; h++) {
+    for (let m = 0; m < 60; m += 30) {
+      const time = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'time-slot-btn';
+      btn.textContent = formatTime(time);
+      btn.dataset.time = time;
+
+      if (bookedTimes.includes(time)) {
+        btn.classList.add('booked');
+        btn.disabled = true;
+      } else {
+        btn.addEventListener('click', () => selectTimeSlot(time, btn));
+      }
+
+      grid.appendChild(btn);
+    }
+  }
+}
+
+function selectTimeSlot(time, btn) {
+  // Deselect all
+  document.querySelectorAll('.time-slot-btn.selected').forEach(b => b.classList.remove('selected'));
+
+  // Select this one
+  btn.classList.add('selected');
+
+  const hiddenTime = document.getElementById('selectedTime');
+  if (hiddenTime) hiddenTime.value = time;
+
+  const bookBtn = document.getElementById('bookAppointmentBtn');
+  if (bookBtn) bookBtn.disabled = false;
+}
+
+function formatTime(time) {
+  const [h, m] = time.split(':').map(Number);
+  const period = h >= 12 ? 'PM' : 'AM';
+  const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${hour12}:${String(m).padStart(2, '0')} ${period}`;
+}
+
+async function handleScheduleSubmit(e) {
+  e.preventDefault();
+
+  const date = document.getElementById('scheduleDate')?.value;
+  const time = document.getElementById('selectedTime')?.value;
+  const phone = document.getElementById('schedulePhone')?.value?.trim() || undefined;
+  const notes = document.getElementById('scheduleNotes')?.value?.trim() || undefined;
+
+  if (!date || !time) {
+    alert('Please select a date and time slot.');
+    return;
+  }
+
+  if (!lastQuoteNumber || !lastQuoteEmail || !lastQuoteName) {
+    alert('Quote information missing. Please try again.');
+    return;
+  }
+
+  const statusEl = document.getElementById('scheduleStatus');
+
+  try {
+    const res = await fetch('/api/scheduling/book', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        quoteNumber: lastQuoteNumber,
+        name: lastQuoteName,
+        email: lastQuoteEmail,
+        date,
+        time,
+        phone,
+        notes
+      })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      // Hide form, show confirmation
+      document.getElementById('scheduleForm').style.display = 'none';
+      const confirmation = document.getElementById('scheduleConfirmation');
+      if (confirmation) {
+        confirmation.style.display = 'block';
+        const details = document.getElementById('confirmationDetails');
+        if (details) {
+          const dateObj = new Date(date + 'T12:00:00');
+          const dateStr = dateObj.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+          details.textContent = `${dateStr} at ${formatTime(time)}`;
+        }
+      }
+      if (statusEl) statusEl.textContent = '';
+    } else {
+      if (statusEl) {
+        statusEl.textContent = data.error || data.details?.join(', ') || 'Error booking appointment.';
+        statusEl.style.color = 'var(--error)';
+      }
+    }
+  } catch (err) {
+    console.error(err);
+    if (statusEl) {
+      statusEl.textContent = `Network error: ${err.message}`;
+      statusEl.style.color = 'var(--error)';
+    }
+  }
+}
+
+// ─── Quote Summary ───
 
 function updateFinalQuoteSummary() {
   const summaryContent = document.getElementById('summaryContent');

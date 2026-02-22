@@ -1,25 +1,9 @@
-<%- include('partials/header', { title: 'Schedule an Installation' }) %>
+<%- include('partials/header', { title: 'Schedule' }) %>
 
-  <main class="container">
-    <h1>Schedule an Installation</h1>
-    <form id="schedulingForm">
-      <label for="name">Name</label>
-      <input id="name" name="name" required />
+<main class="container" style="text-align: center; padding: 4rem 1rem;">
+  <h1>Scheduling Has Moved</h1>
+  <p style="color: var(--text-muted); margin-bottom: 2rem;">You can now schedule your appointment directly after submitting a quote.</p>
+  <a href="/quotes" class="btn-primary-lg">Get Connected</a>
+</main>
 
-      <label for="address">Address</label>
-      <input id="address" name="address" required />
-
-      <label for="quoteID">Quote Number</label>
-      <input id="quoteID" name="quoteID" required />
-
-      <label for="date">Preferred Date</label>
-      <input id="date" name="date" type="date" required />
-
-      <button type="submit">Submit</button>
-    </form>
-    <p id="schedulingStatus"></p>
-  </main>
-
-
-  <script src="/scripts/scheduling.js"></script>
-  <%- include('partials/footer') %>
+<%- include('partials/footer') %>

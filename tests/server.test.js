@@ -61,10 +61,10 @@ describe('Server Middleware and Routes', () => {
       expect(response.status).toBe(200);
     });
 
-    test('GET /scheduling should render scheduling page', async () => {
+    test('GET /scheduling should redirect to quotes', async () => {
       const response = await request(app).get('/scheduling');
-      expect(response.status).toBe(200);
-      expect(response.text).toContain('Schedule');
+      expect(response.status).toBe(302);
+      expect(response.headers.location).toBe('/quotes');
     });
 
     test('GET /quotes should render quotes page', async () => {

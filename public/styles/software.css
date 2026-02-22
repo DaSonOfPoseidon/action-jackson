@@ -7,6 +7,7 @@
   --surface-light: #2a2a40; /* lighter purple surface */
   --text: #f0f0f0; /* crisp white text */
   --text-muted: #a8a8b3; /* muted lavender text */
+  --text-color: #f0f0f0;
   --primary: #c084fc; /* accessible pastel purple */
   --primary-dark: #9333ea; /* darker purple for buttons */
   --accent: #86efac; /* accessible pastel green accent */
@@ -15,4 +16,17 @@
   --tertiary: #fb7185; /* soft pastel pink */
   --warning: #fde68a; /* accessible pastel yellow */
   --error: #fca5a5; /* accessible pastel red */
+
+  /* Typography (same fonts, keeps purple palette) */
+  --font-heading: 'Syne', sans-serif;
+  --font-body: 'Figtree', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+
+  /* Shared design tokens */
+  --radius: 8px;
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.6);
+  --transition: all 0.2s ease-in-out;
+  --glow-amber: 0 0 20px rgba(192, 132, 252, 0.15);
+  --glow-amber-strong: 0 0 30px rgba(192, 132, 252, 0.25);
 }
