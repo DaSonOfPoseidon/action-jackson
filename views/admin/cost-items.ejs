@@ -37,6 +37,17 @@
                 </div>
             </div>
 
+            <div class="labor-rate-bar" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; background: var(--bg-secondary, #1a1a2e); border: 1px solid var(--border-color, #333); border-radius: 8px; margin-bottom: 1rem;">
+                <label for="laborRateInput" style="font-weight: 600; white-space: nowrap;">
+                    <i class="fas fa-dollar-sign"></i> Labor Rate ($/hr):
+                </label>
+                <input type="number" id="laborRateInput" class="form-input" step="0.01" min="0" value="<%= laborRate %>" style="width: 100px;">
+                <button class="action-btn" id="saveLaborRateBtn" style="white-space: nowrap;">
+                    <i class="fas fa-save"></i> Save Rate
+                </button>
+                <span id="laborRateStatus" style="color: var(--text-muted); font-size: 0.85rem;"></span>
+            </div>
+
             <div class="filters-section">
                 <form class="filters-grid" method="GET">
                     <div class="filter-group">
@@ -111,6 +122,7 @@
                                     <th>Unit Type</th>
                                     <th>Price</th>
                                     <th>Material Cost</th>
+                                    <th>Labor Hours</th>
                                     <th>Labor Cost</th>
                                     <th>Status</th>
                                     <th>Actions</th>
@@ -163,8 +175,15 @@
                                             <% } %>
                                         </td>
                                         <td>
-                                            <% if (item.laborCost != null) { %>
-                                                $<%= item.laborCost.toFixed(2) %>
+                                            <% if (item.laborHours != null) { %>
+                                                <%= item.laborHours %> hrs
+                                            <% } else { %>
+                                                <span style="color: var(--text-muted);">—</span>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <% if (item.laborHours != null) { %>
+                                                $<%= (item.laborHours * laborRate).toFixed(2) %>
                                             <% } else { %>
                                                 <span style="color: var(--text-muted);">—</span>
                                             <% } %>
@@ -176,7 +195,7 @@
                                             </span>
                                         </td>
                                         <td>
-                                            <button class="action-btn edit-btn" data-item='<%- JSON.stringify({ _id: item._id, code: item.code, name: item.name, description: item.description || "", category: item.category, unitType: item.unitType, costUnitType: item.costUnitType || "", unitLabel: item.unitLabel || "", price: item.price, materialCost: item.materialCost, laborCost: item.laborCost, purchaseUrl: item.purchaseUrl || "", thresholdAmount: item.thresholdAmount, sortOrder: item.sortOrder, billOfMaterials: (item.billOfMaterials || []).map(function(b) { return { item: b.item && b.item._id ? b.item._id : b.item, code: b.item && b.item.code ? b.item.code : "", name: b.item && b.item.name ? b.item.name : "", quantity: b.quantity }; }) }) %>'>
+                                            <button class="action-btn edit-btn" data-item='<%- JSON.stringify({ _id: item._id, code: item.code, name: item.name, description: item.description || "", category: item.category, unitType: item.unitType, costUnitType: item.costUnitType || "", unitLabel: item.unitLabel || "", price: item.price, materialCost: item.materialCost, laborHours: item.laborHours, purchaseUrl: item.purchaseUrl || "", thresholdAmount: item.thresholdAmount, sortOrder: item.sortOrder, billOfMaterials: (item.billOfMaterials || []).map(function(b) { return { item: b.item && b.item._id ? b.item._id : b.item, code: b.item && b.item.code ? b.item.code : "", name: b.item && b.item.name ? b.item.name : "", quantity: b.quantity }; }) }) %>'>
                                                 <i class="fas fa-edit"></i> Edit
                                             </button>
                                             <button class="action-btn warning toggle-btn" data-item-id="<%= item._id %>" data-active="<%= item.isActive %>">
@@ -317,8 +336,8 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="itemLaborCost">Labor Cost ($)</label>
-                            <input type="number" id="itemLaborCost" class="form-input" step="0.01" min="0" placeholder="Optional">
+                            <label for="itemLaborHours">Labor Hours</label>
+                            <input type="number" id="itemLaborHours" class="form-input" step="0.01" min="0" placeholder="Optional">
                         </div>
                     </div>
 
@@ -382,6 +401,9 @@
             if (seedBtn) {
                 seedBtn.addEventListener('click', seedDefaults);
             }
+
+            // Save labor rate
+            document.getElementById('saveLaborRateBtn').addEventListener('click', saveLaborRate);
 
             // Close modal
             document.getElementById('closeModal').addEventListener('click', closeModal);
@@ -459,7 +481,7 @@
                 document.getElementById('itemUnitLabel').value = item ? item.unitLabel : '';
                 document.getElementById('itemPrice').value = item ? item.price : '';
                 document.getElementById('itemMaterialCost').value = item && item.materialCost != null ? item.materialCost : '';
-                document.getElementById('itemLaborCost').value = item && item.laborCost != null ? item.laborCost : '';
+                document.getElementById('itemLaborHours').value = item && item.laborHours != null ? item.laborHours : '';
                 document.getElementById('itemThreshold').value = item && item.thresholdAmount != null ? item.thresholdAmount : '';
                 document.getElementById('itemPurchaseUrl').value = item && item.purchaseUrl ? item.purchaseUrl : '';
                 document.getElementById('itemSortOrder').value = item ? item.sortOrder : 0;
@@ -632,8 +654,8 @@
                 var materialVal = document.getElementById('itemMaterialCost').value;
                 if (materialVal !== '') data.materialCost = parseFloat(materialVal);
 
-                var laborVal = document.getElementById('itemLaborCost').value;
-                if (laborVal !== '') data.laborCost = parseFloat(laborVal);
+                var laborVal = document.getElementById('itemLaborHours').value;
+                if (laborVal !== '') data.laborHours = parseFloat(laborVal);
 
                 var thresholdVal = document.getElementById('itemThreshold').value;
                 if (thresholdVal !== '') data.thresholdAmount = parseFloat(thresholdVal);
@@ -730,6 +752,41 @@
                 } catch (error) {
                     console.error('Seed error:', error);
                     alert('Error seeding defaults. Please try again.');
+                }
+            }
+
+            async function saveLaborRate() {
+                var rate = parseFloat(document.getElementById('laborRateInput').value);
+                var statusEl = document.getElementById('laborRateStatus');
+
+                if (isNaN(rate) || rate < 0) {
+                    statusEl.textContent = 'Invalid rate';
+                    statusEl.style.color = '#e74c3c';
+                    return;
+                }
+
+                try {
+                    var response = await fetch('/admin/settings/labor-rate', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ laborRate: rate })
+                    });
+
+                    var data = await response.json();
+
+                    if (data.success) {
+                        statusEl.textContent = 'Saved!';
+                        statusEl.style.color = '#2ecc71';
+                        setTimeout(function() { location.reload(); }, 500);
+                    } else {
+                        statusEl.textContent = 'Error: ' + (data.error || 'Unknown error');
+                        statusEl.style.color = '#e74c3c';
+                    }
+                } catch (error) {
+                    console.error('Save labor rate error:', error);
+                    statusEl.textContent = 'Error saving rate';
+                    statusEl.style.color = '#e74c3c';
                 }
             }
 

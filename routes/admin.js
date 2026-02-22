@@ -7,6 +7,7 @@ const Quote = require('../models/Quote');
 const Schedule = require('../models/Schedule');
 const Invoice = require('../models/Invoice');
 const CostItem = require('../models/CostItem');
+const Setting = require('../models/Setting');
 
 // Rate limiting for admin operations
 const adminRateLimit = rateLimit({
@@ -877,6 +878,52 @@ router.delete('/invoices/:id', async (req, res) => {
 });
 
 // ============================================================
+// Settings Routes
+// ============================================================
+
+/**
+ * GET /admin/settings/labor-rate - Get current labor rate
+ */
+router.get('/settings/labor-rate', async (req, res) => {
+  try {
+    const settings = await Setting.getSettings();
+    res.json({ laborRate: settings.laborRate });
+  } catch (error) {
+    console.error('Get labor rate error:', error);
+    res.status(500).json({ error: 'Error fetching labor rate' });
+  }
+});
+
+/**
+ * PUT /admin/settings/labor-rate - Update labor rate
+ */
+router.put('/settings/labor-rate', async (req, res) => {
+  try {
+    const { laborRate } = req.body;
+
+    if (laborRate == null || isNaN(laborRate)) {
+      return res.status(400).json({ error: 'Labor rate is required and must be a number' });
+    }
+
+    if (Number(laborRate) < 0) {
+      return res.status(400).json({ error: 'Labor rate cannot be negative' });
+    }
+
+    const settings = await Setting.updateLaborRate(Number(laborRate), req.admin.username);
+
+    console.log(`Labor rate updated to $${settings.laborRate}/hr by ${req.admin.username}`);
+
+    res.json({
+      success: true,
+      laborRate: settings.laborRate
+    });
+  } catch (error) {
+    console.error('Update labor rate error:', error);
+    res.status(500).json({ error: 'Error updating labor rate' });
+  }
+});
+
+// ============================================================
 // Cost Item Management Routes
 // ============================================================
 
@@ -931,14 +978,15 @@ router.get('/cost-items', async (req, res) => {
         sortQuery = { category: 1, sortOrder: 1, name: 1 };
     }
 
-    const [costItems, totalCount, allItemsForBom] = await Promise.all([
+    const [costItems, totalCount, allItemsForBom, settings] = await Promise.all([
       CostItem.find(filter)
         .populate('billOfMaterials.item', 'code name')
         .sort(sortQuery)
         .skip(skip)
         .limit(limit),
       CostItem.countDocuments(filter),
-      CostItem.find({ isActive: true }, '_id code name price').sort({ code: 1 }).lean()
+      CostItem.find({ isActive: true }, '_id code name price').sort({ code: 1 }).lean(),
+      Setting.getSettings()
     ]);
 
     const totalPages = Math.ceil(totalCount / limit);
@@ -947,6 +995,7 @@ router.get('/cost-items', async (req, res) => {
       title: 'Cost Item Management',
       costItems,
       allItemsForBom,
+      laborRate: settings.laborRate,
       pagination: {
         currentPage: page,
         totalPages,
@@ -988,13 +1037,13 @@ router.post('/cost-items/seed', async (req, res) => {
 
     // Pass 1: Create all items (without BOM references)
     const defaults = [
-      { code: 'CAT6-RUN', name: 'Cat6 Cable Run', category: 'Cable Runs', unitType: 'per-run', costUnitType: 'per-foot', unitLabel: 'per run', price: 100, materialCost: 25, laborCost: 40, sortOrder: 0 },
-      { code: 'COAX-RUN', name: 'Coax Cable Run', category: 'Cable Runs', unitType: 'per-run', costUnitType: 'per-foot', unitLabel: 'per run', price: 150, materialCost: 35, laborCost: 50, sortOrder: 1 },
-      { code: 'FIBER-RUN', name: 'Fiber Cable Run', category: 'Cable Runs', unitType: 'per-run', costUnitType: 'per-foot', unitLabel: 'per run', price: 200, materialCost: 60, laborCost: 70, sortOrder: 2 },
-      { code: 'AP-MOUNT', name: 'Access Point Mount', category: 'Services', unitType: 'per-unit', unitLabel: 'per mount', price: 25, materialCost: 5, laborCost: 10, sortOrder: 0 },
-      { code: 'ETH-RELOCATION', name: 'Ethernet Relocation', category: 'Services', unitType: 'per-unit', unitLabel: 'per relocation', price: 20, materialCost: 2, laborCost: 10, sortOrder: 1 },
-      { code: 'MEDIA-PANEL', name: 'Media Panel Install', category: 'Centralization', unitType: 'flat-fee', unitLabel: 'flat fee', price: 100, materialCost: 30, laborCost: 40, sortOrder: 0 },
-      { code: 'PATCH-PANEL', name: 'Patch Panel', category: 'Centralization', unitType: 'flat-fee', unitLabel: 'flat fee', price: 50, materialCost: 20, laborCost: 15, sortOrder: 1 },
+      { code: 'CAT6-RUN', name: 'Cat6 Cable Run', category: 'Cable Runs', unitType: 'per-run', costUnitType: 'per-foot', unitLabel: 'per run', price: 100, materialCost: 25, laborHours: 0.8, sortOrder: 0 },
+      { code: 'COAX-RUN', name: 'Coax Cable Run', category: 'Cable Runs', unitType: 'per-run', costUnitType: 'per-foot', unitLabel: 'per run', price: 150, materialCost: 35, laborHours: 1.0, sortOrder: 1 },
+      { code: 'FIBER-RUN', name: 'Fiber Cable Run', category: 'Cable Runs', unitType: 'per-run', costUnitType: 'per-foot', unitLabel: 'per run', price: 200, materialCost: 60, laborHours: 1.4, sortOrder: 2 },
+      { code: 'AP-MOUNT', name: 'Access Point Mount', category: 'Services', unitType: 'per-unit', unitLabel: 'per mount', price: 25, materialCost: 5, laborHours: 0.2, sortOrder: 0 },
+      { code: 'ETH-RELOCATION', name: 'Ethernet Relocation', category: 'Services', unitType: 'per-unit', unitLabel: 'per relocation', price: 20, materialCost: 2, laborHours: 0.2, sortOrder: 1 },
+      { code: 'MEDIA-PANEL', name: 'Media Panel Install', category: 'Centralization', unitType: 'flat-fee', unitLabel: 'flat fee', price: 100, materialCost: 30, laborHours: 0.8, sortOrder: 0 },
+      { code: 'PATCH-PANEL', name: 'Patch Panel', category: 'Centralization', unitType: 'flat-fee', unitLabel: 'flat fee', price: 50, materialCost: 20, laborHours: 0.3, sortOrder: 1 },
       { code: 'LOOSE-TERM', name: 'Loose Termination', category: 'Centralization', unitType: 'flat-fee', unitLabel: 'flat fee', price: 0, sortOrder: 2 },
       { code: 'DEPOSIT-DROPS', name: 'Drops Only Deposit', category: 'Deposits', unitType: 'threshold', unitLabel: 'deposit', price: 20, thresholdAmount: 100, sortOrder: 0 },
       { code: 'DEPOSIT-WHOLE', name: 'Whole-Home Deposit', category: 'Deposits', unitType: 'flat-fee', unitLabel: 'flat fee', price: 200, sortOrder: 1 },
@@ -1105,7 +1154,7 @@ router.get('/cost-items/search', async (req, res) => {
  */
 router.post('/cost-items', async (req, res) => {
   try {
-    const { code, name, description, category, unitType, costUnitType, unitLabel, price, materialCost, laborCost, thresholdAmount, purchaseUrl, billOfMaterials, sortOrder } = req.body;
+    const { code, name, description, category, unitType, costUnitType, unitLabel, price, materialCost, laborHours, thresholdAmount, purchaseUrl, billOfMaterials, sortOrder } = req.body;
 
     if (!code || !name || !category || !unitType || price == null) {
       return res.status(400).json({
@@ -1136,7 +1185,7 @@ router.post('/cost-items', async (req, res) => {
       unitLabel,
       price,
       materialCost,
-      laborCost,
+      laborHours,
       thresholdAmount,
       purchaseUrl: purchaseUrl || undefined,
       billOfMaterials: billOfMaterials || [],
@@ -1183,7 +1232,7 @@ router.post('/cost-items', async (req, res) => {
  */
 router.put('/cost-items/:id', async (req, res) => {
   try {
-    const { code, name, description, category, unitType, costUnitType, unitLabel, price, materialCost, laborCost, thresholdAmount, purchaseUrl, billOfMaterials, sortOrder } = req.body;
+    const { code, name, description, category, unitType, costUnitType, unitLabel, price, materialCost, laborHours, thresholdAmount, purchaseUrl, billOfMaterials, sortOrder } = req.body;
 
     // Validate BOM item IDs exist
     if (billOfMaterials && billOfMaterials.length > 0) {
@@ -1212,7 +1261,7 @@ router.put('/cost-items/:id', async (req, res) => {
     if (unitLabel !== undefined) updateData.unitLabel = unitLabel;
     if (price !== undefined) updateData.price = price;
     if (materialCost !== undefined) updateData.materialCost = materialCost;
-    if (laborCost !== undefined) updateData.laborCost = laborCost;
+    if (laborHours !== undefined) updateData.laborHours = laborHours;
     if (thresholdAmount !== undefined) updateData.thresholdAmount = thresholdAmount;
     if (purchaseUrl !== undefined) updateData.purchaseUrl = purchaseUrl || null;
     if (billOfMaterials !== undefined) updateData.billOfMaterials = billOfMaterials;

@@ -5,6 +5,7 @@ const { MongoMemoryServer } = require('mongodb-memory-server');
 const app = require('../server');
 const Admin = require('../models/Admin');
 const CostItem = require('../models/CostItem');
+const Setting = require('../models/Setting');
 
 let mongoServer;
 
@@ -32,6 +33,7 @@ afterAll(async () => {
 beforeEach(async () => {
   await Admin.deleteMany({});
   await CostItem.deleteMany({});
+  await Setting.deleteMany({});
   await new Promise(resolve => setTimeout(resolve, 100));
 });
 
@@ -172,26 +174,63 @@ describe('Cost Item System Tests', () => {
       expect(items[2].code).toBe('B-1');
     });
 
-    test('should return pricing map via getPricingMap with new fields', async () => {
+    test('should return pricing map via getPricingMap with laborHours computed', async () => {
       await CostItem.create([
-        { code: 'CAT6-RUN', name: 'Cat6 Cable Run', category: 'Cable Runs', unitType: 'per-run', costUnitType: 'per-foot', unitLabel: 'per run', price: 100, materialCost: 25, laborCost: 40, isActive: true },
+        { code: 'CAT6-RUN', name: 'Cat6 Cable Run', category: 'Cable Runs', unitType: 'per-run', costUnitType: 'per-foot', unitLabel: 'per run', price: 100, materialCost: 25, laborHours: 0.8, isActive: true },
         { code: 'AP-MOUNT', name: 'Access Point Mount', category: 'Services', unitType: 'per-unit', unitLabel: 'per mount', price: 25, isActive: true },
         { code: 'DISABLED', name: 'Disabled', category: 'Services', unitType: 'per-unit', price: 10, isActive: false }
       ]);
 
-      const map = await CostItem.getPricingMap();
+      const map = await CostItem.getPricingMap(50);
 
       expect(map['CAT6-RUN']).toBeDefined();
       expect(map['CAT6-RUN'].price).toBe(100);
       expect(map['CAT6-RUN'].unitType).toBe('per-run');
       expect(map['CAT6-RUN'].costUnitType).toBe('per-foot');
       expect(map['CAT6-RUN'].materialCost).toBe(25);
-      expect(map['CAT6-RUN'].laborCost).toBe(40);
-      expect(map['CAT6-RUN'].cost).toBe(65);
+      expect(map['CAT6-RUN'].laborHours).toBe(0.8);
+      expect(map['CAT6-RUN'].laborCost).toBe(40); // 0.8 * 50
+      expect(map['CAT6-RUN'].cost).toBe(65); // 25 + 40
       expect(map['AP-MOUNT']).toBeDefined();
       expect(map['AP-MOUNT'].price).toBe(25);
       expect(map['AP-MOUNT'].costUnitType).toBeNull();
       expect(map['DISABLED']).toBeUndefined();
+    });
+
+    test('should compute getPricingMap with different labor rates', async () => {
+      await CostItem.create({
+        code: 'RATE-TEST',
+        name: 'Rate Test',
+        category: 'Services',
+        unitType: 'per-unit',
+        price: 100,
+        materialCost: 10,
+        laborHours: 2,
+        isActive: true
+      });
+
+      const map75 = await CostItem.getPricingMap(75);
+      expect(map75['RATE-TEST'].laborCost).toBe(150); // 2 * 75
+      expect(map75['RATE-TEST'].cost).toBe(160); // 10 + 150
+
+      const map0 = await CostItem.getPricingMap(0);
+      expect(map0['RATE-TEST'].laborCost).toBe(0); // 2 * 0
+      expect(map0['RATE-TEST'].cost).toBe(10); // 10 + 0
+    });
+
+    test('should default getPricingMap to $50/hr when no rate provided', async () => {
+      await CostItem.create({
+        code: 'DEFAULT-RATE',
+        name: 'Default Rate',
+        category: 'Services',
+        unitType: 'per-unit',
+        price: 100,
+        laborHours: 1,
+        isActive: true
+      });
+
+      const map = await CostItem.getPricingMap();
+      expect(map['DEFAULT-RATE'].laborCost).toBe(50); // 1 * 50 default
     });
 
     // New model tests for costUnitType
@@ -281,7 +320,7 @@ describe('Cost Item System Tests', () => {
       expect(item.purchaseUrl).toBeUndefined();
     });
 
-    // materialCost / laborCost tests
+    // materialCost / laborHours tests
     test('should reject negative materialCost', async () => {
       await expect(CostItem.create({
         code: 'NEG-MAT',
@@ -293,83 +332,15 @@ describe('Cost Item System Tests', () => {
       })).rejects.toThrow(/Material cost cannot be negative/);
     });
 
-    test('should reject negative laborCost', async () => {
+    test('should reject negative laborHours', async () => {
       await expect(CostItem.create({
         code: 'NEG-LAB',
         name: 'Negative Labor',
         category: 'Services',
         unitType: 'per-unit',
         price: 10,
-        laborCost: -3
-      })).rejects.toThrow(/Labor cost cannot be negative/);
-    });
-
-    // Virtual cost getter
-    test('should compute virtual cost as materialCost + laborCost', async () => {
-      const item = await CostItem.create({
-        code: 'VIRTUAL-COST',
-        name: 'Virtual Cost',
-        category: 'Services',
-        unitType: 'per-unit',
-        price: 100,
-        materialCost: 25,
-        laborCost: 40
-      });
-
-      expect(item.cost).toBe(65);
-    });
-
-    test('should compute virtual cost when only materialCost set', async () => {
-      const item = await CostItem.create({
-        code: 'MAT-ONLY',
-        name: 'Material Only',
-        category: 'Services',
-        unitType: 'per-unit',
-        price: 50,
-        materialCost: 20
-      });
-
-      expect(item.cost).toBe(20);
-    });
-
-    test('should compute virtual cost when only laborCost set', async () => {
-      const item = await CostItem.create({
-        code: 'LAB-ONLY',
-        name: 'Labor Only',
-        category: 'Services',
-        unitType: 'per-unit',
-        price: 50,
-        laborCost: 15
-      });
-
-      expect(item.cost).toBe(15);
-    });
-
-    test('should compute virtual cost as 0 when neither set', async () => {
-      const item = await CostItem.create({
-        code: 'NO-COST',
-        name: 'No Cost',
-        category: 'Services',
-        unitType: 'per-unit',
-        price: 50
-      });
-
-      expect(item.cost).toBe(0);
-    });
-
-    test('should include virtual cost in toJSON', async () => {
-      const item = await CostItem.create({
-        code: 'JSON-COST',
-        name: 'JSON Cost',
-        category: 'Services',
-        unitType: 'per-unit',
-        price: 100,
-        materialCost: 30,
-        laborCost: 20
-      });
-
-      const json = item.toJSON();
-      expect(json.cost).toBe(50);
+        laborHours: -3
+      })).rejects.toThrow(/Labor hours cannot be negative/);
     });
 
     // BOM tests
@@ -483,6 +454,45 @@ describe('Cost Item System Tests', () => {
       });
 
       expect(parent.billOfMaterials).toHaveLength(2);
+    });
+  });
+
+  // ============================================================
+  // Setting Model Tests
+  // ============================================================
+  describe('Setting Model', () => {
+
+    test('should create default settings via getSettings', async () => {
+      const settings = await Setting.getSettings();
+
+      expect(settings.key).toBe('global');
+      expect(settings.laborRate).toBe(50);
+    });
+
+    test('should return existing settings on subsequent getSettings calls', async () => {
+      const first = await Setting.getSettings();
+      first.laborRate = 75;
+      await first.save();
+
+      const second = await Setting.getSettings();
+      expect(second.laborRate).toBe(75);
+    });
+
+    test('should update labor rate via updateLaborRate', async () => {
+      const settings = await Setting.updateLaborRate(65, 'admin');
+
+      expect(settings.laborRate).toBe(65);
+      expect(settings.updatedBy).toBe('admin');
+    });
+
+    test('should reject negative labor rate via updateLaborRate', async () => {
+      await expect(Setting.updateLaborRate(-10, 'admin'))
+        .rejects.toThrow(/Labor rate cannot be negative/);
+    });
+
+    test('should allow zero labor rate', async () => {
+      const settings = await Setting.updateLaborRate(0, 'admin');
+      expect(settings.laborRate).toBe(0);
     });
   });
 
@@ -602,7 +612,7 @@ describe('Cost Item System Tests', () => {
         expect(response.text).toMatch(/No Cost Items Found/);
       });
 
-      test('should display material cost and labor cost columns', async () => {
+      test('should display material cost and labor hours columns', async () => {
         await CostItem.create({
           code: 'COST-COLS',
           name: 'Cost Columns Test',
@@ -610,16 +620,25 @@ describe('Cost Item System Tests', () => {
           unitType: 'per-unit',
           price: 100,
           materialCost: 25,
-          laborCost: 40
+          laborHours: 0.8
         });
 
         const response = await adminAgent.get('/admin/cost-items');
 
         expect(response.status).toBe(200);
         expect(response.text).toMatch(/Material Cost/);
+        expect(response.text).toMatch(/Labor Hours/);
         expect(response.text).toMatch(/Labor Cost/);
         expect(response.text).toMatch(/\$25\.00/);
-        expect(response.text).toMatch(/\$40\.00/);
+        expect(response.text).toMatch(/0\.8 hrs/);
+      });
+
+      test('should display labor rate settings bar', async () => {
+        const response = await adminAgent.get('/admin/cost-items');
+
+        expect(response.status).toBe(200);
+        expect(response.text).toMatch(/Labor Rate/);
+        expect(response.text).toMatch(/saveLaborRateBtn/);
       });
     });
 
@@ -647,7 +666,7 @@ describe('Cost Item System Tests', () => {
         expect(item.createdBy).toBe('testadmin');
       });
 
-      test('should create item with all new fields', async () => {
+      test('should create item with all new fields including laborHours', async () => {
         const comp = await CostItem.create({
           code: 'BOM-COMP-RT',
           name: 'BOM Component',
@@ -667,7 +686,7 @@ describe('Cost Item System Tests', () => {
             unitLabel: 'per run',
             price: 100,
             materialCost: 25,
-            laborCost: 40,
+            laborHours: 0.8,
             purchaseUrl: 'https://example.com/cable',
             billOfMaterials: [{ item: comp._id.toString(), quantity: 2 }]
           });
@@ -678,7 +697,7 @@ describe('Cost Item System Tests', () => {
         const item = await CostItem.findOne({ code: 'FULL-ITEM' });
         expect(item.costUnitType).toBe('per-foot');
         expect(item.materialCost).toBe(25);
-        expect(item.laborCost).toBe(40);
+        expect(item.laborHours).toBe(0.8);
         expect(item.purchaseUrl).toBe('https://example.com/cable');
         expect(item.billOfMaterials).toHaveLength(1);
         expect(item.billOfMaterials[0].quantity).toBe(2);
@@ -738,7 +757,7 @@ describe('Cost Item System Tests', () => {
 
     describe('POST /admin/cost-items/seed', () => {
 
-      test('should seed default items for superadmin', async () => {
+      test('should seed default items for superadmin with laborHours', async () => {
         const response = await superAdminAgent
           .post('/admin/cost-items/seed');
 
@@ -750,11 +769,21 @@ describe('Cost Item System Tests', () => {
         const count = await CostItem.countDocuments();
         expect(count).toBe(13);
 
-        // Verify cable runs have costUnitType
+        // Verify cable runs have costUnitType and laborHours
         const cat6 = await CostItem.findOne({ code: 'CAT6-RUN' });
         expect(cat6.costUnitType).toBe('per-foot');
         expect(cat6.materialCost).toBe(25);
-        expect(cat6.laborCost).toBe(40);
+        expect(cat6.laborHours).toBe(0.8);
+
+        // Verify other seed items have laborHours
+        const coax = await CostItem.findOne({ code: 'COAX-RUN' });
+        expect(coax.laborHours).toBe(1.0);
+
+        const fiber = await CostItem.findOne({ code: 'FIBER-RUN' });
+        expect(fiber.laborHours).toBe(1.4);
+
+        const apMount = await CostItem.findOne({ code: 'AP-MOUNT' });
+        expect(apMount.laborHours).toBe(0.2);
 
         // Verify component items exist
         const rj45 = await CostItem.findOne({ code: 'RJ45-CONNECTOR' });
@@ -823,7 +852,7 @@ describe('Cost Item System Tests', () => {
         expect(updated.updatedBy).toBe('testadmin');
       });
 
-      test('should update with all new fields', async () => {
+      test('should update with laborHours', async () => {
         const item = await CostItem.create({
           code: 'UPD-FULL',
           name: 'Update Full',
@@ -845,7 +874,7 @@ describe('Cost Item System Tests', () => {
           .send({
             costUnitType: 'per-foot',
             materialCost: 30,
-            laborCost: 50,
+            laborHours: 1.5,
             purchaseUrl: 'https://example.com/updated',
             billOfMaterials: [{ item: comp._id.toString(), quantity: 3 }]
           });
@@ -856,7 +885,7 @@ describe('Cost Item System Tests', () => {
         const updated = await CostItem.findById(item._id);
         expect(updated.costUnitType).toBe('per-foot');
         expect(updated.materialCost).toBe(30);
-        expect(updated.laborCost).toBe(50);
+        expect(updated.laborHours).toBe(1.5);
         expect(updated.purchaseUrl).toBe('https://example.com/updated');
         expect(updated.billOfMaterials).toHaveLength(1);
         expect(updated.billOfMaterials[0].quantity).toBe(3);
@@ -890,6 +919,57 @@ describe('Cost Item System Tests', () => {
 
         expect(response.status).toBe(404);
         expect(response.body.error).toBe('Cost item not found');
+      });
+    });
+
+    describe('Labor Rate Settings Routes', () => {
+
+      test('GET /admin/settings/labor-rate should return default rate', async () => {
+        const response = await adminAgent.get('/admin/settings/labor-rate');
+
+        expect(response.status).toBe(200);
+        expect(response.body.laborRate).toBe(50);
+      });
+
+      test('PUT /admin/settings/labor-rate should update rate', async () => {
+        const response = await adminAgent
+          .put('/admin/settings/labor-rate')
+          .send({ laborRate: 75 });
+
+        expect(response.status).toBe(200);
+        expect(response.body.success).toBe(true);
+        expect(response.body.laborRate).toBe(75);
+
+        // Verify persisted
+        const settings = await Setting.getSettings();
+        expect(settings.laborRate).toBe(75);
+      });
+
+      test('PUT /admin/settings/labor-rate should reject negative rate', async () => {
+        const response = await adminAgent
+          .put('/admin/settings/labor-rate')
+          .send({ laborRate: -10 });
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toMatch(/cannot be negative/);
+      });
+
+      test('PUT /admin/settings/labor-rate should reject missing rate', async () => {
+        const response = await adminAgent
+          .put('/admin/settings/labor-rate')
+          .send({});
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toMatch(/required/);
+      });
+
+      test('PUT /admin/settings/labor-rate should allow zero rate', async () => {
+        const response = await adminAgent
+          .put('/admin/settings/labor-rate')
+          .send({ laborRate: 0 });
+
+        expect(response.status).toBe(200);
+        expect(response.body.laborRate).toBe(0);
       });
     });
 

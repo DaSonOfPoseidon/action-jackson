@@ -69,10 +69,10 @@ const CostItemSchema = new mongoose.Schema({
     min: [0, 'Material cost cannot be negative']
   },
 
-  // Labor cost component
-  laborCost: {
+  // Labor hours component
+  laborHours: {
     type: Number,
-    min: [0, 'Labor cost cannot be negative']
+    min: [0, 'Labor hours cannot be negative']
   },
 
   // Customer-facing price
@@ -136,13 +136,6 @@ const CostItemSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now }
 });
 
-// Virtual: combined cost from materialCost + laborCost
-CostItemSchema.virtual('cost').get(function() {
-  const mat = this.materialCost || 0;
-  const lab = this.laborCost || 0;
-  return mat + lab;
-});
-
 // Enable virtuals in JSON/Object output
 CostItemSchema.set('toJSON', { virtuals: true });
 CostItemSchema.set('toObject', { virtuals: true });
@@ -202,11 +195,15 @@ CostItemSchema.statics.getActiveByCategory = async function() {
 /**
  * Get a code-keyed lookup object of all active items
  * (for future quote builder)
+ * @param {number} laborRate - hourly labor rate for computing laborCost and cost
  */
-CostItemSchema.statics.getPricingMap = async function() {
+CostItemSchema.statics.getPricingMap = async function(laborRate) {
+  const rate = laborRate != null ? laborRate : 50;
   const items = await this.find({ isActive: true }).exec();
   const map = {};
   for (const item of items) {
+    const computedLaborCost = (item.laborHours || 0) * rate;
+    const mat = item.materialCost || 0;
     map[item.code] = {
       name: item.name,
       category: item.category,
@@ -215,8 +212,9 @@ CostItemSchema.statics.getPricingMap = async function() {
       unitLabel: item.unitLabel,
       price: item.price,
       materialCost: item.materialCost,
-      laborCost: item.laborCost,
-      cost: item.cost,
+      laborHours: item.laborHours,
+      laborCost: computedLaborCost,
+      cost: mat + computedLaborCost,
       purchaseUrl: item.purchaseUrl,
       billOfMaterials: item.billOfMaterials,
       thresholdAmount: item.thresholdAmount
