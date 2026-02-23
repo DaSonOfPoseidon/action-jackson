@@ -107,6 +107,7 @@ const invoicesRoutes = require('./routes/invoices');
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
 const fileRoutes = require('./routes/files');
+const estimateRoutes = require('./routes/estimates');
 
 // Use API routes
 app.use('/api/home', homeRoutes);
@@ -115,6 +116,7 @@ app.use('/api/quotes', quotesRoutes);
 app.use('/api/shared', sharedRoutes);
 app.use('/api/invoices', invoicesRoutes);
 app.use('/api/files', fileRoutes);
+app.use('/api/estimates', estimateRoutes);
 app.use('/auth', authRoutes);
 app.use('/admin', adminRoutes);
 
@@ -135,6 +137,11 @@ app.get('/scheduling', (req, res) => {
 // Quotes
 app.get('/quotes', (req, res) => {
   res.render('quotes', { title: 'Get Connected' });
+});
+
+// Estimate Builder
+app.get('/estimate', (req, res) => {
+  res.render('estimate', { title: 'Estimate Builder' });
 });
 
 // About

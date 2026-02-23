@@ -1,0 +1,751 @@
+<%- include('partials/header', { title: 'Estimate Builder' }) %>
+
+  <main class="container">
+
+    <!-- Page Header -->
+    <div class="estimate-header">
+      <h2>Estimate Builder</h2>
+      <p class="estimate-subtitle">Select your services below and watch your estimate build in real time. When you're ready, lock it in with a full quote request.</p>
+    </div>
+
+    <!-- Two-Column Layout -->
+    <div class="estimate-layout">
+
+      <!-- Left Column: Service Selection -->
+      <div class="estimate-builder" id="estimateBuilder">
+        <!-- Loading State -->
+        <div id="estimateLoading" class="estimate-loading">
+          <div class="skeleton-fieldset">
+            <div class="skeleton-legend"></div>
+            <div class="skeleton-row"></div>
+            <div class="skeleton-row short"></div>
+            <div class="skeleton-row"></div>
+          </div>
+          <div class="skeleton-fieldset">
+            <div class="skeleton-legend"></div>
+            <div class="skeleton-row short"></div>
+            <div class="skeleton-row"></div>
+          </div>
+          <div class="skeleton-fieldset">
+            <div class="skeleton-legend"></div>
+            <div class="skeleton-row"></div>
+            <div class="skeleton-row short"></div>
+          </div>
+        </div>
+
+        <!-- Error State -->
+        <div id="estimateError" class="estimate-error" style="display: none;">
+          <i class="fas fa-exclamation-triangle"></i>
+          <h3>Couldn't Load Services</h3>
+          <p>We weren't able to fetch pricing data. Please try again in a moment.</p>
+          <button type="button" id="retryBtn">Retry</button>
+        </div>
+
+        <!-- Dynamic Categories (populated by JS) -->
+        <div id="categoryContainer"></div>
+      </div>
+
+      <!-- Right Column: Pricing Summary (sticky) -->
+      <aside class="estimate-summary" id="estimateSummary">
+        <div class="summary-inner">
+          <h3><i class="fas fa-receipt"></i> Your Estimate</h3>
+
+          <div id="summaryLineItems" class="summary-line-items">
+            <p class="summary-empty" id="summaryEmpty">No items selected yet.</p>
+          </div>
+
+          <div class="summary-divider"></div>
+
+          <div class="summary-total-row">
+            <span>Estimated Total</span>
+            <span class="font-mono summary-total-value" id="summaryTotal">$0</span>
+          </div>
+
+          <p class="summary-disclaimer">Final pricing may vary based on site conditions.</p>
+
+          <div class="summary-actions">
+            <a href="/quotes" class="btn-lock-it-in" id="lockItInBtn">Lock It In</a>
+            <button type="button" class="btn-reset" id="resetBtn">Reset</button>
+          </div>
+        </div>
+      </aside>
+
+    </div>
+
+    <!-- Mobile Fixed Bottom Bar -->
+    <div class="mobile-summary-bar" id="mobileSummaryBar">
+      <div class="mobile-bar-inner">
+        <div class="mobile-bar-total">
+          <span>Estimate</span>
+          <span class="font-mono" id="mobileSummaryTotal">$0</span>
+        </div>
+        <button type="button" class="mobile-bar-expand" id="mobileExpandBtn">
+          <i class="fas fa-chevron-up"></i>
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+  <style>
+    /* ─── Estimate Page Layout ─── */
+
+    .estimate-header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+      padding-top: 1rem;
+    }
+
+    .estimate-header h2 {
+      color: var(--primary);
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .estimate-subtitle {
+      color: var(--text-muted);
+      max-width: 600px;
+      margin: 0 auto;
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
+    .estimate-layout {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 2rem;
+      align-items: start;
+    }
+
+    /* ─── Builder Column ─── */
+
+    .estimate-builder {
+      min-width: 0;
+    }
+
+    /* ─── Loading Skeleton ─── */
+
+    .estimate-loading {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .skeleton-fieldset {
+      background: var(--surface);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius);
+      padding: 2rem;
+    }
+
+    .skeleton-legend {
+      width: 140px;
+      height: 28px;
+      background: linear-gradient(90deg, var(--surface-light) 25%, rgba(245, 158, 11, 0.08) 50%, var(--surface-light) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: var(--radius);
+      margin-bottom: 1.25rem;
+    }
+
+    .skeleton-row {
+      height: 44px;
+      background: linear-gradient(90deg, var(--surface-light) 25%, rgba(255,255,255,0.04) 50%, var(--surface-light) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: var(--radius);
+      margin-bottom: 0.75rem;
+    }
+
+    .skeleton-row.short {
+      width: 65%;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* ─── Error State ─── */
+
+    .estimate-error {
+      text-align: center;
+      padding: 4rem 2rem;
+      background: var(--surface);
+      border: 1px solid rgba(252, 165, 165, 0.2);
+      border-radius: var(--radius);
+    }
+
+    .estimate-error i {
+      font-size: 2.5rem;
+      color: var(--error);
+      margin-bottom: 1rem;
+    }
+
+    .estimate-error h3 {
+      color: var(--error);
+      margin-bottom: 0.5rem;
+    }
+
+    .estimate-error p {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+    }
+
+    .estimate-error button {
+      background: var(--surface-light);
+      color: var(--text);
+      border: 1px solid rgba(252, 165, 165, 0.3);
+      padding: 0.6rem 1.5rem;
+    }
+
+    .estimate-error button:hover {
+      border-color: var(--error);
+    }
+
+    /* ─── Category Fieldsets ─── */
+
+    .estimate-builder fieldset {
+      background: var(--surface);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius);
+      padding: 2rem;
+      margin: 0 0 1.5rem 0;
+    }
+
+    .estimate-builder legend {
+      background: var(--primary);
+      color: #0C0A09;
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius);
+      font-weight: 600;
+      font-family: var(--font-heading);
+    }
+
+    /* ─── Item Rows ─── */
+
+    .estimate-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .estimate-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .estimate-item:first-child {
+      padding-top: 0;
+    }
+
+    .item-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .item-name {
+      font-weight: 500;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .item-price-label {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: var(--primary);
+      margin-top: 0.15rem;
+    }
+
+    .item-info-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.9rem;
+      padding: 0.15rem 0.35rem;
+      transition: var(--transition);
+      flex-shrink: 0;
+      line-height: 1;
+    }
+
+    .item-info-btn:hover {
+      color: var(--primary);
+      transform: scale(1.15);
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .item-description {
+      display: none;
+      background: var(--surface-light);
+      border-left: 3px solid var(--primary);
+      border-radius: var(--radius);
+      padding: 0.6rem 0.85rem;
+      margin: 0.5rem 0 0 0;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .item-description.active {
+      display: block;
+    }
+
+    .item-control {
+      flex-shrink: 0;
+    }
+
+    .item-control input[type="number"] {
+      width: 80px;
+      background: var(--surface-light);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: var(--radius);
+      padding: 0.5rem 0.6rem;
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      text-align: center;
+      margin: 0;
+    }
+
+    .item-control input[type="number"]:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25);
+      outline: none;
+    }
+
+    /* Flat-fee checkbox styling */
+    .item-control .flat-fee-toggle {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+    }
+
+    .item-control .flat-fee-toggle input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--primary);
+      cursor: pointer;
+      margin: 0;
+    }
+
+    .flat-fee-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    /* Centralization radio styling */
+    .centralization-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .centralization-option {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: var(--transition);
+      border: 1px solid transparent;
+    }
+
+    .centralization-option:hover {
+      background: rgba(245, 158, 11, 0.05);
+    }
+
+    .centralization-option.selected {
+      background: rgba(245, 158, 11, 0.08);
+      border-color: rgba(245, 158, 11, 0.2);
+    }
+
+    .centralization-option input[type="radio"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--primary);
+      cursor: pointer;
+      flex-shrink: 0;
+      margin: 0;
+    }
+
+    .centralization-option .item-info {
+      flex: 1;
+    }
+
+    .centralization-option .item-info-btn {
+      margin-left: auto;
+    }
+
+    /* ─── Summary Panel ─── */
+
+    .estimate-summary {
+      position: sticky;
+      top: 1rem;
+    }
+
+    .summary-inner {
+      background: var(--surface);
+      border: 2px solid rgba(245, 158, 11, 0.2);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+    }
+
+    .summary-inner h3 {
+      color: var(--primary);
+      font-size: 1.15rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .summary-inner h3 i {
+      font-size: 1rem;
+    }
+
+    .summary-line-items {
+      max-height: 340px;
+      overflow-y: auto;
+      margin-bottom: 0.5rem;
+      scrollbar-width: thin;
+      scrollbar-color: var(--surface-light) transparent;
+    }
+
+    .summary-line-items::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .summary-line-items::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .summary-line-items::-webkit-scrollbar-thumb {
+      background: var(--surface-light);
+      border-radius: 4px;
+    }
+
+    .summary-empty {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      text-align: center;
+      padding: 1.5rem 0;
+      font-style: italic;
+    }
+
+    .summary-line-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 0.35rem 0;
+      font-size: 0.88rem;
+      gap: 0.75rem;
+    }
+
+    .summary-item-name {
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+
+    .summary-item-detail {
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      flex-shrink: 0;
+    }
+
+    .summary-item-subtotal {
+      color: var(--primary);
+      font-family: var(--font-mono);
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+
+    .summary-divider {
+      height: 1px;
+      background: rgba(245, 158, 11, 0.2);
+      margin: 0.75rem 0;
+    }
+
+    .summary-total-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem;
+      background: var(--surface-light);
+      border-radius: var(--radius);
+      border: 1px solid rgba(245, 158, 11, 0.15);
+    }
+
+    .summary-total-row span:first-child {
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .summary-total-value {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .summary-disclaimer {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-align: center;
+      margin: 0.75rem 0 0.5rem;
+      font-style: italic;
+    }
+
+    .summary-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .btn-lock-it-in {
+      display: block;
+      text-align: center;
+      background: var(--primary);
+      color: #0C0A09;
+      padding: 0.85rem 1.5rem;
+      border-radius: var(--radius);
+      font-weight: 700;
+      font-family: var(--font-heading);
+      font-size: 1.05rem;
+      text-decoration: none;
+      transition: var(--transition);
+      border: none;
+      cursor: pointer;
+      letter-spacing: -0.01em;
+    }
+
+    .btn-lock-it-in:hover {
+      background: var(--primary-dark);
+      transform: translateY(-2px);
+      box-shadow: var(--glow-amber-strong);
+      color: #0C0A09;
+    }
+
+    .btn-reset {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 0.6rem 1rem;
+      font-size: 0.88rem;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: var(--transition);
+      font-weight: 500;
+    }
+
+    .btn-reset:hover {
+      color: var(--error);
+      border-color: rgba(252, 165, 165, 0.3);
+      background: rgba(252, 165, 165, 0.05);
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* ─── Mobile Summary Bar ─── */
+
+    .mobile-summary-bar {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: var(--surface);
+      border-top: 2px solid rgba(245, 158, 11, 0.25);
+      padding: 0.75rem 1rem;
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .mobile-bar-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .mobile-bar-total {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .mobile-bar-total span:first-child {
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .mobile-bar-total .font-mono {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .mobile-bar-expand {
+      background: var(--primary);
+      color: #0C0A09;
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: var(--transition);
+    }
+
+    .mobile-bar-expand:hover {
+      background: var(--primary-dark);
+      box-shadow: none;
+      transform: none;
+    }
+
+    .mobile-bar-expand.expanded i {
+      transform: rotate(180deg);
+    }
+
+    /* ─── Responsive ─── */
+
+    @media (max-width: 900px) {
+      .estimate-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .estimate-summary {
+        display: none;
+      }
+
+      .mobile-summary-bar {
+        display: block;
+      }
+
+      .estimate-builder {
+        padding-bottom: 5rem;
+      }
+
+      .estimate-header h2 {
+        font-size: 1.65rem;
+      }
+
+      .estimate-builder fieldset {
+        padding: 1.25rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .estimate-item {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+
+      .item-control input[type="number"] {
+        width: 70px;
+      }
+    }
+
+    /* ─── Mobile Expanded Summary Overlay ─── */
+
+    .mobile-summary-overlay {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 101;
+      background: var(--surface);
+      border-top: 2px solid var(--primary);
+      border-radius: 16px 16px 0 0;
+      padding: 1.5rem;
+      max-height: 70vh;
+      overflow-y: auto;
+      box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.7);
+      transform: translateY(100%);
+      transition: transform 0.3s ease;
+    }
+
+    .mobile-summary-overlay.visible {
+      display: block;
+      transform: translateY(0);
+    }
+
+    .mobile-overlay-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .mobile-overlay-header h3 {
+      color: var(--primary);
+      margin: 0;
+      font-size: 1.1rem;
+    }
+
+    .mobile-overlay-close {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.3rem;
+      cursor: pointer;
+      padding: 0.25rem;
+    }
+
+    .mobile-overlay-close:hover {
+      color: var(--text);
+      background: transparent;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .mobile-overlay-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .mobile-overlay-actions .btn-lock-it-in {
+      flex: 1;
+    }
+
+    .mobile-overlay-actions .btn-reset {
+      flex-shrink: 0;
+    }
+
+    /* Backdrop */
+    .mobile-summary-backdrop {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+    }
+
+    .mobile-summary-backdrop.visible {
+      display: block;
+    }
+  </style>
+
+  <script src="/scripts/estimate.js"></script>
+<%- include('partials/footer') %>
