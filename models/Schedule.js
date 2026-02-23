@@ -17,6 +17,19 @@ const ScheduleSchema = new mongoose.Schema({
     ref: 'Quote',
     required: true
   },
+  appointmentType: {
+    type: String,
+    enum: ['survey', 'drops-only-install', 'whole-home-install'],
+    required: true,
+    default: 'drops-only-install'
+  },
+  duration: {
+    type: Number,
+    required: true,
+    default: 120,
+    min: 60,
+    max: 720
+  },
   name: {
     type: String,
     required: true,

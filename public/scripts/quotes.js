@@ -5,29 +5,14 @@ let lastQuoteNumber = null;
 let lastQuoteEmail = null;
 let lastQuoteName = null;
 
-// Pricing configuration
-const pricing = {
-  cables: {
-    cat6: 100,   // $100 per run
-    coax: 150,   // $150 per run
-    fiber: 200   // $200 per run
-  },
-  addons: {
-    apMount: 25,         // $25 per AP mount
-    ethRelocation: 20    // $20 per ethernet relocation
-  },
-  centralization: {
-    'Media Panel': 100,      // $100 if no existing panel
-    'Patch Panel': 50,       // $50 flat fee
-    'Loose Termination': 0   // Free
-  },
-  dropsOnly: {
-    depositThreshold: 100,
-    depositAmount: 20
-  },
-  wholeHome: {
-    depositAmount: 200
-  }
+// Pricing configuration (fallback defaults, overwritten by API fetch)
+let pricing = {
+  cables: { cat6: 100, coax: 150, fiber: 200 },
+  addons: { apMount: 25, ethRelocation: 20 },
+  centralization: { 'Media Panel': 100, 'Patch Panel': 50, 'Loose Termination': 0 },
+  dropsOnly: { depositThreshold: 100, depositAmount: 20 },
+  wholeHome: { depositAmount: 200 },
+  laborHours: { cat6: 0.8, coax: 1.0, fiber: 1.4, apMount: 0.2, ethRelocation: 0.3, mediaPanel: 1.0, patchPanel: 0.5, looseTermination: 0 }
 };
 
 // HTML escape helper to prevent XSS
@@ -39,6 +24,7 @@ function escapeHtml(str) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  fetchPricing();
   initializeStepNavigation();
   initializeServiceTypeSelection();
   initializeFormHandling();
@@ -48,7 +34,45 @@ document.addEventListener('DOMContentLoaded', () => {
   initializeInfoButtons();
   initializeSchedulingIntegration();
   initializeMediaPanelToggle();
+  initializeScopeDetailToggles();
+  initializeSurveyInlineScheduling();
 });
+
+// ─── Dynamic Pricing Fetch ───
+
+async function fetchPricing() {
+  try {
+    const res = await fetch('/api/quotes/pricing');
+    if (res.ok) {
+      const data = await res.json();
+      pricing = {
+        cables: data.cables || pricing.cables,
+        addons: data.addons || pricing.addons,
+        centralization: data.centralization || pricing.centralization,
+        dropsOnly: data.dropsOnly || pricing.dropsOnly,
+        wholeHome: data.wholeHome || pricing.wholeHome,
+        laborHours: data.laborHours || pricing.laborHours
+      };
+      updateDynamicPriceLabels();
+    }
+  } catch (err) {
+    console.error('Failed to fetch pricing, using defaults:', err);
+  }
+}
+
+function updateDynamicPriceLabels() {
+  const fieldMap = {
+    cat6: pricing.cables.cat6,
+    coax: pricing.cables.coax,
+    fiber: pricing.cables.fiber
+  };
+  document.querySelectorAll('.dynamic-price').forEach(span => {
+    const field = span.dataset.field;
+    if (field && fieldMap[field] !== undefined) {
+      span.textContent = fieldMap[field];
+    }
+  });
+}
 
 // ─── Progress Indicator ───
 
@@ -67,7 +91,6 @@ function updateProgressIndicator(stepNumber) {
   });
 
   connectors.forEach((conn, i) => {
-    // Connector i sits between step i+1 and step i+2
     conn.classList.toggle('active', i + 1 < stepNumber);
   });
 }
@@ -93,7 +116,6 @@ function initializeStepNavigation() {
       step.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
-    // Update progress indicator
     if (step === step1) updateProgressIndicator(1);
     else if (step === step2) updateProgressIndicator(2);
     else if (step === step3) updateProgressIndicator(3);
@@ -128,7 +150,6 @@ function initializeStepNavigation() {
           if (step3Yes && step3No) {
             step3Yes.checked = !!inlineYes;
             step3No.checked = !inlineYes;
-            // Trigger the location toggle
             const locationLabel = document.getElementById('mediaPanelLocationLabel');
             if (locationLabel) locationLabel.style.display = inlineYes ? 'block' : 'none';
           }
@@ -140,6 +161,16 @@ function initializeStepNavigation() {
         if (!networking && !security && !voip) {
           alert('Please select at least one scope (Networking, Security, or VoIP).');
           return;
+        }
+        // Validate survey selection when "before-install" is chosen
+        const surveyPref = document.querySelector('input[name="surveyPreference"]:checked')?.value;
+        if (surveyPref === 'before-install') {
+          const surveyDate = document.getElementById('surveyDate')?.value;
+          const surveyTime = document.getElementById('surveySelectedTime')?.value;
+          if (!surveyDate || !surveyTime) {
+            alert('Please select a date and time for your site survey, or choose "Day of install".');
+            return;
+          }
         }
       }
       showStep(step3);
@@ -161,6 +192,21 @@ function initializeStepNavigation() {
         alert('Please fill in all home information fields.');
         return;
       }
+
+      // Validate address
+      const street = document.getElementById('addressStreet')?.value?.trim();
+      const city = document.getElementById('addressCity')?.value?.trim();
+      const state = document.getElementById('addressState')?.value;
+      const zip = document.getElementById('addressZip')?.value?.trim();
+      if (!street || !city || !state || !zip) {
+        alert('Please fill in your complete service address.');
+        return;
+      }
+      if (!/^\d{5}(-\d{4})?$/.test(zip)) {
+        alert('Please enter a valid ZIP code (e.g., 12345 or 12345-6789).');
+        return;
+      }
+
       if (!liability) {
         alert('You must acknowledge the safety & liability notice to proceed.');
         return;
@@ -266,6 +312,138 @@ function initializeCentralizationToggle() {
   });
 }
 
+// ─── Scope Detail Toggles ───
+
+function initializeScopeDetailToggles() {
+  const toggles = [
+    { checkbox: 'scopeNetworking', detail: 'scopeNetworkingDetails' },
+    { checkbox: 'scopeSecurity', detail: 'scopeSecurityDetails' },
+    { checkbox: 'scopeVoip', detail: 'scopeVoipDetails' }
+  ];
+
+  toggles.forEach(({ checkbox, detail }) => {
+    const cb = document.getElementById(checkbox);
+    const detailEl = document.getElementById(detail);
+    if (cb && detailEl) {
+      cb.addEventListener('change', () => {
+        detailEl.style.display = cb.checked ? 'block' : 'none';
+      });
+    }
+  });
+}
+
+// ─── Inline Survey Scheduling ───
+
+function initializeSurveyInlineScheduling() {
+  const surveyRadios = document.querySelectorAll('input[name="surveyPreference"]');
+  const scheduler = document.getElementById('inlineSurveyScheduler');
+  if (!scheduler) return;
+
+  // Toggle visibility based on survey preference
+  surveyRadios.forEach(radio => {
+    radio.addEventListener('change', () => {
+      scheduler.style.display = radio.value === 'before-install' && radio.checked ? 'block' : 'none';
+    });
+  });
+
+  // Show by default since "before-install" is checked
+  scheduler.style.display = 'block';
+
+  const dateInput = document.getElementById('surveyDate');
+  if (!dateInput) return;
+
+  // Set min/max
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  dateInput.min = tomorrow.toISOString().split('T')[0];
+
+  const maxDate = new Date();
+  maxDate.setDate(maxDate.getDate() + 90);
+  dateInput.max = maxDate.toISOString().split('T')[0];
+
+  dateInput.addEventListener('change', async () => {
+    const dateVal = dateInput.value;
+    if (!dateVal) return;
+
+    try {
+      const res = await fetch(`/api/scheduling/slots?date=${dateVal}`);
+      const data = await res.json();
+
+      if (res.ok) {
+        renderSurveyTimeSlots(data.bookedSlots || []);
+        document.getElementById('surveyTimeSlotsContainer').style.display = 'block';
+      }
+    } catch (err) {
+      console.error('Error fetching survey slots:', err);
+    }
+  });
+}
+
+function renderSurveyTimeSlots(bookedSlots) {
+  const grid = document.getElementById('surveyTimeSlotsGrid');
+  if (!grid) return;
+
+  while (grid.firstChild) {
+    grid.removeChild(grid.firstChild);
+  }
+
+  const hiddenTime = document.getElementById('surveySelectedTime');
+  if (hiddenTime) hiddenTime.value = '';
+
+  // Hide the note
+  const noteEl = document.getElementById('surveyScheduleNote');
+  if (noteEl) noteEl.style.display = 'none';
+
+  // Compute blocked hours from booked slots
+  const blockedHours = computeBlockedHours(bookedSlots);
+
+  // Survey is 2 hours, so last possible start is 16:00 (ends at 18:00)
+  for (let h = 8; h <= 16; h++) {
+    const time = `${String(h).padStart(2, '0')}:00`;
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'time-slot-btn';
+    btn.textContent = formatTime(time);
+    btn.dataset.time = time;
+
+    // Check if this 2-hour survey window overlaps any blocked hours
+    const surveyHours = [h, h + 1];
+    const isBlocked = surveyHours.some(hr => blockedHours.has(hr));
+
+    if (isBlocked) {
+      btn.classList.add('booked');
+      btn.disabled = true;
+    } else {
+      btn.addEventListener('click', () => selectSurveyTimeSlot(time, btn));
+    }
+
+    grid.appendChild(btn);
+  }
+}
+
+function selectSurveyTimeSlot(time, btn) {
+  const grid = document.getElementById('surveyTimeSlotsGrid');
+  if (grid) {
+    grid.querySelectorAll('.time-slot-btn.selected').forEach(b => b.classList.remove('selected'));
+  }
+  btn.classList.add('selected');
+
+  const hiddenTime = document.getElementById('surveySelectedTime');
+  if (hiddenTime) hiddenTime.value = time;
+
+  // Show confirmation note
+  const noteEl = document.getElementById('surveyScheduleNote');
+  const summaryEl = document.getElementById('surveyScheduleSummary');
+  const dateVal = document.getElementById('surveyDate')?.value;
+  if (noteEl && summaryEl && dateVal) {
+    const dateObj = new Date(dateVal + 'T12:00:00');
+    const dateStr = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+    summaryEl.textContent = `${dateStr} at ${formatTime(time)}`;
+    noteEl.style.display = 'block';
+  }
+}
+
 function setupCalculationListeners() {
   const inputFields = ['coaxRuns', 'cat6Runs', 'fiberRuns', 'apMountQty', 'ethRelocationQty'];
   inputFields.forEach(fieldId => {
@@ -333,6 +511,33 @@ function initializeFormHandling() {
   form.addEventListener('submit', handleSubmit);
 }
 
+// ─── Compute drops-only duration from labor hours ───
+
+function computeDropsOnlyDuration() {
+  const runs = {
+    coax: parseInt(document.getElementById('coaxRuns')?.value) || 0,
+    cat6: parseInt(document.getElementById('cat6Runs')?.value) || 0,
+    fiber: parseInt(document.getElementById('fiberRuns')?.value) || 0
+  };
+  const services = {
+    apMount: parseInt(document.getElementById('apMountQty')?.value) || 0,
+    ethRelocation: parseInt(document.getElementById('ethRelocationQty')?.value) || 0
+  };
+
+  const lh = pricing.laborHours || {};
+  const totalHours =
+    runs.cat6 * (lh.cat6 || 0.8) +
+    runs.coax * (lh.coax || 1.0) +
+    runs.fiber * (lh.fiber || 1.4) +
+    services.apMount * (lh.apMount || 0.2) +
+    services.ethRelocation * (lh.ethRelocation || 0.3);
+
+  // Add 1 hour buffer, round up to nearest hour, convert to minutes
+  const withBuffer = totalHours + 1;
+  const roundedUp = Math.ceil(withBuffer);
+  return Math.max(roundedUp * 60, 120); // minimum 2 hours
+}
+
 async function handleSubmit(event) {
   event.preventDefault();
 
@@ -357,7 +562,13 @@ async function handleSubmit(event) {
     hasMediaPanel: document.getElementById('hasMediaPanelYes')?.checked || false,
     mediaPanelLocation: document.getElementById('mediaPanelLocation')?.value || '',
     hasCrawlspaceOrBasement: document.getElementById('hasCrawlspaceYes')?.checked || false,
-    liabilityAcknowledged: document.getElementById('liabilityAcknowledged')?.checked || false
+    liabilityAcknowledged: document.getElementById('liabilityAcknowledged')?.checked || false,
+    address: {
+      street: document.getElementById('addressStreet')?.value?.trim() || '',
+      city: document.getElementById('addressCity')?.value?.trim() || '',
+      state: document.getElementById('addressState')?.value || '',
+      zip: document.getElementById('addressZip')?.value?.trim() || ''
+    }
   };
 
   const payload = {
@@ -379,7 +590,6 @@ async function handleSubmit(event) {
       ethRelocation: parseInt(document.getElementById('ethRelocationQty')?.value) || 0
     };
     payload.centralization = document.querySelector('input[name="centralization"]:checked')?.value || '';
-    // Sync hasMediaPanel from inline toggle when centralization is Media Panel
     if (payload.centralization === 'Media Panel') {
       payload.homeInfo.hasMediaPanel = document.getElementById('inlineHasPanelYes')?.checked || false;
     }
@@ -396,6 +606,9 @@ async function handleSubmit(event) {
       networkingBrand: document.querySelector('input[name="networkingBrand"]:checked')?.value || 'No Preference',
       securityBrand: document.querySelector('input[name="securityBrand"]:checked')?.value || 'No Preference',
       surveyPreference: document.querySelector('input[name="surveyPreference"]:checked')?.value || 'before-install',
+      networkingDetails: document.getElementById('networkingDetails')?.value || '',
+      securityDetails: document.getElementById('securityDetails')?.value || '',
+      voipDetails: document.getElementById('voipDetails')?.value || '',
       notes: document.getElementById('wholeHomeNotes')?.value || ''
     };
   }
@@ -410,18 +623,42 @@ async function handleSubmit(event) {
     const data = await res.json();
 
     if (res.ok) {
-      // Store quote info for scheduling
       lastQuoteNumber = data.quoteNumber;
       lastQuoteEmail = email;
       lastQuoteName = name;
 
-      // Show step 5 with quote number
       const quoteNumEl = document.getElementById('successQuoteNumber');
       if (quoteNumEl) quoteNumEl.textContent = '#' + data.quoteNumber;
 
-      // Pre-fill scheduling phone if provided
       const schedPhone = document.getElementById('schedulePhone');
       if (schedPhone && phone) schedPhone.value = phone;
+
+      // Auto-book survey if "before-install" was selected
+      if (selectedServiceType === 'Whole-Home') {
+        const surveyPref = document.querySelector('input[name="surveyPreference"]:checked')?.value;
+        const surveyDate = document.getElementById('surveyDate')?.value;
+        const surveyTime = document.getElementById('surveySelectedTime')?.value;
+
+        if (surveyPref === 'before-install' && surveyDate && surveyTime) {
+          try {
+            await fetch('/api/scheduling/book', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                quoteNumber: data.quoteNumber,
+                name,
+                email,
+                date: surveyDate,
+                time: surveyTime,
+                appointmentType: 'survey',
+                duration: 120
+              })
+            });
+          } catch (surveyErr) {
+            console.error('Failed to auto-book survey:', surveyErr);
+          }
+        }
+      }
 
       if (window.showStep && window.steps) {
         window.showStep(window.steps.step5);
@@ -435,18 +672,16 @@ async function handleSubmit(event) {
   }
 }
 
-// ─── Scheduling Integration ───
+// ─── Scheduling Integration (Step 5) ───
 
 function initializeSchedulingIntegration() {
   const dateInput = document.getElementById('scheduleDate');
   if (!dateInput) return;
 
-  // Set min date to tomorrow
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   dateInput.min = tomorrow.toISOString().split('T')[0];
 
-  // Set max date to 90 days from now
   const maxDate = new Date();
   maxDate.setDate(maxDate.getDate() + 90);
   dateInput.max = maxDate.toISOString().split('T')[0];
@@ -455,17 +690,6 @@ function initializeSchedulingIntegration() {
     const dateVal = dateInput.value;
     if (!dateVal) return;
 
-    // Check if weekend
-    const selectedDate = new Date(dateVal + 'T12:00:00');
-    const day = selectedDate.getDay();
-    if (day === 0 || day === 6) {
-      alert('Appointments are only available Monday through Friday.');
-      dateInput.value = '';
-      document.getElementById('timeSlotsContainer').style.display = 'none';
-      return;
-    }
-
-    // Fetch booked slots for this date
     try {
       const res = await fetch(`/api/scheduling/slots?date=${dateVal}`);
       const data = await res.json();
@@ -479,57 +703,88 @@ function initializeSchedulingIntegration() {
     }
   });
 
-  // Schedule form submission
   const scheduleForm = document.getElementById('scheduleForm');
   if (scheduleForm) {
     scheduleForm.addEventListener('submit', handleScheduleSubmit);
   }
 }
 
+// Compute which hour-indices are blocked by existing bookings
+function computeBlockedHours(bookedSlots) {
+  const blocked = new Set();
+  for (const slot of bookedSlots) {
+    const [h] = slot.time.split(':').map(Number);
+    const duration = slot.duration || 60;
+    const appointmentType = slot.appointmentType || 'drops-only-install';
+
+    if (appointmentType === 'whole-home-install') {
+      // Whole-home blocks all hours
+      for (let hr = 0; hr < 24; hr++) blocked.add(hr);
+    } else {
+      const durationHours = Math.ceil(duration / 60);
+      for (let i = 0; i < durationHours; i++) {
+        blocked.add(h + i);
+      }
+    }
+  }
+  return blocked;
+}
+
 function renderTimeSlots(bookedSlots) {
   const grid = document.getElementById('timeSlotsGrid');
   if (!grid) return;
 
-  // Clear existing
   while (grid.firstChild) {
     grid.removeChild(grid.firstChild);
   }
 
-  // Reset selected time
   const hiddenTime = document.getElementById('selectedTime');
   if (hiddenTime) hiddenTime.value = '';
   const bookBtn = document.getElementById('bookAppointmentBtn');
   if (bookBtn) bookBtn.disabled = true;
 
-  const bookedTimes = bookedSlots.map(s => s.time);
+  const blockedHours = computeBlockedHours(bookedSlots);
 
-  // Generate 30-min slots from 8:00 to 17:30
+  // Determine the appointment type and duration for the current booking
+  let bookingDurationHours = 2; // default
+  if (selectedServiceType === 'Whole-Home') {
+    bookingDurationHours = 12; // full day
+  } else if (selectedServiceType === 'Drops Only') {
+    bookingDurationHours = Math.ceil(computeDropsOnlyDuration() / 60);
+  }
+
+  // Generate hourly slots from 8:00 to 17:00
   for (let h = 8; h < 18; h++) {
-    for (let m = 0; m < 60; m += 30) {
-      const time = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'time-slot-btn';
-      btn.textContent = formatTime(time);
-      btn.dataset.time = time;
+    const time = `${String(h).padStart(2, '0')}:00`;
 
-      if (bookedTimes.includes(time)) {
-        btn.classList.add('booked');
-        btn.disabled = true;
-      } else {
-        btn.addEventListener('click', () => selectTimeSlot(time, btn));
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'time-slot-btn';
+    btn.textContent = formatTime(time);
+    btn.dataset.time = time;
+
+    // Check if this slot or the duration window overlaps blocked hours
+    let isBlocked = false;
+    for (let i = 0; i < bookingDurationHours; i++) {
+      if (blockedHours.has(h + i) || (h + i) >= 18) {
+        isBlocked = true;
+        break;
       }
-
-      grid.appendChild(btn);
     }
+
+    if (isBlocked) {
+      btn.classList.add('booked');
+      btn.disabled = true;
+    } else {
+      btn.addEventListener('click', () => selectTimeSlot(time, btn));
+    }
+
+    grid.appendChild(btn);
   }
 }
 
 function selectTimeSlot(time, btn) {
-  // Deselect all
-  document.querySelectorAll('.time-slot-btn.selected').forEach(b => b.classList.remove('selected'));
-
-  // Select this one
+  document.querySelectorAll('#timeSlotsGrid .time-slot-btn.selected').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
 
   const hiddenTime = document.getElementById('selectedTime');
@@ -566,6 +821,17 @@ async function handleScheduleSubmit(e) {
 
   const statusEl = document.getElementById('scheduleStatus');
 
+  // Determine appointment type and duration
+  let appointmentType = 'drops-only-install';
+  let duration = 120;
+  if (selectedServiceType === 'Whole-Home') {
+    appointmentType = 'whole-home-install';
+    duration = 720;
+  } else if (selectedServiceType === 'Drops Only') {
+    appointmentType = 'drops-only-install';
+    duration = computeDropsOnlyDuration();
+  }
+
   try {
     const res = await fetch('/api/scheduling/book', {
       method: 'POST',
@@ -577,14 +843,15 @@ async function handleScheduleSubmit(e) {
         date,
         time,
         phone,
-        notes
+        notes,
+        appointmentType,
+        duration
       })
     });
 
     const data = await res.json();
 
     if (res.ok) {
-      // Hide form, show confirmation
       document.getElementById('scheduleForm').style.display = 'none';
       const confirmation = document.getElementById('scheduleConfirmation');
       if (confirmation) {
@@ -618,7 +885,6 @@ function updateFinalQuoteSummary() {
   const summaryContent = document.getElementById('summaryContent');
   if (!summaryContent) return;
 
-  // Clear existing content safely
   while (summaryContent.firstChild) {
     summaryContent.removeChild(summaryContent.firstChild);
   }
@@ -665,7 +931,6 @@ function buildDropsOnlySummaryDOM(container) {
   if (coax > 0) items.appendChild(createSummaryLine(`Coax runs (${coax}x @ $${pricing.cables.coax})`, `$${coax * pricing.cables.coax}`));
   if (fiber > 0) items.appendChild(createSummaryLine(`Fiber runs (${fiber}x @ $${pricing.cables.fiber})`, `$${fiber * pricing.cables.fiber}`));
 
-  // Centralization line
   let centralizationCost = 0;
   let centralizationLabel = '';
   if (centralizationType) {
@@ -728,6 +993,29 @@ function buildWholeHomeSummaryDOM(container) {
   if (voip) scopeParts.push('VoIP');
   items.appendChild(createSummaryLine('Scope:', scopeParts.join(', ')));
 
+  // Scope details
+  if (networking) {
+    const nd = document.getElementById('networkingDetails')?.value;
+    if (nd) {
+      const truncated = nd.substring(0, 100) + (nd.length > 100 ? '...' : '');
+      items.appendChild(createSummaryLine('Networking Details:', escapeHtml(truncated)));
+    }
+  }
+  if (security) {
+    const sd = document.getElementById('securityDetails')?.value;
+    if (sd) {
+      const truncated = sd.substring(0, 100) + (sd.length > 100 ? '...' : '');
+      items.appendChild(createSummaryLine('Security Details:', escapeHtml(truncated)));
+    }
+  }
+  if (voip) {
+    const vd = document.getElementById('voipDetails')?.value;
+    if (vd) {
+      const truncated = vd.substring(0, 100) + (vd.length > 100 ? '...' : '');
+      items.appendChild(createSummaryLine('VoIP Details:', escapeHtml(truncated)));
+    }
+  }
+
   const speed = document.getElementById('internetSpeed')?.value;
   if (speed) items.appendChild(createSummaryLine('Internet Speed:', escapeHtml(speed)));
 
@@ -748,7 +1036,18 @@ function buildWholeHomeSummaryDOM(container) {
 
   const surveyPref = document.querySelector('input[name="surveyPreference"]:checked')?.value;
   if (surveyPref) {
-    items.appendChild(createSummaryLine('Site Survey:', surveyPref === 'before-install' ? 'Before install' : 'Day of install'));
+    let surveyText = surveyPref === 'before-install' ? 'Before install' : 'Day of install';
+    // Show survey date/time if scheduled inline
+    if (surveyPref === 'before-install') {
+      const surveyDate = document.getElementById('surveyDate')?.value;
+      const surveyTime = document.getElementById('surveySelectedTime')?.value;
+      if (surveyDate && surveyTime) {
+        const dateObj = new Date(surveyDate + 'T12:00:00');
+        const dateStr = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+        surveyText += ` - ${dateStr} at ${formatTime(surveyTime)}`;
+      }
+    }
+    items.appendChild(createSummaryLine('Site Survey:', surveyText));
   }
 
   const notes = document.getElementById('wholeHomeNotes')?.value;
@@ -786,6 +1085,16 @@ function buildHomeInfoSummaryDOM(container) {
 
   const items = document.createElement('div');
   items.className = 'summary-items';
+
+  // Address
+  const street = document.getElementById('addressStreet')?.value?.trim() || '';
+  const city = document.getElementById('addressCity')?.value?.trim() || '';
+  const state = document.getElementById('addressState')?.value || '';
+  const zip = document.getElementById('addressZip')?.value?.trim() || '';
+  if (street) {
+    const addressStr = `${street}, ${city}, ${state} ${zip}`;
+    items.appendChild(createSummaryLine('Service Address:', escapeHtml(addressStr)));
+  }
 
   items.appendChild(createSummaryLine('Home Age:', homeAge));
   items.appendChild(createSummaryLine('Stories:', stories));

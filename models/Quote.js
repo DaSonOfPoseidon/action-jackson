@@ -66,7 +66,16 @@ const QuoteSchema = new mongoose.Schema({
       type: String,
       enum: ['before-install', 'day-of']
     },
+    networkingDetails: { type: String, maxlength: 2000 },
+    securityDetails:   { type: String, maxlength: 2000 },
+    voipDetails:       { type: String, maxlength: 2000 },
     notes: { type: String, maxlength: 2000 }
+  },
+
+  // Linked survey schedule (when booked inline during quote)
+  surveyScheduleId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Schedule'
   },
 
   // Home info (both paths)
@@ -83,7 +92,13 @@ const QuoteSchema = new mongoose.Schema({
     hasMediaPanel:            { type: Boolean },
     mediaPanelLocation:       { type: String },
     hasCrawlspaceOrBasement:  { type: Boolean },
-    liabilityAcknowledged:    { type: Boolean }
+    liabilityAcknowledged:    { type: Boolean },
+    address: {
+      street: { type: String, maxlength: 200, trim: true },
+      city:   { type: String, maxlength: 100, trim: true },
+      state:  { type: String, maxlength: 2, uppercase: true, trim: true },
+      zip:    { type: String, maxlength: 10, trim: true }
+    }
   },
 
   // Pricing

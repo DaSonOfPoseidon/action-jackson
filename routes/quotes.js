@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Quote = require('../models/Quote');
+const CostItem = require('../models/CostItem');
 const nodemailer = require('nodemailer');
 const rateLimit = require('express-rate-limit');
 const { body, validationResult } = require('express-validator');
@@ -65,8 +66,8 @@ const isValidBusinessEmail = (email) => {
   return !disposableDomains.includes(domain);
 };
 
-// Service configuration
-const serviceConfig = {
+// Hardcoded fallback pricing
+const defaultServiceConfig = {
   'Drops Only': {
     costPerRun: { cat6: 100, coax: 150, fiber: 200 },
     depositThreshold: 100,
@@ -77,44 +78,136 @@ const serviceConfig = {
   }
 };
 
-// Add-on service pricing
-const addonPricing = {
-  apMount: 25,         // $25 per AP mount
-  ethRelocation: 20    // $20 per ethernet relocation
+const defaultAddonPricing = {
+  apMount: 25,
+  ethRelocation: 20
 };
 
-// Centralization pricing
-const centralizationPricing = {
-  'Media Panel': 100,      // $100 if no existing panel
-  'Patch Panel': 50,       // $50 flat fee
-  'Loose Termination': 0   // Free
+const defaultCentralizationPricing = {
+  'Media Panel': 100,
+  'Patch Panel': 50,
+  'Loose Termination': 0
 };
 
-// Calculate pricing for Drops Only quotes
-const calculateDropsOnlyPricing = (runs, services, discount = 0, centralization = null) => {
-  const costs = serviceConfig['Drops Only'].costPerRun;
+const defaultLaborHours = {
+  cat6: 0.8, coax: 1.0, fiber: 1.4,
+  apMount: 0.2, ethRelocation: 0.3,
+  mediaPanel: 1.0, patchPanel: 0.5, looseTermination: 0
+};
+
+// Fetch pricing from CostItem database with fallback to hardcoded values
+const fetchPricingConfig = async () => {
+  try {
+    const codeMap = {
+      'CAT6-RUN': 'cat6', 'COAX-RUN': 'coax', 'FIBER-RUN': 'fiber',
+      'AP-MOUNT': 'apMount', 'ETH-RELOCATION': 'ethRelocation',
+      'MEDIA-PANEL': 'mediaPanel', 'PATCH-PANEL': 'patchPanel',
+      'LOOSE-TERM': 'looseTermination',
+      'DEPOSIT-DROPS': 'depositDrops', 'DEPOSIT-WHOLE': 'depositWhole'
+    };
+
+    const items = await CostItem.find({
+      code: { $in: Object.keys(codeMap) },
+      isActive: true
+    });
+
+    if (items.length === 0) {
+      return {
+        serviceConfig: defaultServiceConfig,
+        addonPricing: defaultAddonPricing,
+        centralizationPricing: defaultCentralizationPricing,
+        laborHours: defaultLaborHours
+      };
+    }
+
+    const byKey = {};
+    for (const item of items) {
+      byKey[codeMap[item.code]] = item;
+    }
+
+    const costPerRun = {
+      cat6: byKey.cat6?.price ?? defaultServiceConfig['Drops Only'].costPerRun.cat6,
+      coax: byKey.coax?.price ?? defaultServiceConfig['Drops Only'].costPerRun.coax,
+      fiber: byKey.fiber?.price ?? defaultServiceConfig['Drops Only'].costPerRun.fiber
+    };
+
+    const depositDropsItem = byKey.depositDrops;
+    const depositWholeItem = byKey.depositWhole;
+
+    const serviceConfig = {
+      'Drops Only': {
+        costPerRun,
+        depositThreshold: depositDropsItem?.thresholdAmount ?? defaultServiceConfig['Drops Only'].depositThreshold,
+        depositAmount: depositDropsItem?.price ?? defaultServiceConfig['Drops Only'].depositAmount
+      },
+      'Whole-Home': {
+        depositAmount: depositWholeItem?.price ?? defaultServiceConfig['Whole-Home'].depositAmount
+      }
+    };
+
+    const addonPricing = {
+      apMount: byKey.apMount?.price ?? defaultAddonPricing.apMount,
+      ethRelocation: byKey.ethRelocation?.price ?? defaultAddonPricing.ethRelocation
+    };
+
+    const centralizationPricing = {
+      'Media Panel': byKey.mediaPanel?.price ?? defaultCentralizationPricing['Media Panel'],
+      'Patch Panel': byKey.patchPanel?.price ?? defaultCentralizationPricing['Patch Panel'],
+      'Loose Termination': byKey.looseTermination?.price ?? defaultCentralizationPricing['Loose Termination']
+    };
+
+    const laborHours = {
+      cat6: byKey.cat6?.laborHours ?? defaultLaborHours.cat6,
+      coax: byKey.coax?.laborHours ?? defaultLaborHours.coax,
+      fiber: byKey.fiber?.laborHours ?? defaultLaborHours.fiber,
+      apMount: byKey.apMount?.laborHours ?? defaultLaborHours.apMount,
+      ethRelocation: byKey.ethRelocation?.laborHours ?? defaultLaborHours.ethRelocation,
+      mediaPanel: byKey.mediaPanel?.laborHours ?? defaultLaborHours.mediaPanel,
+      patchPanel: byKey.patchPanel?.laborHours ?? defaultLaborHours.patchPanel,
+      looseTermination: byKey.looseTermination?.laborHours ?? defaultLaborHours.looseTermination
+    };
+
+    return { serviceConfig, addonPricing, centralizationPricing, laborHours };
+  } catch (err) {
+    console.error('Error fetching pricing config from DB, using defaults:', err.message);
+    return {
+      serviceConfig: defaultServiceConfig,
+      addonPricing: defaultAddonPricing,
+      centralizationPricing: defaultCentralizationPricing,
+      laborHours: defaultLaborHours
+    };
+  }
+};
+
+// Calculate pricing for Drops Only quotes (accepts pricing config)
+const calculateDropsOnlyPricing = (runs, services, discount = 0, centralization = null, pricingConfig = null) => {
+  const svcConfig = pricingConfig?.serviceConfig || defaultServiceConfig;
+  const addons = pricingConfig?.addonPricing || defaultAddonPricing;
+  const centralPricing = pricingConfig?.centralizationPricing || defaultCentralizationPricing;
+
+  const costs = svcConfig['Drops Only'].costPerRun;
   const runsCost = (runs.cat6 || 0) * costs.cat6 +
                    (runs.coax || 0) * costs.coax +
                    (runs.fiber || 0) * costs.fiber;
 
   const servicesCost =
-    (services.apMount || 0) * addonPricing.apMount +
-    (services.ethRelocation || 0) * addonPricing.ethRelocation;
+    (services.apMount || 0) * addons.apMount +
+    (services.ethRelocation || 0) * addons.ethRelocation;
 
   // Centralization cost
   let centralizationCost = 0;
   if (centralization && centralization.type) {
     if (centralization.type === 'Media Panel') {
-      centralizationCost = centralization.hasExistingPanel ? 0 : centralizationPricing['Media Panel'];
+      centralizationCost = centralization.hasExistingPanel ? 0 : centralPricing['Media Panel'];
     } else {
-      centralizationCost = centralizationPricing[centralization.type] || 0;
+      centralizationCost = centralPricing[centralization.type] || 0;
     }
   }
 
   const subtotal = runsCost + servicesCost + centralizationCost;
   const totalCost = Math.round(subtotal * (1 - discount / 100) * 100) / 100;
 
-  const config = serviceConfig['Drops Only'];
+  const config = svcConfig['Drops Only'];
   const depositRequired = totalCost > config.depositThreshold ? config.depositAmount : 0;
 
   return {
@@ -124,7 +217,7 @@ const calculateDropsOnlyPricing = (runs, services, discount = 0, centralization 
 };
 
 // GET route for real-time calculation (Drops Only only)
-router.get('/calculate', calculateRateLimit, (req, res) => {
+router.get('/calculate', calculateRateLimit, async (req, res) => {
   const { serviceType, discount } = req.query;
 
   if (serviceType !== 'Drops Only') {
@@ -132,6 +225,8 @@ router.get('/calculate', calculateRateLimit, (req, res) => {
   }
 
   try {
+    const pricingConfig = await fetchPricingConfig();
+
     const runsData = {
       coax: parseInt(req.query.runs?.coax || '0') || 0,
       cat6: parseInt(req.query.runs?.cat6 || '0') || 0,
@@ -152,18 +247,41 @@ router.get('/calculate', calculateRateLimit, (req, res) => {
       };
     }
 
-    const pricing = calculateDropsOnlyPricing(runsData, servicesData, parseInt(discount) || 0, centralizationData);
+    const pricing = calculateDropsOnlyPricing(runsData, servicesData, parseInt(discount) || 0, centralizationData, pricingConfig);
 
     res.json({
       serviceType,
       pricing,
-      config: serviceConfig['Drops Only'],
-      addonPricing,
-      centralizationPricing
+      config: pricingConfig.serviceConfig['Drops Only'],
+      addonPricing: pricingConfig.addonPricing,
+      centralizationPricing: pricingConfig.centralizationPricing
     });
   } catch (err) {
     console.error('Calculate error:', err);
     res.status(500).json({ error: 'Error calculating quote' });
+  }
+});
+
+// GET route for frontend to fetch current pricing on page load
+router.get('/pricing', async (req, res) => {
+  try {
+    const pricingConfig = await fetchPricingConfig();
+    res.json({
+      cables: pricingConfig.serviceConfig['Drops Only'].costPerRun,
+      addons: pricingConfig.addonPricing,
+      centralization: pricingConfig.centralizationPricing,
+      dropsOnly: {
+        depositThreshold: pricingConfig.serviceConfig['Drops Only'].depositThreshold,
+        depositAmount: pricingConfig.serviceConfig['Drops Only'].depositAmount
+      },
+      wholeHome: {
+        depositAmount: pricingConfig.serviceConfig['Whole-Home'].depositAmount
+      },
+      laborHours: pricingConfig.laborHours
+    });
+  } catch (err) {
+    console.error('Pricing fetch error:', err);
+    res.status(500).json({ error: 'Error fetching pricing' });
   }
 });
 
@@ -232,10 +350,42 @@ const validateQuote = [
     .optional()
     .isLength({ max: 2000 })
     .withMessage('Equipment description must be under 2000 characters'),
+  body('wholeHome.networkingDetails')
+    .optional()
+    .isLength({ max: 2000 })
+    .withMessage('Networking details must be under 2000 characters'),
+  body('wholeHome.securityDetails')
+    .optional()
+    .isLength({ max: 2000 })
+    .withMessage('Security details must be under 2000 characters'),
+  body('wholeHome.voipDetails')
+    .optional()
+    .isLength({ max: 2000 })
+    .withMessage('VoIP details must be under 2000 characters'),
   body('wholeHome.notes')
     .optional()
     .isLength({ max: 2000 })
     .withMessage('Notes must be under 2000 characters'),
+  body('homeInfo.address.street')
+    .trim()
+    .isLength({ min: 1, max: 200 })
+    .withMessage('Street address is required (max 200 characters)'),
+  body('homeInfo.address.city')
+    .trim()
+    .isLength({ min: 1, max: 100 })
+    .withMessage('City is required (max 100 characters)'),
+  body('homeInfo.address.state')
+    .trim()
+    .isLength({ min: 2, max: 2 })
+    .withMessage('State must be a 2-letter code')
+    .matches(/^[A-Za-z]{2}$/)
+    .withMessage('State must be a valid 2-letter state code'),
+  body('homeInfo.address.zip')
+    .trim()
+    .isLength({ min: 5, max: 10 })
+    .withMessage('ZIP code is required (5-10 characters)')
+    .matches(/^\d{5}(-\d{4})?$/)
+    .withMessage('ZIP code must be in format 12345 or 12345-6789'),
   body('honeypot')
     .optional()
     .isEmpty()
@@ -288,6 +438,9 @@ router.post('/create', quoteRateLimit, validateQuote, async (req, res) => {
   }
 
   try {
+    // Fetch dynamic pricing config
+    const pricingConfig = await fetchPricingConfig();
+
     // Calculate pricing
     let pricing = {};
     if (serviceType === 'Drops Only') {
@@ -295,11 +448,11 @@ router.post('/create', quoteRateLimit, validateQuote, async (req, res) => {
         type: centralization,
         hasExistingPanel: homeInfo?.hasMediaPanel || false
       } : null;
-      pricing = calculateDropsOnlyPricing(runs || {}, services || {}, discount || 0, centralizationData);
+      pricing = calculateDropsOnlyPricing(runs || {}, services || {}, discount || 0, centralizationData, pricingConfig);
     } else {
       // Whole-Home: deposit-based
       pricing = {
-        depositAmount: serviceConfig['Whole-Home'].depositAmount
+        depositAmount: pricingConfig.serviceConfig['Whole-Home'].depositAmount
       };
     }
 
@@ -335,7 +488,13 @@ router.post('/create', quoteRateLimit, validateQuote, async (req, res) => {
         hasMediaPanel: homeInfo?.hasMediaPanel || false,
         mediaPanelLocation: homeInfo?.mediaPanelLocation ? sanitizeString(homeInfo.mediaPanelLocation) : undefined,
         hasCrawlspaceOrBasement: homeInfo?.hasCrawlspaceOrBasement || false,
-        liabilityAcknowledged: true
+        liabilityAcknowledged: true,
+        address: homeInfo?.address ? {
+          street: sanitizeString(homeInfo.address.street),
+          city: sanitizeString(homeInfo.address.city),
+          state: homeInfo.address.state?.toUpperCase().substring(0, 2),
+          zip: sanitizeString(homeInfo.address.zip)
+        } : undefined
       },
       pricing,
       ip: clientIP,
@@ -357,6 +516,9 @@ router.post('/create', quoteRateLimit, validateQuote, async (req, res) => {
         networkingBrand: !wholeHome.hasOwnEquipment ? wholeHome.networkingBrand : undefined,
         securityBrand: !wholeHome.hasOwnEquipment ? wholeHome.securityBrand : undefined,
         surveyPreference: wholeHome.surveyPreference || undefined,
+        networkingDetails: wholeHome.networkingDetails ? sanitizeString(wholeHome.networkingDetails) : undefined,
+        securityDetails: wholeHome.securityDetails ? sanitizeString(wholeHome.securityDetails) : undefined,
+        voipDetails: wholeHome.voipDetails ? sanitizeString(wholeHome.voipDetails) : undefined,
         notes: wholeHome.notes ? sanitizeString(wholeHome.notes) : undefined
       };
     }

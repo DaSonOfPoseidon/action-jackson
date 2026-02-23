@@ -38,27 +38,74 @@ const createEmailTransporter = () => {
   });
 };
 
-// Helper function to check for scheduling conflicts
-const checkSchedulingConflict = async (date, time, excludeId = null) => {
-  const appointmentDateTime = new Date(`${date}T${time}:00`);
-  const bufferMinutes = 60; // 1-hour buffer between appointments
-  
-  const conflictStart = new Date(appointmentDateTime.getTime() - bufferMinutes * 60000);
-  const conflictEnd = new Date(appointmentDateTime.getTime() + bufferMinutes * 60000);
-  
-  const query = {
-    date: {
-      $gte: conflictStart,
-      $lte: conflictEnd
-    }
-  };
-  
-  if (excludeId) {
-    query._id = { $ne: excludeId };
+// Duration defaults by appointment type
+const getDurationForType = (appointmentType, bodyDuration) => {
+  if (appointmentType === 'survey') return 120;
+  if (appointmentType === 'whole-home-install') return 720;
+  // drops-only-install: use frontend-supplied duration or default to 120
+  if (bodyDuration && Number.isFinite(bodyDuration) && bodyDuration >= 60 && bodyDuration <= 720) {
+    return Math.ceil(bodyDuration / 60) * 60; // round up to nearest hour
   }
-  
-  const conflictingAppointment = await Schedule.findOne(query);
-  return conflictingAppointment;
+  return 120;
+};
+
+// Helper function to check for scheduling conflicts (duration-aware)
+const checkSchedulingConflict = async (date, time, appointmentType, duration, excludeId = null) => {
+  const dateStr = typeof date === 'string' ? date : date.toISOString().split('T')[0];
+
+  // Whole-home installs block the entire day
+  if (appointmentType === 'whole-home-install') {
+    const query = {
+      date: {
+        $gte: new Date(dateStr + 'T00:00:00.000Z'),
+        $lt: new Date(dateStr + 'T23:59:59.999Z')
+      }
+    };
+    if (excludeId) query._id = { $ne: excludeId };
+    const conflict = await Schedule.findOne(query);
+    return conflict;
+  }
+
+  // For non-whole-home: check if any whole-home install exists on that day
+  const wholeHomeQuery = {
+    date: {
+      $gte: new Date(dateStr + 'T00:00:00.000Z'),
+      $lt: new Date(dateStr + 'T23:59:59.999Z')
+    },
+    appointmentType: 'whole-home-install'
+  };
+  if (excludeId) wholeHomeQuery._id = { $ne: excludeId };
+  const wholeHomeConflict = await Schedule.findOne(wholeHomeQuery);
+  if (wholeHomeConflict) return wholeHomeConflict;
+
+  // Time-range overlap check for survey / drops-only-install
+  const [hours, minutes] = time.split(':').map(Number);
+  const newStartMin = hours * 60 + minutes;
+  const newEndMin = newStartMin + (duration || 120);
+
+  // Get all non-cancelled appointments on this date
+  const dayAppointments = await Schedule.find({
+    date: {
+      $gte: new Date(dateStr + 'T00:00:00.000Z'),
+      $lt: new Date(dateStr + 'T23:59:59.999Z')
+    },
+    ...(excludeId ? { _id: { $ne: excludeId } } : {})
+  });
+
+  for (const apt of dayAppointments) {
+    const [aH, aM] = apt.time.split(':').map(Number);
+    const aptStartMin = aH * 60 + aM;
+    // Backward compat: old docs without duration treated as 60 min
+    const aptDuration = apt.duration || 60;
+    const aptEndMin = aptStartMin + aptDuration;
+
+    // Overlap: newStart < aptEnd AND newEnd > aptStart
+    if (newStartMin < aptEndMin && newEndMin > aptStartMin) {
+      return apt;
+    }
+  }
+
+  return null;
 };
 
 // Validation middleware for booking
@@ -125,12 +172,6 @@ const validateBooking = [
         throw new Error('Appointments can only be scheduled up to 90 days in advance');
       }
       
-      // Check if it's a weekend (optional business rule)
-      const dayOfWeek = appointmentDate.getDay();
-      if (dayOfWeek === 0 || dayOfWeek === 6) {
-        throw new Error('Appointments are only available Monday through Friday');
-      }
-      
       return true;
     }),
   body('time')
@@ -144,13 +185,21 @@ const validateBooking = [
         throw new Error('Appointments are only available between 8:00 AM and 6:00 PM');
       }
       
-      // Only allow appointments at 30-minute intervals
-      if (minutes !== 0 && minutes !== 30) {
-        throw new Error('Appointments must be scheduled at 30-minute intervals (e.g., 9:00, 9:30)');
+      // Only allow appointments at hourly intervals
+      if (minutes !== 0) {
+        throw new Error('Appointments must be scheduled at hourly intervals (e.g., 9:00, 10:00)');
       }
       
       return true;
     }),
+  body('appointmentType')
+    .optional()
+    .isIn(['survey', 'drops-only-install', 'whole-home-install'])
+    .withMessage('Invalid appointment type'),
+  body('duration')
+    .optional()
+    .isInt({ min: 60, max: 720 })
+    .withMessage('Duration must be between 60 and 720 minutes'),
   body('phone')
     .optional()
     .matches(/^\+?[1-9]\d{1,14}$/)
@@ -238,13 +287,15 @@ router.get('/slots', [
           $gte: new Date(requestedDate + 'T00:00:00.000Z'),
           $lt: new Date(requestedDate + 'T23:59:59.999Z')
         }
-      }).select('time name');
-      
+      }).select('time name appointmentType duration');
+
       res.json({
         date: requestedDate,
         bookedSlots: bookedSlots.map(slot => ({
           time: slot.time,
-          customerName: slot.name?.split(' ')[0] // Only first name for privacy
+          customerName: slot.name?.split(' ')[0], // Only first name for privacy
+          appointmentType: slot.appointmentType || 'drops-only-install',
+          duration: slot.duration || 60
         }))
       });
     } else {
@@ -285,7 +336,7 @@ router.post('/book', validateBooking, async (req, res) => {
     });
   }
 
-  const { quoteNumber, name, email, date, time, phone, notes } = req.body;
+  const { quoteNumber, name, email, date, time, phone, notes, appointmentType: reqAppointmentType, duration: reqDuration } = req.body;
 
   try {
     // Fetch the quote to get customer details and verify ownership
@@ -312,8 +363,12 @@ router.post('/book', validateBooking, async (req, res) => {
         }
       });
     }
+    // Determine appointment type and duration
+    const appointmentType = reqAppointmentType || 'drops-only-install';
+    const duration = getDurationForType(appointmentType, reqDuration);
+
     // Check for scheduling conflicts
-    const conflict = await checkSchedulingConflict(date, time);
+    const conflict = await checkSchedulingConflict(date, time, appointmentType, duration);
     if (conflict) {
       return res.status(409).json({
         error: 'Time slot is not available',
@@ -344,6 +399,8 @@ router.post('/book', validateBooking, async (req, res) => {
     const appointmentData = {
       quoteNumber,
       quoteId: quote._id,
+      appointmentType,
+      duration,
       name: validator.escape(validator.trim(name)),
       email: email.toLowerCase(),
       date: new Date(date),

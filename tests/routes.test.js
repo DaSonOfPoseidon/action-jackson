@@ -62,7 +62,13 @@ function makeDropsOnlyPayload(overrides = {}) {
       atticAccess: 'Walk-in attic',
       hasMediaPanel: false,
       hasCrawlspaceOrBasement: false,
-      liabilityAcknowledged: true
+      liabilityAcknowledged: true,
+      address: {
+        street: '123 Main St',
+        city: 'Springfield',
+        state: 'IL',
+        zip: '62701'
+      }
     },
     ...overrides
   };
@@ -91,10 +97,28 @@ function makeWholeHomePayload(overrides = {}) {
       atticAccess: 'Walk-in attic',
       hasMediaPanel: false,
       hasCrawlspaceOrBasement: false,
-      liabilityAcknowledged: true
+      liabilityAcknowledged: true,
+      address: {
+        street: '456 Oak Ave',
+        city: 'Chicago',
+        state: 'IL',
+        zip: '60601'
+      }
     },
     ...overrides
   };
+}
+
+// Helper to get a future date by day-of-week (0=Sun, 6=Sat)
+function getFutureDate(targetDay = null) {
+  const date = new Date();
+  date.setDate(date.getDate() + 7);
+  if (targetDay !== null) {
+    while (date.getDay() !== targetDay) {
+      date.setDate(date.getDate() + 1);
+    }
+  }
+  return date;
 }
 
 describe('API Routes', () => {
@@ -138,7 +162,7 @@ describe('API Routes', () => {
   });
 
   describe('Scheduling Routes - /api/scheduling', () => {
-    test('GET /slots should return available slots', async () => {
+    test('GET /slots should return available slots with appointmentType and duration', async () => {
       const testQuote = new Quote({
         quoteNumber: '12345678',
         customer: { name: 'John Doe', email: 'john@example.com' },
@@ -153,11 +177,7 @@ describe('API Routes', () => {
       });
       await testQuote.save();
 
-      const futureDate = new Date();
-      futureDate.setDate(futureDate.getDate() + 7);
-      while (futureDate.getDay() === 0 || futureDate.getDay() === 6) {
-        futureDate.setDate(futureDate.getDate() + 1);
-      }
+      const futureDate = getFutureDate(2); // Tuesday
 
       await Schedule.create({
         quoteNumber: '12345678',
@@ -165,7 +185,9 @@ describe('API Routes', () => {
         name: 'John Doe',
         email: 'john@example.com',
         date: futureDate,
-        time: '10:00'
+        time: '10:00',
+        appointmentType: 'drops-only-install',
+        duration: 120
       });
 
       const response = await request(app).get('/api/scheduling/slots');
@@ -174,9 +196,16 @@ describe('API Routes', () => {
       expect(response.body).toHaveProperty('upcomingAppointments');
       expect(Array.isArray(response.body.upcomingAppointments)).toBe(true);
       expect(response.body.upcomingAppointments).toHaveLength(1);
+
+      // Test date-specific slots return appointmentType and duration
+      const dateStr = futureDate.toISOString().split('T')[0];
+      const slotsRes = await request(app).get(`/api/scheduling/slots?date=${dateStr}`);
+      expect(slotsRes.status).toBe(200);
+      expect(slotsRes.body.bookedSlots[0]).toHaveProperty('appointmentType', 'drops-only-install');
+      expect(slotsRes.body.bookedSlots[0]).toHaveProperty('duration', 120);
     });
 
-    test('POST /book should create new appointment with valid quote', async () => {
+    test('POST /book should create new appointment with valid quote and appointmentType', async () => {
       const quoteData = makeDropsOnlyPayload({
         customer: { name: 'Jane Smith', email: 'jane@example.com' }
       });
@@ -188,19 +217,16 @@ describe('API Routes', () => {
       expect(quoteResponse.status).toBe(201);
       const quoteNumber = quoteResponse.body.quoteNumber;
 
-      // Find a future Tuesday (day 2) to avoid timezone-related weekend issues
-      const futureDate = new Date();
-      futureDate.setDate(futureDate.getDate() + 7);
-      while (futureDate.getDay() !== 2) { // Tuesday
-        futureDate.setDate(futureDate.getDate() + 1);
-      }
+      const futureDate = getFutureDate(2); // Tuesday
 
       const appointmentData = {
         quoteNumber: quoteNumber,
         name: 'Jane Smith',
         email: 'jane@example.com',
         date: futureDate.toISOString().split('T')[0],
-        time: '14:00'
+        time: '14:00',
+        appointmentType: 'drops-only-install',
+        duration: 120
       };
 
       const response = await request(app)
@@ -216,14 +242,12 @@ describe('API Routes', () => {
       const savedAppointment = await Schedule.findOne({ email: 'jane@example.com' });
       expect(savedAppointment).toBeTruthy();
       expect(savedAppointment.name).toBe('Jane Smith');
+      expect(savedAppointment.appointmentType).toBe('drops-only-install');
+      expect(savedAppointment.duration).toBe(120);
     });
 
     test('POST /book should reject invalid quote number', async () => {
-      const futureDate = new Date();
-      futureDate.setDate(futureDate.getDate() + 9);
-      while (futureDate.getDay() === 0 || futureDate.getDay() === 6) {
-        futureDate.setDate(futureDate.getDate() + 1);
-      }
+      const futureDate = getFutureDate();
 
       const response = await request(app)
         .post('/api/scheduling/book')
@@ -239,6 +263,155 @@ describe('API Routes', () => {
       expect(response.body).toHaveProperty('error');
       expect(response.body.error).toBe('Validation failed');
       expect(response.body.details).toContain('Quote number not found. Please verify your quote number.');
+    });
+
+    test('POST /book should allow weekend bookings', async () => {
+      const quoteData = makeDropsOnlyPayload({
+        customer: { name: 'Weekend User', email: 'weekend@example.com' }
+      });
+
+      const quoteResponse = await request(app)
+        .post('/api/quotes/create')
+        .send(quoteData);
+
+      expect(quoteResponse.status).toBe(201);
+      const quoteNumber = quoteResponse.body.quoteNumber;
+
+      // Find a future Saturday
+      const satDate = getFutureDate(6); // Saturday
+
+      const response = await request(app)
+        .post('/api/scheduling/book')
+        .send({
+          quoteNumber,
+          name: 'Weekend User',
+          email: 'weekend@example.com',
+          date: satDate.toISOString().split('T')[0],
+          time: '10:00',
+          appointmentType: 'drops-only-install',
+          duration: 120
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body.appointment.quoteNumber).toBe(quoteNumber);
+    });
+
+    test('POST /book should reject 30-minute intervals', async () => {
+      const quoteData = makeDropsOnlyPayload({
+        customer: { name: 'Interval User', email: 'interval@example.com' }
+      });
+
+      const quoteResponse = await request(app)
+        .post('/api/quotes/create')
+        .send(quoteData);
+
+      expect(quoteResponse.status).toBe(201);
+
+      const futureDate = getFutureDate(3); // Wednesday
+
+      const response = await request(app)
+        .post('/api/scheduling/book')
+        .send({
+          quoteNumber: quoteResponse.body.quoteNumber,
+          name: 'Interval User',
+          email: 'interval@example.com',
+          date: futureDate.toISOString().split('T')[0],
+          time: '10:30'
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.details).toContain('Appointments must be scheduled at hourly intervals (e.g., 9:00, 10:00)');
+    });
+
+    test('Survey should block 2 hours', async () => {
+      const quoteData1 = makeWholeHomePayload({
+        customer: { name: 'Survey One', email: 'survey1@example.com' }
+      });
+      const q1 = await request(app).post('/api/quotes/create').send(quoteData1);
+      expect(q1.status).toBe(201);
+
+      const futureDate = getFutureDate(2); // Tuesday
+      const dateStr = futureDate.toISOString().split('T')[0];
+
+      // Book a survey at 10:00 (blocks 10:00-12:00)
+      const bookRes = await request(app)
+        .post('/api/scheduling/book')
+        .send({
+          quoteNumber: q1.body.quoteNumber,
+          name: 'Survey One',
+          email: 'survey1@example.com',
+          date: dateStr,
+          time: '10:00',
+          appointmentType: 'survey',
+          duration: 120
+        });
+      expect(bookRes.status).toBe(201);
+
+      // Try to book at 11:00 - should conflict
+      const quoteData2 = makeWholeHomePayload({
+        customer: { name: 'Survey Two', email: 'survey2@example.com' }
+      });
+      const q2 = await request(app).post('/api/quotes/create').send(quoteData2);
+      expect(q2.status).toBe(201);
+
+      const conflictRes = await request(app)
+        .post('/api/scheduling/book')
+        .send({
+          quoteNumber: q2.body.quoteNumber,
+          name: 'Survey Two',
+          email: 'survey2@example.com',
+          date: dateStr,
+          time: '11:00',
+          appointmentType: 'survey',
+          duration: 120
+        });
+      expect(conflictRes.status).toBe(409);
+      expect(conflictRes.body.error).toBe('Time slot is not available');
+    });
+
+    test('Whole-home install should block full day', async () => {
+      const quoteData1 = makeWholeHomePayload({
+        customer: { name: 'WH Block', email: 'whblock@example.com' }
+      });
+      const q1 = await request(app).post('/api/quotes/create').send(quoteData1);
+      expect(q1.status).toBe(201);
+
+      const futureDate = getFutureDate(3); // Wednesday
+      const dateStr = futureDate.toISOString().split('T')[0];
+
+      // Book a whole-home install
+      const bookRes = await request(app)
+        .post('/api/scheduling/book')
+        .send({
+          quoteNumber: q1.body.quoteNumber,
+          name: 'WH Block',
+          email: 'whblock@example.com',
+          date: dateStr,
+          time: '08:00',
+          appointmentType: 'whole-home-install',
+          duration: 720
+        });
+      expect(bookRes.status).toBe(201);
+
+      // Try to book anything else on the same day
+      const quoteData2 = makeDropsOnlyPayload({
+        customer: { name: 'Blocked User', email: 'blocked@example.com' }
+      });
+      const q2 = await request(app).post('/api/quotes/create').send(quoteData2);
+      expect(q2.status).toBe(201);
+
+      const conflictRes = await request(app)
+        .post('/api/scheduling/book')
+        .send({
+          quoteNumber: q2.body.quoteNumber,
+          name: 'Blocked User',
+          email: 'blocked@example.com',
+          date: dateStr,
+          time: '15:00',
+          appointmentType: 'drops-only-install',
+          duration: 120
+        });
+      expect(conflictRes.status).toBe(409);
     });
   });
 
@@ -370,7 +543,8 @@ describe('API Routes', () => {
             hasMediaPanel: true,
             mediaPanelLocation: 'Basement',
             hasCrawlspaceOrBasement: true,
-            liabilityAcknowledged: true
+            liabilityAcknowledged: true,
+            address: { street: '100 Test St', city: 'TestCity', state: 'IL', zip: '60601' }
           }
         });
 
@@ -457,7 +631,8 @@ describe('API Routes', () => {
             homeAge: '2000-2020',
             stories: 1,
             atticAccess: 'Walk-in attic',
-            liabilityAcknowledged: false
+            liabilityAcknowledged: false,
+            address: { street: '100 Test St', city: 'TestCity', state: 'IL', zip: '60601' }
           }
         });
 
@@ -763,7 +938,8 @@ describe('API Routes', () => {
             atticAccess: 'Walk-in attic',
             hasMediaPanel: false,
             hasCrawlspaceOrBasement: false,
-            liabilityAcknowledged: true
+            liabilityAcknowledged: true,
+            address: { street: '100 Test St', city: 'TestCity', state: 'IL', zip: '60601' }
           }
         });
 
@@ -789,7 +965,8 @@ describe('API Routes', () => {
             atticAccess: 'Walk-in attic',
             hasMediaPanel: true,
             hasCrawlspaceOrBasement: false,
-            liabilityAcknowledged: true
+            liabilityAcknowledged: true,
+            address: { street: '100 Test St', city: 'TestCity', state: 'IL', zip: '60601' }
           }
         });
 
@@ -870,6 +1047,125 @@ describe('API Routes', () => {
         expect(response.status).toBe(200);
         // 2 coax×$150 + $0 existing panel = $300
         expect(response.body.pricing.totalCost).toBe(300);
+      });
+    });
+
+    describe('GET /pricing', () => {
+      test('should return pricing configuration', async () => {
+        const response = await request(app).get('/api/quotes/pricing');
+
+        expect(response.status).toBe(200);
+        expect(response.body).toHaveProperty('cables');
+        expect(response.body.cables).toHaveProperty('cat6');
+        expect(response.body.cables).toHaveProperty('coax');
+        expect(response.body.cables).toHaveProperty('fiber');
+        expect(response.body).toHaveProperty('addons');
+        expect(response.body).toHaveProperty('centralization');
+        expect(response.body).toHaveProperty('dropsOnly');
+        expect(response.body).toHaveProperty('wholeHome');
+        expect(response.body).toHaveProperty('laborHours');
+      });
+    });
+
+    describe('POST /create - Address', () => {
+      test('should save address in homeInfo', async () => {
+        const quoteData = makeDropsOnlyPayload({
+          customer: { name: 'Address Test', email: `addr-${Date.now()}@example.com` },
+          homeInfo: {
+            homeAge: '2000-2020',
+            stories: 2,
+            atticAccess: 'Walk-in attic',
+            hasMediaPanel: false,
+            hasCrawlspaceOrBasement: false,
+            liabilityAcknowledged: true,
+            address: {
+              street: '789 Elm Blvd',
+              city: 'Peoria',
+              state: 'IL',
+              zip: '61602'
+            }
+          }
+        });
+
+        const response = await request(app)
+          .post('/api/quotes/create')
+          .send(quoteData);
+
+        expect(response.status).toBe(201);
+        const savedQuote = await Quote.findById(response.body.id);
+        expect(savedQuote.homeInfo.address.street).toBe('789 Elm Blvd');
+        expect(savedQuote.homeInfo.address.city).toBe('Peoria');
+        expect(savedQuote.homeInfo.address.state).toBe('IL');
+        expect(savedQuote.homeInfo.address.zip).toBe('61602');
+      });
+
+      test('should reject missing address', async () => {
+        const quoteData = makeDropsOnlyPayload({
+          customer: { name: 'No Address', email: `noaddr-${Date.now()}@example.com` },
+        });
+        delete quoteData.homeInfo.address;
+
+        const response = await request(app)
+          .post('/api/quotes/create')
+          .send(quoteData);
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toBe('Validation failed');
+      });
+
+      test('should reject invalid ZIP code', async () => {
+        const quoteData = makeDropsOnlyPayload({
+          customer: { name: 'Bad Zip', email: `badzip-${Date.now()}@example.com` },
+          homeInfo: {
+            homeAge: '2000-2020',
+            stories: 2,
+            atticAccess: 'Walk-in attic',
+            hasMediaPanel: false,
+            hasCrawlspaceOrBasement: false,
+            liabilityAcknowledged: true,
+            address: {
+              street: '123 Main St',
+              city: 'Springfield',
+              state: 'IL',
+              zip: 'ABCDE'
+            }
+          }
+        });
+
+        const response = await request(app)
+          .post('/api/quotes/create')
+          .send(quoteData);
+
+        expect(response.status).toBe(400);
+        expect(response.body.details.some(msg => msg.includes('ZIP code'))).toBe(true);
+      });
+    });
+
+    describe('POST /create - Scope Details', () => {
+      test('should save scope details for Whole-Home', async () => {
+        const quoteData = makeWholeHomePayload({
+          customer: { name: 'Scope Detail User', email: `scope-${Date.now()}@example.com` },
+          wholeHome: {
+            scope: { networking: true, security: true, voip: true },
+            hasOwnEquipment: false,
+            networkingBrand: 'UniFi',
+            securityBrand: 'UniFi',
+            surveyPreference: 'day-of',
+            networkingDetails: 'Need 8 wired drops across 3 rooms',
+            securityDetails: '4 outdoor cameras, 2 indoor',
+            voipDetails: '3 desk phones and 1 conference room'
+          }
+        });
+
+        const response = await request(app)
+          .post('/api/quotes/create')
+          .send(quoteData);
+
+        expect(response.status).toBe(201);
+        const savedQuote = await Quote.findById(response.body.id);
+        expect(savedQuote.wholeHome.networkingDetails).toBeTruthy();
+        expect(savedQuote.wholeHome.securityDetails).toBeTruthy();
+        expect(savedQuote.wholeHome.voipDetails).toBeTruthy();
       });
     });
 

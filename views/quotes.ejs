@@ -82,7 +82,7 @@
 
           <div class="cable-run-row">
             <label for="cat6Runs">
-              Cat6 runs - $100/run:
+              Cat6 runs - $<span class="dynamic-price" data-field="cat6">100</span>/run:
               <input type="number" id="cat6Runs" name="cat6Runs" min="0" value="0" />
             </label>
             <button type="button" class="info-btn" data-cable="cat6" aria-label="Cat6 info"><i class="fas fa-info-circle"></i></button>
@@ -93,7 +93,7 @@
 
           <div class="cable-run-row">
             <label for="coaxRuns">
-              Coax runs - $150/run:
+              Coax runs - $<span class="dynamic-price" data-field="coax">150</span>/run:
               <input type="number" id="coaxRuns" name="coaxRuns" min="0" value="0" />
             </label>
             <button type="button" class="info-btn" data-cable="coax" aria-label="Coax info"><i class="fas fa-info-circle"></i></button>
@@ -104,7 +104,7 @@
 
           <div class="cable-run-row">
             <label for="fiberRuns">
-              Fiber runs - $200/run:
+              Fiber runs - $<span class="dynamic-price" data-field="fiber">200</span>/run:
               <input type="number" id="fiberRuns" name="fiberRuns" min="0" value="0" />
             </label>
             <button type="button" class="info-btn" data-cable="fiber" aria-label="Fiber info"><i class="fas fa-info-circle"></i></button>
@@ -178,6 +178,30 @@
           <label class="checkbox-label" for="scopeVoip">
             <input type="checkbox" id="scopeVoip" name="scopeVoip" /> VoIP
           </label>
+
+          <div id="scopeNetworkingDetails" style="display: none; margin-top: 1rem;">
+            <label for="networkingDetails">
+              What networking work do you need?
+              <textarea id="networkingDetails" name="networkingDetails" maxlength="2000" rows="3"
+                        placeholder="e.g., Number of wired drops, WiFi coverage areas, specific rooms..."></textarea>
+            </label>
+          </div>
+
+          <div id="scopeSecurityDetails" style="display: none; margin-top: 1rem;">
+            <label for="securityDetails">
+              What security setup do you need?
+              <textarea id="securityDetails" name="securityDetails" maxlength="2000" rows="3"
+                        placeholder="e.g., Number of cameras, indoor/outdoor, NVR preferences..."></textarea>
+            </label>
+          </div>
+
+          <div id="scopeVoipDetails" style="display: none; margin-top: 1rem;">
+            <label for="voipDetails">
+              What VoIP setup do you need?
+              <textarea id="voipDetails" name="voipDetails" maxlength="2000" rows="3"
+                        placeholder="e.g., Number of phones, conference rooms, VoIP provider..."></textarea>
+            </label>
+          </div>
         </fieldset>
 
         <fieldset>
@@ -232,6 +256,27 @@
           <label class="radio-label">
             <input type="radio" name="surveyPreference" value="day-of" /> Day of install
           </label>
+
+          <div id="inlineSurveyScheduler" class="inline-scheduler">
+            <p><strong>Pick a date and time for your site survey:</strong></p>
+            <div class="schedule-fields">
+              <div class="schedule-field">
+                <label for="surveyDate">Survey Date *</label>
+                <input type="date" id="surveyDate" name="surveyDate" />
+              </div>
+              <div class="schedule-field" id="surveyTimeSlotsContainer" style="display: none;">
+                <label>Available Time Slots</label>
+                <div class="time-slots-grid" id="surveyTimeSlotsGrid">
+                  <!-- Populated by JavaScript -->
+                </div>
+                <input type="hidden" id="surveySelectedTime" name="surveySelectedTime" />
+              </div>
+            </div>
+            <p id="surveyScheduleNote" class="survey-schedule-note" style="display: none;">
+              <i class="fas fa-check-circle" style="color: #22c55e;"></i>
+              Survey scheduled for <strong id="surveyScheduleSummary"></strong>
+            </p>
+          </div>
         </fieldset>
 
         <fieldset>
@@ -322,6 +367,41 @@
             <input type="radio" id="hasCrawlspaceNo" name="hasCrawlspace" value="no" checked /> No
           </label>
         </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Service Address</legend>
+
+        <label for="addressStreet">Street Address *</label>
+        <input type="text" id="addressStreet" name="addressStreet" required maxlength="200" placeholder="123 Main St" />
+
+        <label for="addressCity">City *</label>
+        <input type="text" id="addressCity" name="addressCity" required maxlength="100" placeholder="City" />
+
+        <label for="addressState">State *</label>
+        <select id="addressState" name="addressState" required>
+          <option value="">Select...</option>
+          <option value="AL">AL</option><option value="AK">AK</option><option value="AZ">AZ</option>
+          <option value="AR">AR</option><option value="CA">CA</option><option value="CO">CO</option>
+          <option value="CT">CT</option><option value="DE">DE</option><option value="FL">FL</option>
+          <option value="GA">GA</option><option value="HI">HI</option><option value="ID">ID</option>
+          <option value="IL">IL</option><option value="IN">IN</option><option value="IA">IA</option>
+          <option value="KS">KS</option><option value="KY">KY</option><option value="LA">LA</option>
+          <option value="ME">ME</option><option value="MD">MD</option><option value="MA">MA</option>
+          <option value="MI">MI</option><option value="MN">MN</option><option value="MS">MS</option>
+          <option value="MO">MO</option><option value="MT">MT</option><option value="NE">NE</option>
+          <option value="NV">NV</option><option value="NH">NH</option><option value="NJ">NJ</option>
+          <option value="NM">NM</option><option value="NY">NY</option><option value="NC">NC</option>
+          <option value="ND">ND</option><option value="OH">OH</option><option value="OK">OK</option>
+          <option value="OR">OR</option><option value="PA">PA</option><option value="RI">RI</option>
+          <option value="SC">SC</option><option value="SD">SD</option><option value="TN">TN</option>
+          <option value="TX">TX</option><option value="UT">UT</option><option value="VT">VT</option>
+          <option value="VA">VA</option><option value="WA">WA</option><option value="WV">WV</option>
+          <option value="WI">WI</option><option value="WY">WY</option><option value="DC">DC</option>
+        </select>
+
+        <label for="addressZip">ZIP Code *</label>
+        <input type="text" id="addressZip" name="addressZip" required maxlength="10" placeholder="12345" pattern="\d{5}(-\d{4})?" />
       </fieldset>
 
       <fieldset class="liability-fieldset">
@@ -1081,6 +1161,27 @@
     .confirmation-banner h3 {
       color: #22c55e;
       margin-bottom: 0.5rem;
+    }
+
+    /* Inline Survey Scheduler */
+    .inline-scheduler {
+      margin-top: 1rem;
+      padding: 1.5rem;
+      background: var(--surface-light);
+      border-radius: var(--radius);
+      border-left: 3px solid var(--primary);
+    }
+
+    .inline-scheduler p strong {
+      color: var(--primary);
+    }
+
+    .survey-schedule-note {
+      margin-top: 1rem;
+      padding: 0.75rem 1rem;
+      background: rgba(34, 197, 94, 0.1);
+      border-radius: var(--radius);
+      border: 1px solid rgba(34, 197, 94, 0.3);
     }
 
     /* Mobile Responsive */
