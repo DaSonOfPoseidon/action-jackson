@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - Action Jackson Admin</title>
+
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+
+    <link rel="stylesheet" href="/styles/business.css">
+    <link rel="stylesheet" href="/styles/admin.css">
+    <script src="https://kit.fontawesome.com/8623ae8306.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="admin-layout">
+        <%- include('../partials/admin-sidebar', { currentPage: 'consultations' }) %>
+
+        <main class="admin-content">
+            <div class="content-header">
+                <h1>Consultation Management</h1>
+                <button class="logout-btn" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+
+            <div class="filters-section">
+                <form class="filters-grid" method="GET">
+                    <div class="filter-group">
+                        <label class="filter-label">Search</label>
+                        <input type="text" name="search" class="filter-input"
+                               placeholder="Customer name, email, request #..."
+                               value="<%= filters.search %>">
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Status</label>
+                        <select name="status" class="filter-input">
+                            <option value="">All Statuses</option>
+                            <option value="new" <%= filters.status === 'new' ? 'selected' : '' %>>New</option>
+                            <option value="contacted" <%= filters.status === 'contacted' ? 'selected' : '' %>>Contacted</option>
+                            <option value="consultation-scheduled" <%= filters.status === 'consultation-scheduled' ? 'selected' : '' %>>Consultation Scheduled</option>
+                            <option value="quoted" <%= filters.status === 'quoted' ? 'selected' : '' %>>Quoted</option>
+                            <option value="booked" <%= filters.status === 'booked' ? 'selected' : '' %>>Booked</option>
+                            <option value="completed" <%= filters.status === 'completed' ? 'selected' : '' %>>Completed</option>
+                            <option value="closed" <%= filters.status === 'closed' ? 'selected' : '' %>>Closed</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Sort By</label>
+                        <select name="sort" class="filter-input">
+                            <option value="-createdAt" <%= filters.sort === '-createdAt' ? 'selected' : '' %>>Newest First</option>
+                            <option value="createdAt" <%= filters.sort === 'createdAt' ? 'selected' : '' %>>Oldest First</option>
+                            <option value="customer.name" <%= filters.sort === 'customer.name' ? 'selected' : '' %>>Customer Name</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <button type="submit" class="filter-btn">
+                            <i class="fas fa-search"></i> Filter
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="quotes-table">
+                <div class="table-header">
+                    <h3>Consultations (<%= pagination.totalConsultations %> total)</h3>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Request #</th>
+                                <th>Customer</th>
+                                <th>Services</th>
+                                <th>Package</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (consultations.length > 0) { %>
+                                <% consultations.forEach(c => { %>
+                                    <tr>
+                                        <td><strong>#<%= c.requestNumber %></strong></td>
+                                        <td>
+                                            <div class="customer-info"><%= c.customer.name %></div>
+                                            <div><%= c.customer.email %></div>
+                                        </td>
+                                        <td>
+                                            <%= (c.interestedServices || []).map(s => {
+                                                const labels = { 'networking': 'Networking', 'smart-home': 'Smart Home', 'cameras': 'Cameras', 'structured-wiring': 'Wiring' };
+                                                return labels[s] || s;
+                                            }).join(', ') %>
+                                        </td>
+                                        <td>
+                                            <% const pkgLabels = { 'foundation': 'Foundation', 'backbone': 'Backbone', 'performance': 'Performance', 'standalone': 'Standalone', 'unsure': 'Unsure' }; %>
+                                            <%= pkgLabels[c.interestedPackage] || c.interestedPackage || 'N/A' %>
+                                        </td>
+                                        <td>
+                                            <span class="status-badge status-<%= c.status %>"><%= c.status %></span>
+                                        </td>
+                                        <td><%= c.createdAt.toLocaleDateString() %></td>
+                                        <td>
+                                            <a href="/admin/consultations/<%= c._id %>" class="action-btn">
+                                                <i class="fas fa-eye"></i> View
+                                            </a>
+                                        </td>
+                                    </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="7" style="text-align: center; padding: 2rem;">
+                                        No consultation requests found.
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+
+                <% if (pagination.totalPages > 1) { %>
+                <div class="pagination">
+                    <% for (let i = 1; i <= pagination.totalPages; i++) { %>
+                        <a href="?page=<%= i %>&search=<%= filters.search %>&status=<%= filters.status %>&sort=<%= filters.sort %>"
+                           class="page-btn <%= i === pagination.currentPage ? 'active' : '' %>">
+                            <%= i %>
+                        </a>
+                    <% } %>
+                </div>
+                <% } %>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.getElementById('logoutBtn')?.addEventListener('click', async () => {
+            await fetch('/auth/logout', { method: 'POST' });
+            window.location.href = '/admin/login';
+        });
+    </script>
+</body>
+</html>

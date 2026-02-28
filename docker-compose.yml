@@ -9,10 +9,10 @@ services:
       - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
     environment:
       MONGO_INITDB_ROOT_USERNAME: actionjackson
-      MONGO_INITDB_ROOT_PASSWORD: "${MONGO_ROOT_PASSWORD}"  # load from .env or secret
+      MONGO_INITDB_ROOT_PASSWORD: "${MONGO_ROOT_PASSWORD}"
       MONGO_INITDB_DATABASE: action_jackson
-      MONGO_DEV_PASSWORD: "${MONGO_DEV_PASSWORD}"  # Password for read-only dev user
-    healthcheck:                              
+      MONGO_DEV_PASSWORD: "${MONGO_DEV_PASSWORD}"
+    healthcheck:
       test: ["CMD-SHELL", "mongo --eval 'db.adminCommand(\"ping\")' --quiet || exit 1"]
       interval: 10s
       timeout: 5s
@@ -20,31 +20,55 @@ services:
       start_period: 10s
     networks:
       - app-network
-    # SECURITY: Exposing Mongo for local network access
-    # Binding to local network interface for development access
     ports:
-      - "192.168.1.69:27017:27017"  # Bind to server's local IP for network access
+      - "192.168.1.69:27017:27017"
 
-  app:
+  api:
     build: .
     restart: unless-stopped
     depends_on:
-      - mongo 
-    ports:                            # startup order only; readiness must be handled by app or via retries.
-      - "3000:3000"                        # consider restricting to 127.0.0.1 if only accessed via Cloudflare Tunnel.
+      - mongo
     environment:
+      PORT: "3001"
       MONGO_URI: "mongodb://actionjackson:${MONGO_ROOT_PASSWORD}@mongo:27017/action_jackson?authSource=admin"
       EMAIL_USER: "${EMAIL_USER}"
       EMAIL_PASS: "${EMAIL_PASS}"
       ADMIN_EMAIL: "${ADMIN_EMAIL}"
-    healthcheck:                          # assumes your app exposes e.g. GET /healthz returning 200.
-      test: ["CMD-SHELL", "curl -f http://localhost:3000/healthz || exit 1"]
+      ADMIN_SESSION_SECRET: "${ADMIN_SESSION_SECRET}"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3001/healthz || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 10s
     networks:
       - app-network
+    labels:
+      cloudflare-tunnel.enable: "true"
+      cloudflare-tunnel.subdomain: "dev"
+      cloudflare-tunnel.port: "3001"
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "3000:3000"
+    environment:
+      API_URL: "http://api:3001"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - app-network
+    labels:
+      cloudflare-tunnel.enable: "true"
+      cloudflare-tunnel.subdomain: "www"
+      cloudflare-tunnel.port: "3000"
 
 volumes:
   mongo-data:

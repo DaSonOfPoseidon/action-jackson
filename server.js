@@ -4,11 +4,30 @@ const path = require('path');
 const compression = require('compression');
 const cookieParser = require('cookie-parser');
 const helmet = require('helmet');
+const cors = require('cors');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
 require('dotenv').config();
 
 const app = express();
+
+// CORS for Next.js frontend
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://actionjacksoninstalls.com',
+  'https://www.actionjacksoninstalls.com'
+];
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (server-to-server, curl, etc.)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(null, false);
+    }
+  },
+  credentials: true
+}));
 
 // Middleware
 app.use(express.json({ limit: '10mb' })); // Limit JSON payload size
@@ -108,6 +127,7 @@ const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
 const fileRoutes = require('./routes/files');
 const estimateRoutes = require('./routes/estimates');
+const consultationRoutes = require('./routes/consultations');
 
 // Use API routes
 app.use('/api/home', homeRoutes);
@@ -117,6 +137,7 @@ app.use('/api/shared', sharedRoutes);
 app.use('/api/invoices', invoicesRoutes);
 app.use('/api/files', fileRoutes);
 app.use('/api/estimates', estimateRoutes);
+app.use('/api/consultations', consultationRoutes);
 app.use('/auth', authRoutes);
 app.use('/admin', adminRoutes);
 
@@ -219,7 +240,7 @@ app.use((req, res) => {
 });
 // Start server only if not in test environment
 if (process.env.NODE_ENV !== 'test') {
-  const PORT = process.env.PORT || 3000;
+  const PORT = process.env.PORT || 3001;
   app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 }
 

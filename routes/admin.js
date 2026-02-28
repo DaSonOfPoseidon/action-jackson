@@ -8,6 +8,7 @@ const Schedule = require('../models/Schedule');
 const Invoice = require('../models/Invoice');
 const CostItem = require('../models/CostItem');
 const Setting = require('../models/Setting');
+const ConsultationRequest = require('../models/ConsultationRequest');
 
 // Rate limiting for admin operations
 const adminRateLimit = rateLimit({
@@ -47,32 +48,37 @@ router.use(adminPageAuth);
 router.get('/dashboard', async (req, res) => {
   try {
     // Get recent stats for dashboard overview
-    const [quoteCount, scheduleCount, invoiceCount] = await Promise.all([
+    const [quoteCount, scheduleCount, invoiceCount, consultationCount] = await Promise.all([
       Quote.countDocuments({ createdAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } }),
       Schedule.countDocuments({ createdAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } }),
-      Invoice.countDocuments({ createdAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } })
+      Invoice.countDocuments({ createdAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } }),
+      ConsultationRequest.countDocuments({ createdAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } })
     ]);
 
     // Get recent activity
-    const [recentQuotes, recentSchedules, recentInvoices] = await Promise.all([
+    const [recentQuotes, recentSchedules, recentInvoices, recentConsultations] = await Promise.all([
       Quote.find().sort({ createdAt: -1 }).limit(5)
         .select('customer.name serviceType packageOption pricing.totalCost pricing.depositAmount createdAt status'),
       Schedule.find().sort({ createdAt: -1 }).limit(5)
         .select('name date time status createdAt'),
       Invoice.find().sort({ createdAt: -1 }).limit(5)
-        .select('invoiceNumber customer.name finalAmount status createdAt')
+        .select('invoiceNumber customer.name finalAmount status createdAt'),
+      ConsultationRequest.find().sort({ createdAt: -1 }).limit(5)
+        .select('customer.name interestedPackage interestedServices status createdAt requestNumber')
     ]);
 
     const dashboardData = {
       stats: {
         quotes: quoteCount,
         schedules: scheduleCount,
-        invoices: invoiceCount
+        invoices: invoiceCount,
+        consultations: consultationCount
       },
       recentActivity: {
         quotes: recentQuotes,
         schedules: recentSchedules,
-        invoices: recentInvoices
+        invoices: recentInvoices,
+        consultations: recentConsultations
       }
     };
 
@@ -1443,5 +1449,129 @@ function calculateQuotePricing(options) {
     };
   }
 }
+
+/**
+ * GET /admin/consultations - Consultation request management page
+ */
+router.get('/consultations', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const search = req.query.search || '';
+    const status = req.query.status || '';
+    const sort = req.query.sort || '-createdAt';
+
+    const query = {};
+
+    if (search) {
+      query.$or = [
+        { 'customer.name': { $regex: search, $options: 'i' } },
+        { 'customer.email': { $regex: search, $options: 'i' } },
+        { requestNumber: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    if (status) {
+      query.status = status;
+    }
+
+    const consultations = await ConsultationRequest.find(query)
+      .sort(sort)
+      .limit(limit)
+      .skip((page - 1) * limit)
+      .exec();
+
+    const totalConsultations = await ConsultationRequest.countDocuments(query);
+    const totalPages = Math.ceil(totalConsultations / limit);
+
+    res.render('admin/consultations', {
+      title: 'Consultation Management',
+      consultations,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalConsultations,
+        limit
+      },
+      filters: {
+        search,
+        status,
+        sort
+      },
+      user: {
+        username: req.admin.username,
+        role: req.admin.role
+      }
+    });
+
+  } catch (error) {
+    console.error('Consultations page error:', error);
+    res.status(500).render('error', {
+      title: 'Consultations Error',
+      message: 'Error loading consultations',
+      statusCode: 500
+    });
+  }
+});
+
+/**
+ * GET /admin/consultations/:id - View specific consultation
+ */
+router.get('/consultations/:id', async (req, res) => {
+  try {
+    const consultation = await ConsultationRequest.findById(req.params.id);
+
+    if (!consultation) {
+      return res.status(404).render('error', {
+        title: 'Consultation Not Found',
+        message: 'The requested consultation was not found',
+        statusCode: 404
+      });
+    }
+
+    res.render('admin/consultation-detail', {
+      title: `Consultation - ${consultation.customer.name}`,
+      consultation,
+      user: {
+        username: req.admin.username,
+        role: req.admin.role
+      }
+    });
+
+  } catch (error) {
+    console.error('Consultation detail error:', error);
+    res.status(500).render('error', {
+      title: 'Consultation Error',
+      message: 'Error loading consultation details',
+      statusCode: 500
+    });
+  }
+});
+
+/**
+ * PUT /admin/consultations/:id - Update consultation status/notes
+ */
+router.put('/consultations/:id', async (req, res) => {
+  try {
+    const { status, adminNotes, quotedAmount, scheduledConsultation } = req.body;
+
+    const consultation = await ConsultationRequest.findById(req.params.id);
+    if (!consultation) {
+      return res.status(404).json({ error: 'Consultation not found' });
+    }
+
+    if (status) consultation.status = status;
+    if (adminNotes !== undefined) consultation.adminNotes = adminNotes;
+    if (quotedAmount !== undefined) consultation.quotedAmount = quotedAmount;
+    if (scheduledConsultation !== undefined) consultation.scheduledConsultation = scheduledConsultation;
+
+    await consultation.save();
+
+    res.json({ message: 'Consultation updated successfully', consultation });
+  } catch (error) {
+    console.error('Consultation update error:', error);
+    res.status(500).json({ error: 'Error updating consultation' });
+  }
+});
 
 module.exports = router;
