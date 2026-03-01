@@ -67,11 +67,9 @@ const packages = [
     idealFor: "Builder-grade homes using ISP router only.",
     includes: [
       "Network assessment",
-      "Router/firewall configuration",
-      "1\u20132 PoE access point install",
-      "Basic VLAN segmentation",
-      "Low-latency optimization",
-      "Clean mounting & cable management",
+      "Mesh router setup with optional wired backhaul",
+      "Latency optimization",
+      "Cable management & clean mounting",
     ],
     accent: "green" as const,
   },
@@ -82,7 +80,7 @@ const packages = [
     includes: [
       "Full network redesign",
       "Managed PoE switch",
-      "2\u20134 AP installs",
+      "2\u20134 PoE access point installs",
       "VLAN segmentation (Main / Guest / IoT / Cameras)",
       "Structured panel or rack cleanup",
       "Smart home hub setup",
@@ -92,19 +90,31 @@ const packages = [
     featured: true,
   },
   {
+    name: "Security",
+    priceRange: "$999\u2013$1,999",
+    idealFor: "Homes adding PoE cameras with local recording.",
+    includes: [
+      "2\u20134 PoE camera installs",
+      "Local NVR setup (no subscriptions)",
+      "Detection zone configuration",
+      "Night vision optimization",
+      "Secure remote access",
+      "Camera VLAN isolation",
+    ],
+    accent: "orange" as const,
+  },
+  {
     name: "Performance + Protection",
     priceRange: "$2,500\u2013$6,000",
     idealFor: "Full coverage: network, cameras, and smart home.",
     includes: [
       "Everything in Smart Home Backbone",
-      "4\u20138 PoE camera installs",
-      "Local NVR setup (no subscriptions)",
-      "Secure remote access",
+      "Everything in Security package",
       "UPS battery protection",
       "Full labeling & documentation",
       "Network diagram provided",
     ],
-    accent: "orange" as const,
+    accent: "cyan" as const,
   },
 ];
 
@@ -204,7 +214,7 @@ export default function HomePage() {
               Hardware billed separately or bundled. Every install includes clean mounting and configuration.
             </p>
           </AnimateIn>
-          <div className="mt-12 grid gap-8 lg:grid-cols-3">
+          <div className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-4">
             {packages.map((pkg, i) => (
               <AnimateIn key={pkg.name} delay={i * 100}>
                 <PackageCard {...pkg} />

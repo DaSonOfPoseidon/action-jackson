@@ -51,20 +51,20 @@ const features: Feature[] = [
     badge: "All Packages",
   },
   {
-    title: "Router & Firewall Configuration",
-    summary: "Replace your ISP router with enterprise-grade hardware.",
+    title: "Mesh Router Setup",
+    summary: "Replace your ISP router with a high-performance mesh system.",
     detail:
-      "UniFi, Omada, or equivalent hardware with properly configured firewall rules, DNS filtering, and WAN failover. No consumer mesh systems.",
+      "Foundation includes a mesh router with optional wired backhaul for whole-home coverage. Backbone upgrades to enterprise-grade hardware (UniFi, Omada) with managed PoE switch and dedicated APs.",
     icon: "fas fa-server",
-    badge: "All Packages",
+    badge: "Foundation+",
   },
   {
     title: "PoE Access Point Installs",
     summary: "Ceiling or wall-mounted APs with hardwired backhaul.",
     detail:
-      "1-2 APs for Foundation, 2-4 for Smart Home Backbone. Each AP connects via a dedicated low-voltage cable run — no wireless backhaul, no signal degradation.",
+      "2-4 APs for Smart Home Backbone and above. Each AP connects via a dedicated low-voltage cable run — no wireless backhaul, no signal degradation.",
     icon: "fas fa-wifi",
-    badge: "All Packages",
+    badge: "Backbone",
   },
   {
     title: "VLAN Segmentation",
@@ -72,15 +72,15 @@ const features: Feature[] = [
     detail:
       "Each segment has its own rules, bandwidth allocation, and security posture. IoT devices can't reach your personal network. Guests get internet only.",
     icon: "fas fa-diagram-project",
-    badge: "All Packages",
+    badge: "Backbone",
   },
   {
-    title: "Low-Latency Optimization",
+    title: "Latency Optimization",
     summary: "QoS rules tuned for gaming and remote work.",
     detail:
       "Traffic shaping ensures real-time applications always have priority over background downloads. Smart queue management for symmetric and asymmetric connections.",
     icon: "fas fa-bolt",
-    badge: "Foundation+",
+    badge: "All Packages",
   },
   {
     title: "Cable Management & Mounting",
@@ -96,7 +96,7 @@ const faqs: FAQItem[] = [
   {
     question: "Do I need to buy my own hardware?",
     answer:
-      "You can purchase hardware yourself or have us source it. We recommend specific models based on your home's size and device count. Hardware is billed separately from labor.",
+      "You can purchase hardware yourself or have us source it. We recommend specific models based on your home's size and device count. Hardware is billed separately from labor. If we purchase equipment on your behalf, a 5\u201310% acquisition and stocking fee applies.",
   },
   {
     question: "Will this work with my ISP?",
@@ -123,13 +123,12 @@ const faqs: FAQItem[] = [
 const pricing: PricingInfo = {
   label: "Starting Price",
   price: "$799",
-  description: "Foundation Network Upgrade",
+  description: "Foundation Network",
   inclusions: [
     "Network assessment & floor plan evaluation",
-    "Router/firewall configuration",
-    "1-2 access point installs with hardwired backhaul",
-    "VLAN segmentation (Main, Guest, IoT)",
-    "Clean cable management & mounting",
+    "Mesh router setup with optional wired backhaul",
+    "Latency optimization (gaming + remote work)",
+    "Cable management & clean mounting",
     "Hardware billed separately or bundled",
   ],
 };
@@ -173,14 +172,14 @@ export default function NetworkingPage() {
             },
             {
               tier: "Foundation",
-              tagline: "Most popular",
+              tagline: "Entry-level upgrade",
               specs: [
-                { label: "Devices", value: "50+" },
-                { label: "VLANs", value: "3-4" },
-                { label: "WiFi", value: "1-2 APs" },
-                { label: "Firewall", value: "Stateful + Rules" },
+                { label: "Devices", value: "30+" },
+                { label: "VLANs", value: "None" },
+                { label: "WiFi", value: "Mesh Router" },
+                { label: "Firewall", value: "Router Built-in" },
                 { label: "QoS", value: "Smart Queue" },
-                { label: "Management", value: "Full Dashboard" },
+                { label: "Management", value: "App-Based" },
               ],
             },
             {

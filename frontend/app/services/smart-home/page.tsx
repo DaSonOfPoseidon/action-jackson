@@ -161,6 +161,11 @@ const faqs: FAQItem[] = [
     answer:
       "We recommend a dedicated mini PC or Home Assistant Yellow for reliability. It can also run on a Raspberry Pi 4/5, NAS, or as a VM. Dedicated hardware ensures best performance and uptime.",
   },
+  {
+    question: "Do I need to buy my own equipment?",
+    answer:
+      "You can purchase hardware yourself or have us source it. We recommend specific switches, access points, and hubs based on your home's size and device count. Hardware is billed separately from labor. If we purchase equipment on your behalf, a 5\u201310% acquisition and stocking fee applies.",
+  },
 ];
 
 const pricing: PricingInfo = {

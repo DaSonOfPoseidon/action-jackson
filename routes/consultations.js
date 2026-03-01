@@ -57,27 +57,25 @@ const isValidBusinessEmail = (email) => {
 const PACKAGES = [
   {
     id: 'foundation',
-    name: 'Foundation Network Upgrade',
+    name: 'Foundation Network',
     priceRange: '$799-$1,499',
     idealFor: 'Builder-grade homes using ISP router only.',
     includes: [
       'Network assessment',
-      'Router/firewall configuration (UniFi, Omada, etc.)',
-      '1-2 PoE access point install',
-      'Basic VLAN segmentation (Main / Guest / optional IoT)',
-      'Low-latency optimization (gaming + remote work)',
-      'Clean mounting and cable management'
+      'Mesh router setup with optional wired backhaul',
+      'Latency optimization (gaming + remote work)',
+      'Cable management and clean mounting'
     ]
   },
   {
     id: 'backbone',
-    name: 'Smart Home Backbone Package',
+    name: 'Smart Home Backbone',
     priceRange: '$1,500-$3,500',
     idealFor: 'Homes adding automation and security devices.',
     includes: [
       'Full network redesign',
       'Managed PoE switch',
-      '2-4 AP installs',
+      '2-4 PoE access point installs',
       'VLAN segmentation (Main / Guest / IoT / Cameras)',
       'Structured panel or rack cleanup',
       'Smart home hub setup (Home Assistant optional)',
@@ -85,18 +83,30 @@ const PACKAGES = [
     ]
   },
   {
+    id: 'security',
+    name: 'Security',
+    priceRange: '$999-$1,999',
+    idealFor: 'Homes adding PoE cameras with local recording.',
+    includes: [
+      '2-4 PoE camera installs',
+      'Local NVR setup (no subscriptions)',
+      'Detection zone configuration',
+      'Night vision optimization',
+      'Secure remote access',
+      'Camera VLAN isolation'
+    ]
+  },
+  {
     id: 'performance',
-    name: 'Performance + Protection Package',
+    name: 'Performance + Protection',
     priceRange: '$2,500-$6,000',
     idealFor: 'Full coverage: network, cameras, and smart home.',
     includes: [
       'Everything in Smart Home Backbone',
-      '4-8 PoE camera installs',
-      'Local NVR setup (no subscription model)',
-      'Secure remote access configuration',
+      'Everything in Security package',
       'UPS battery protection',
       'Full labeling and documentation',
-      'Basic network diagram provided'
+      'Network diagram provided'
     ]
   }
 ];
@@ -156,7 +166,7 @@ const validateConsultation = [
     .withMessage('Invalid service selection'),
   body('interestedPackage')
     .optional()
-    .isIn(['foundation', 'backbone', 'performance', 'standalone', 'unsure'])
+    .isIn(['foundation', 'backbone', 'security', 'performance', 'standalone', 'unsure'])
     .withMessage('Invalid package selection'),
   body('honeypot')
     .optional()
@@ -248,6 +258,7 @@ router.post('/create', consultationRateLimit, validateConsultation, async (req, 
         const packageLabels = {
           'foundation': 'Foundation Network ($799-$1,499)',
           'backbone': 'Smart Home Backbone ($1,500-$3,500)',
+          'security': 'Security ($999-$1,999)',
           'performance': 'Performance + Protection ($2,500-$6,000)',
           'standalone': 'Standalone Services',
           'unsure': 'Not Sure'

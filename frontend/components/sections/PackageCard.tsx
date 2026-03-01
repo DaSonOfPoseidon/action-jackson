@@ -9,7 +9,7 @@ interface PackageCardProps {
   priceRange: string;
   idealFor: string;
   includes: string[];
-  accent?: "green" | "purple" | "orange";
+  accent?: "green" | "purple" | "orange" | "cyan";
   featured?: boolean;
 }
 
@@ -17,6 +17,7 @@ const accentColors = {
   green: "from-green/40 to-transparent",
   purple: "from-purple/40 to-transparent",
   orange: "from-orange/40 to-transparent",
+  cyan: "from-cyan/40 to-transparent",
 };
 
 export function PackageCard({

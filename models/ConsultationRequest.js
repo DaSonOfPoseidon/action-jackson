@@ -32,7 +32,7 @@ const ConsultationRequestSchema = new mongoose.Schema({
   }],
   interestedPackage: {
     type: String,
-    enum: ['foundation', 'backbone', 'performance', 'standalone', 'unsure']
+    enum: ['foundation', 'backbone', 'security', 'performance', 'standalone', 'unsure']
   },
   status: {
     type: String,

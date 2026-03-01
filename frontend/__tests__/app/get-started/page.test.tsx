@@ -46,6 +46,7 @@ describe("GetStartedPage", () => {
     render(<GetStartedPage />);
     expect(screen.getByText(/Foundation Network/)).toBeInTheDocument();
     expect(screen.getByText(/Smart Home Backbone/)).toBeInTheDocument();
+    expect(screen.getByText(/Security \(\$999/)).toBeInTheDocument();
     expect(screen.getByText(/Performance \+ Protection/)).toBeInTheDocument();
     expect(screen.getByText("Not sure yet")).toBeInTheDocument();
   });

@@ -63,18 +63,19 @@ describe('Consultation API', () => {
       const res = await request(app).get('/api/consultations/packages');
       expect(res.status).toBe(200);
       expect(Array.isArray(res.body)).toBe(true);
-      expect(res.body.length).toBe(3);
+      expect(res.body.length).toBe(4);
       expect(res.body[0]).toHaveProperty('id');
       expect(res.body[0]).toHaveProperty('name');
       expect(res.body[0]).toHaveProperty('priceRange');
       expect(res.body[0]).toHaveProperty('includes');
     });
 
-    it('should include foundation, backbone, and performance packages', async () => {
+    it('should include foundation, backbone, security, and performance packages', async () => {
       const res = await request(app).get('/api/consultations/packages');
       const ids = res.body.map(p => p.id);
       expect(ids).toContain('foundation');
       expect(ids).toContain('backbone');
+      expect(ids).toContain('security');
       expect(ids).toContain('performance');
     });
   });
@@ -211,6 +212,17 @@ describe('Consultation API', () => {
         .send(payload);
 
       expect(res.status).toBe(400);
+    });
+
+    it('should accept security as valid package value', async () => {
+      const payload = makeConsultationPayload({ interestedPackage: 'security' });
+      const res = await request(app)
+        .post('/api/consultations/create')
+        .send(payload);
+
+      expect(res.status).toBe(201);
+      const saved = await ConsultationRequest.findById(res.body.id);
+      expect(saved.interestedPackage).toBe('security');
     });
 
     it('should reject invalid package value', async () => {

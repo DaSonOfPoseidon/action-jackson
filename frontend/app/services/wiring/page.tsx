@@ -154,6 +154,11 @@ const faqs: FAQItem[] = [
     answer:
       "Low-voltage cabling typically doesn't require permits in most jurisdictions. All installs follow NEC low-voltage separation requirements and manufacturer specifications for bend radius and cable support.",
   },
+  {
+    question: "Do I need to buy my own materials?",
+    answer:
+      "You can purchase cable, keystones, and wall plates yourself or have us source everything. We recommend specific brands and grades based on your project requirements. Materials are billed separately from labor. If we purchase equipment or materials on your behalf, a 5\u201310% acquisition and stocking fee applies.",
+  },
 ];
 
 const pricing: PricingInfo = {

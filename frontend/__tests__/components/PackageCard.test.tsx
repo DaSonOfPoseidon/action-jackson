@@ -9,8 +9,8 @@ describe("PackageCard", () => {
     idealFor: "Builder-grade homes using ISP router only.",
     includes: [
       "Network assessment",
-      "Router/firewall configuration",
-      "1\u20132 PoE access point install",
+      "Mesh router setup with optional wired backhaul",
+      "Latency optimization",
     ],
   };
 

@@ -118,6 +118,11 @@ const faqs: FAQItem[] = [
     answer:
       "We primarily install Reolink, UniFi Protect, and Hikvision/Dahua cameras depending on your budget, feature requirements, and NVR platform. All are PoE with local storage support.",
   },
+  {
+    question: "Do I need to buy my own equipment?",
+    answer:
+      "You can purchase cameras and NVR hardware yourself or have us source it. We recommend specific models based on your property layout and recording requirements. Hardware is billed separately from labor. If we purchase equipment on your behalf, a 5\u201310% acquisition and stocking fee applies.",
+  },
 ];
 
 const pricing: PricingInfo = {
@@ -133,7 +138,7 @@ const pricing: PricingInfo = {
     "Night vision optimization",
     "Network VLAN integration",
   ],
-  note: "Cameras are also included in the Performance + Protection package (4-8 cameras) starting at $2,500. Low-voltage cabling billed separately if new runs are needed.",
+  note: "Cameras are also included in the Security package (2\u20134 cameras) starting at $999. Low-voltage cabling billed separately if new runs are needed.",
 };
 
 export default function CamerasPage() {

@@ -40,7 +40,8 @@ const SERVICES = [
 const PACKAGES = [
   { value: "foundation", label: "Foundation Network ($799\u2013$1,499)", color: "green" },
   { value: "backbone", label: "Smart Home Backbone ($1,500\u2013$3,500)", color: "purple" },
-  { value: "performance", label: "Performance + Protection ($2,500\u2013$6,000)", color: "orange" },
+  { value: "security", label: "Security ($999\u2013$1,999)", color: "orange" },
+  { value: "performance", label: "Performance + Protection ($2,500\u2013$6,000)", color: "cyan" },
   { value: "standalone", label: "Standalone Services", color: "green" },
   { value: "unsure", label: "Not sure yet", color: "green" },
 ];

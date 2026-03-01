@@ -26,11 +26,12 @@ describe("HomePage", () => {
     expect(screen.getByText("The engineered alternative.")).toBeInTheDocument();
   });
 
-  it("renders packages section with all three packages", () => {
+  it("renders packages section with all four packages", () => {
     render(<HomePage />);
     expect(screen.getByText("Service Packages")).toBeInTheDocument();
     expect(screen.getByText("Foundation Network")).toBeInTheDocument();
     expect(screen.getByText("Smart Home Backbone")).toBeInTheDocument();
+    expect(screen.getByText("Security")).toBeInTheDocument();
     expect(screen.getByText("Performance + Protection")).toBeInTheDocument();
   });
 
