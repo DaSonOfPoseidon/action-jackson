@@ -1,173 +1,225 @@
 import { Metadata } from "next";
-import { Hero } from "@/components/sections/Hero";
 import { CTABand } from "@/components/sections/CTABand";
-import { AnimateIn } from "@/components/AnimateIn";
-import { Card } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
+import { ServiceHero } from "@/components/sections/ServiceHero";
+import { PainPoints } from "@/components/sections/PainPoints";
+import { ProcessSteps } from "@/components/sections/ProcessSteps";
+import { FeatureGrid } from "@/components/sections/FeatureGrid";
+import { SpecsTable } from "@/components/sections/SpecsTable";
+import { FAQAccordion } from "@/components/sections/FAQAccordion";
+import { PricingCard } from "@/components/sections/PricingCard";
+import { NetworkVisual } from "@/components/icons";
+import type { PainPoint, Feature, FAQItem, PricingInfo } from "@/lib/services";
 
 export const metadata: Metadata = {
   title: "Networking Services",
 };
 
-const problems = [
+const painPoints: PainPoint[] = [
   {
     title: "One Router, 30+ Devices",
     description:
       "Your ISP router was designed to handle a few laptops. Now it's managing phones, tablets, smart TVs, thermostats, cameras, and gaming consoles on a single network.",
+    icon: "fas fa-router",
   },
   {
     title: "No Network Segmentation",
     description:
       "Every device shares the same network. A compromised smart plug has direct access to your work laptop, personal files, and financial data.",
+    icon: "fas fa-shield-halved",
   },
   {
     title: "Interference & Dead Zones",
     description:
       "Builder-grade router placement and neighboring WiFi networks create interference patterns that degrade performance throughout the house.",
+    icon: "fas fa-signal",
   },
   {
     title: "Buffering & Latency",
     description:
       "Video calls drop, games lag, and streaming buffers because traffic isn't prioritized. Your ISP router treats a firmware update the same as a Zoom call.",
+    icon: "fas fa-gauge-high",
   },
 ];
 
-const included = [
+const features: Feature[] = [
   {
     title: "Network Assessment",
-    description:
-      "Full evaluation of your current setup, coverage gaps, device count, and bandwidth requirements before any work begins.",
+    summary: "Full evaluation of your current setup, coverage gaps, and bandwidth requirements.",
+    detail:
+      "We map your floor plan, count every connected device, measure signal strength in every room, and identify bandwidth bottlenecks before designing your new network.",
+    icon: "fas fa-clipboard-check",
     badge: "All Packages",
   },
   {
     title: "Router & Firewall Configuration",
-    description:
-      "Replace your ISP router with enterprise-grade hardware (UniFi, Omada, or equivalent). Properly configured firewall rules and DNS.",
+    summary: "Replace your ISP router with enterprise-grade hardware.",
+    detail:
+      "UniFi, Omada, or equivalent hardware with properly configured firewall rules, DNS filtering, and WAN failover. No consumer mesh systems.",
+    icon: "fas fa-server",
     badge: "All Packages",
   },
   {
     title: "PoE Access Point Installs",
-    description:
-      "Ceiling or wall-mounted access points with hardwired backhaul. 1-2 APs for Foundation, 2-4 for Smart Home Backbone.",
+    summary: "Ceiling or wall-mounted APs with hardwired backhaul.",
+    detail:
+      "1-2 APs for Foundation, 2-4 for Smart Home Backbone. Each AP connects via a dedicated low-voltage cable run — no wireless backhaul, no signal degradation.",
+    icon: "fas fa-wifi",
     badge: "All Packages",
   },
   {
     title: "VLAN Segmentation",
-    description:
-      "Isolated networks for Main, Guest, IoT, and Cameras. Each segment has its own rules, bandwidth allocation, and security posture.",
+    summary: "Isolated networks for Main, Guest, IoT, and Cameras.",
+    detail:
+      "Each segment has its own rules, bandwidth allocation, and security posture. IoT devices can't reach your personal network. Guests get internet only.",
+    icon: "fas fa-diagram-project",
     badge: "All Packages",
   },
   {
     title: "Low-Latency Optimization",
-    description:
-      "QoS rules tuned for gaming and remote work. Traffic shaping ensures real-time applications always have priority over background downloads.",
+    summary: "QoS rules tuned for gaming and remote work.",
+    detail:
+      "Traffic shaping ensures real-time applications always have priority over background downloads. Smart queue management for symmetric and asymmetric connections.",
+    icon: "fas fa-bolt",
     badge: "Foundation+",
   },
   {
     title: "Cable Management & Mounting",
-    description:
-      "Clean, professional mounting with concealed cabling. No exposed wires, no cable spaghetti, no zip-tied mess behind the TV.",
+    summary: "Clean, professional mounting with concealed cabling.",
+    detail:
+      "No exposed wires, no cable spaghetti, no zip-tied mess behind the TV. Equipment rack or structured panel with proper ventilation and cable routing.",
+    icon: "fas fa-screwdriver-wrench",
     badge: "All Packages",
   },
 ];
 
+const faqs: FAQItem[] = [
+  {
+    question: "Do I need to buy my own hardware?",
+    answer:
+      "You can purchase hardware yourself or have us source it. We recommend specific models based on your home's size and device count. Hardware is billed separately from labor.",
+  },
+  {
+    question: "Will this work with my ISP?",
+    answer:
+      "Yes. We replace the routing and WiFi functions of your ISP equipment while keeping the modem or ONT connection. Works with any provider — cable, fiber, or fixed wireless.",
+  },
+  {
+    question: "How long does installation take?",
+    answer:
+      "Foundation installs typically take 3-5 hours. Backbone packages with multiple AP installs and structured cabling may take a full day. We schedule around your availability.",
+  },
+  {
+    question: "Can I manage the network myself after install?",
+    answer:
+      "Absolutely. We provide full admin access and a walkthrough of the management interface. Optional remote management is available if you prefer hands-off administration.",
+  },
+  {
+    question: "What about smart home devices on the network?",
+    answer:
+      "IoT devices are placed on a dedicated VLAN with internet access but no path to your personal devices. We configure mDNS reflection so casting and discovery still work across VLANs.",
+  },
+];
+
+const pricing: PricingInfo = {
+  label: "Starting Price",
+  price: "$799",
+  description: "Foundation Network Upgrade",
+  inclusions: [
+    "Network assessment & floor plan evaluation",
+    "Router/firewall configuration",
+    "1-2 access point installs with hardwired backhaul",
+    "VLAN segmentation (Main, Guest, IoT)",
+    "Clean cable management & mounting",
+    "Hardware billed separately or bundled",
+  ],
+};
+
 export default function NetworkingPage() {
   return (
     <>
-      <Hero
+      <ServiceHero
         title="Engineered WiFi & Network Performance."
         subtitle="Replace your ISP router with a properly designed, segmented network built for speed and reliability."
-        primaryCTA={{ label: "Get Started", href: "/get-started" }}
-        secondaryCTA={{ label: "View Packages", href: "/#packages" }}
+        badge="Networking"
+        accent="green"
+        visual={<NetworkVisual />}
       />
 
-      {/* Problem Section */}
-      <section className="border-t border-border py-20">
-        <div className="mx-auto max-w-6xl px-6">
-          <AnimateIn>
-            <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted">The Problem</p>
-            <h2 className="mt-2 font-heading text-3xl font-bold text-foreground">
-              The problem with builder-grade networking.
-            </h2>
-            <p className="mt-3 max-w-2xl text-muted">
-              ISP-provided equipment was never designed for how modern homes
-              actually use their network.
-            </p>
-          </AnimateIn>
-          <div className="mt-12 grid gap-6 sm:grid-cols-2">
-            {problems.map((p, i) => (
-              <AnimateIn key={p.title} delay={i * 100}>
-                <Card hover className="h-full border-orange/10">
-                  <h3 className="font-heading text-lg font-semibold text-foreground">
-                    {p.title}
-                  </h3>
-                  <p className="mt-2 text-sm leading-relaxed text-muted">
-                    {p.description}
-                  </p>
-                </Card>
-              </AnimateIn>
-            ))}
-          </div>
-        </div>
-      </section>
+      <PainPoints
+        heading="The problem with builder-grade networking."
+        subheading="ISP-provided equipment was never designed for how modern homes actually use their network."
+        items={painPoints}
+        accent="green"
+      />
 
-      {/* What's Included — numbered items */}
-      <section className="border-t border-border bg-surface py-20">
-        <div className="mx-auto max-w-4xl px-6">
-          <AnimateIn>
-            <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted">Included</p>
-            <h2 className="mt-2 font-heading text-3xl font-bold text-foreground">
-              What&apos;s included.
-            </h2>
-            <p className="mt-3 max-w-2xl text-muted">
-              Every network install is designed around your home&apos;s layout,
-              device count, and usage patterns. Not a cookie-cutter template.
-            </p>
-          </AnimateIn>
-          <div className="mt-12 space-y-0 divide-y divide-border">
-            {included.map((item, i) => (
-              <AnimateIn key={item.title} delay={i * 80}>
-                <div className="flex gap-6 py-8 first:pt-0 last:pb-0">
-                  <span className="font-mono text-2xl font-bold text-green/30">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <div className="flex-1">
-                    <div className="flex flex-wrap items-center gap-3">
-                      <h3 className="font-heading text-lg font-semibold text-foreground">
-                        {item.title}
-                      </h3>
-                      <Badge variant="purple">{item.badge}</Badge>
-                    </div>
-                    <p className="mt-2 text-sm leading-relaxed text-muted">
-                      {item.description}
-                    </p>
+      <ProcessSteps steps={[]} accent="green" />
+
+      <FeatureGrid features={features} accent="green" />
+
+      <SpecsTable label="Comparison" accent="green">
+        <div className="grid gap-5 md:grid-cols-3">
+          {[
+            {
+              tier: "ISP Router",
+              tagline: "What you have now",
+              specs: [
+                { label: "Devices", value: "10-15" },
+                { label: "VLANs", value: "None" },
+                { label: "WiFi", value: "1 SSID" },
+                { label: "Firewall", value: "Basic NAT" },
+                { label: "QoS", value: "None" },
+                { label: "Management", value: "Web only" },
+              ],
+            },
+            {
+              tier: "Foundation",
+              tagline: "Most popular",
+              specs: [
+                { label: "Devices", value: "50+" },
+                { label: "VLANs", value: "3-4" },
+                { label: "WiFi", value: "1-2 APs" },
+                { label: "Firewall", value: "Stateful + Rules" },
+                { label: "QoS", value: "Smart Queue" },
+                { label: "Management", value: "Full Dashboard" },
+              ],
+            },
+            {
+              tier: "Backbone",
+              tagline: "Smart home ready",
+              specs: [
+                { label: "Devices", value: "100+" },
+                { label: "VLANs", value: "5+" },
+                { label: "WiFi", value: "2-4 APs" },
+                { label: "Firewall", value: "DPI + IDS/IPS" },
+                { label: "QoS", value: "Per-VLAN Rules" },
+                { label: "Management", value: "Remote + Alerts" },
+              ],
+            },
+          ].map((col) => (
+            <div
+              key={col.tier}
+              className="rounded-xl border border-border bg-surface-light p-6"
+            >
+              <h4 className="font-heading text-lg font-semibold text-foreground">
+                {col.tier}
+              </h4>
+              <p className="mt-1 text-xs text-muted">{col.tagline}</p>
+              <div className="mt-5 space-y-3">
+                {col.specs.map((s) => (
+                  <div key={s.label} className="flex justify-between text-sm">
+                    <span className="text-muted">{s.label}</span>
+                    <span className="font-medium text-foreground">{s.value}</span>
                   </div>
-                </div>
-              </AnimateIn>
-            ))}
-          </div>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
-      </section>
+      </SpecsTable>
 
-      {/* Pricing */}
-      <section className="border-t border-border py-16">
-        <div className="mx-auto max-w-3xl px-6 text-center">
-          <AnimateIn variant="scale-in">
-            <p className="text-sm font-medium uppercase tracking-widest text-purple">
-              Starting Price
-            </p>
-            <p className="mt-3 font-heading text-5xl font-bold text-foreground md:text-6xl">
-              <span className="text-orange glow-text">$799</span>
-            </p>
-            <p className="mt-2 text-lg text-muted">Foundation Network Upgrade</p>
-            <p className="mx-auto mt-4 max-w-xl text-sm text-muted">
-              Includes network assessment, router/firewall configuration, 1-2 AP
-              installs, VLAN segmentation, and clean cable management. Hardware
-              billed separately or bundled.
-            </p>
-          </AnimateIn>
-        </div>
-      </section>
+      <FAQAccordion faqs={faqs} accent="green" />
+
+      <PricingCard pricing={pricing} accent="green" />
 
       <CTABand
         headline="Ready to replace your ISP router?"

@@ -32,6 +32,12 @@ const config: Config = {
           dark: '#c2410c',
           muted: '#9a3412',
         },
+        cyan: {
+          DEFAULT: '#06b6d4',
+          dark: '#0891b2',
+          muted: '#164e63',
+          vivid: '#22d3ee',
+        },
       },
       fontFamily: {
         heading: ['var(--font-syne)', 'sans-serif'],
@@ -43,6 +49,7 @@ const config: Config = {
         'glow-lg': '0 0 40px rgba(34, 197, 94, 0.2), 0 0 80px rgba(34, 197, 94, 0.1)',
         'glow-purple': '0 0 20px rgba(147, 51, 234, 0.15)',
         'glow-orange': '0 0 20px rgba(234, 88, 12, 0.15)',
+        'glow-cyan': '0 0 20px rgba(6, 182, 212, 0.15)',
         'inner-glow': 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
       },
       backgroundImage: {
@@ -63,11 +70,26 @@ const config: Config = {
           '0%, 100%': { boxShadow: '0 0 20px rgba(34, 197, 94, 0.15)' },
           '50%': { boxShadow: '0 0 40px rgba(34, 197, 94, 0.3), 0 0 80px rgba(34, 197, 94, 0.1)' },
         },
+        'line-draw': {
+          '0%': { strokeDashoffset: '100' },
+          '100%': { strokeDashoffset: '0' },
+        },
+        'scan-beam': {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(100%)' },
+        },
+        'pulse-node': {
+          '0%, 100%': { r: '3', opacity: '0.6' },
+          '50%': { r: '5', opacity: '1' },
+        },
       },
       animation: {
         'fade-in-up': 'fade-in-up 0.6s ease-out forwards',
         'gradient-shift': 'gradient-shift 8s ease infinite',
         'pulse-glow': 'pulse-glow 3s ease-in-out infinite',
+        'line-draw': 'line-draw 2s ease-out forwards',
+        'scan-beam': 'scan-beam 3s ease-in-out infinite',
+        'pulse-node': 'pulse-node 2s ease-in-out infinite',
       },
     },
   },

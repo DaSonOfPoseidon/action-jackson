@@ -1,174 +1,234 @@
 import { Metadata } from "next";
-import { Hero } from "@/components/sections/Hero";
 import { CTABand } from "@/components/sections/CTABand";
-import { AnimateIn } from "@/components/AnimateIn";
-import { Card } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
+import { ServiceHero } from "@/components/sections/ServiceHero";
+import { PainPoints } from "@/components/sections/PainPoints";
+import { ProcessSteps } from "@/components/sections/ProcessSteps";
+import { FeatureGrid } from "@/components/sections/FeatureGrid";
+import { SpecsTable } from "@/components/sections/SpecsTable";
+import { FAQAccordion } from "@/components/sections/FAQAccordion";
+import { PricingCard } from "@/components/sections/PricingCard";
+import { SmartHomeVisual } from "@/components/icons";
+import type { PainPoint, Feature, FAQItem, PricingInfo } from "@/lib/services";
 
 export const metadata: Metadata = {
   title: "Smart Home Automation",
 };
 
-const problems = [
+const painPoints: PainPoint[] = [
   {
     title: "Congested Network, Broken Automations",
     description:
       "Smart devices crammed onto a consumer router with 40 other devices. Automations fail because the network can't handle the traffic reliably.",
+    icon: "fas fa-circle-exclamation",
   },
   {
     title: "Cloud Dependency",
     description:
       "Every device phones home to a different cloud service. Internet goes down, your lights stop working. Vendor kills the product, your investment is gone.",
+    icon: "fas fa-cloud-arrow-up",
   },
   {
     title: "No Isolation or Security",
     description:
       "That cheap smart plug from Amazon has direct network access to your work laptop, NAS, and personal data. No segmentation, no firewall rules.",
+    icon: "fas fa-shield-halved",
   },
   {
     title: "Fragmented Control",
     description:
       "Five different apps to control five different brands. No unified dashboard, no cross-device automations, no central management.",
+    icon: "fas fa-puzzle-piece",
   },
 ];
 
-const included = [
+const features: Feature[] = [
   {
     title: "Managed PoE Switch",
-    description:
-      "Enterprise-grade managed switch powers your access points, cameras, and wired devices over a single ethernet cable. Clean, centralized power and data.",
+    summary: "Enterprise-grade managed switch for centralized power and data.",
+    detail:
+      "Powers your access points, cameras, and wired devices over a single low-voltage cable. VLAN-aware with port isolation, PoE budgeting, and traffic monitoring.",
+    icon: "fas fa-server",
     badge: "Infrastructure",
   },
   {
     title: "Dedicated IoT VLAN",
-    description:
-      "Smart devices get their own isolated network segment. They can reach the internet and your automation hub, but they cannot touch your personal devices.",
+    summary: "Smart devices on their own isolated network segment.",
+    detail:
+      "They can reach the internet and your automation hub, but they cannot touch your personal devices. mDNS reflection configured so casting and discovery still work.",
+    icon: "fas fa-diagram-project",
     badge: "Security",
   },
   {
     title: "Home Assistant Setup",
-    description:
-      "Local-first automation hub that runs without the cloud. Control Zigbee, Z-Wave, WiFi, and Matter devices from a single dashboard with full automation support.",
+    summary: "Local-first automation hub that runs without the cloud.",
+    detail:
+      "Control Zigbee, Z-Wave, WiFi, and Matter devices from a single dashboard. Full automation support with YAML or visual editor. Runs on dedicated hardware or VM.",
+    icon: "fas fa-house-signal",
     badge: "Automation",
   },
   {
     title: "Structured Panel Cleanup",
-    description:
-      "Organize the rats nest in your structured media panel. Proper patch panel, labeled connections, and clean cable routing for easy future expansion.",
+    summary: "Organize the rats nest in your structured media panel.",
+    detail:
+      "Proper patch panel, labeled connections, and clean cable routing for easy future expansion. Low-voltage structured cabling with professional termination.",
+    icon: "fas fa-toolbox",
     badge: "Infrastructure",
   },
   {
     title: "2-4 Access Point Installs",
-    description:
-      "Ceiling or wall-mounted APs with hardwired backhaul for full-home coverage. Positioned based on your floor plan and device density, not guesswork.",
+    summary: "Ceiling or wall-mounted APs with hardwired backhaul.",
+    detail:
+      "Positioned based on your floor plan and device density, not guesswork. Each AP connects via a dedicated low-voltage cable run from the structured panel.",
+    icon: "fas fa-wifi",
     badge: "Coverage",
   },
   {
     title: "Remote Management",
-    description:
-      "Optional secure remote access to manage your network and automations from anywhere. Monitor device health, update configurations, and troubleshoot remotely.",
+    summary: "Optional secure remote access for management.",
+    detail:
+      "Monitor device health, update configurations, and troubleshoot remotely. VPN or Cloudflare Tunnel access without exposing ports to the internet.",
+    icon: "fas fa-globe",
     badge: "Optional",
   },
 ];
 
+const protocols = [
+  {
+    name: "Zigbee",
+    range: "10-20m",
+    mesh: "Yes",
+    power: "Ultra-low",
+    devices: "Sensors, lights, locks",
+    supported: true,
+  },
+  {
+    name: "Z-Wave",
+    range: "30m",
+    mesh: "Yes",
+    power: "Low",
+    devices: "Locks, thermostats, blinds",
+    supported: true,
+  },
+  {
+    name: "WiFi",
+    range: "50m+",
+    mesh: "No",
+    power: "High",
+    devices: "Cameras, plugs, displays",
+    supported: true,
+  },
+  {
+    name: "Matter",
+    range: "Varies",
+    mesh: "Thread",
+    power: "Low",
+    devices: "Next-gen unified devices",
+    supported: true,
+  },
+  {
+    name: "Thread",
+    range: "15m",
+    mesh: "Yes",
+    power: "Ultra-low",
+    devices: "Sensors, locks, lights",
+    supported: true,
+  },
+];
+
+const faqs: FAQItem[] = [
+  {
+    question: "Do I need to replace my existing smart devices?",
+    answer:
+      "Usually not. Home Assistant supports 2,000+ integrations. Most WiFi, Zigbee, Z-Wave, and Matter devices work out of the box. We'll audit your devices during the site survey.",
+  },
+  {
+    question: "What if my internet goes down?",
+    answer:
+      "Home Assistant runs locally. All local automations (lights, locks, sensors) continue to work without internet. Cloud-dependent devices (voice assistants, some cameras) will be limited.",
+  },
+  {
+    question: "Can I still use Alexa/Google Home for voice control?",
+    answer:
+      "Yes. Home Assistant integrates with both Alexa and Google Home. You can use voice control while keeping all automation logic local and private.",
+  },
+  {
+    question: "How complex can automations get?",
+    answer:
+      "As complex as you want. From simple schedules to multi-condition automations triggered by motion, time, weather, presence, or device state. Visual editor for simple flows, YAML for advanced logic.",
+  },
+  {
+    question: "What hardware runs Home Assistant?",
+    answer:
+      "We recommend a dedicated mini PC or Home Assistant Yellow for reliability. It can also run on a Raspberry Pi 4/5, NAS, or as a VM. Dedicated hardware ensures best performance and uptime.",
+  },
+];
+
+const pricing: PricingInfo = {
+  label: "Starting Price",
+  price: "$1,500",
+  description: "Smart Home Backbone Package",
+  inclusions: [
+    "Full network redesign and VLAN segmentation",
+    "Managed PoE switch installation",
+    "2-4 access point installs with hardwired backhaul",
+    "Structured media panel cleanup",
+    "Home Assistant setup and configuration",
+    "Hardware billed separately or bundled",
+  ],
+};
+
 export default function SmartHomePage() {
   return (
     <>
-      <Hero
+      <ServiceHero
         title="Smart Home Infrastructure That Actually Works."
         subtitle="Stop adding smart devices to a network that can't support them. Build the backbone first."
-        primaryCTA={{ label: "Get Started", href: "/get-started" }}
-        secondaryCTA={{ label: "View Packages", href: "/#packages" }}
+        badge="Smart Home"
+        accent="purple"
+        visual={<SmartHomeVisual />}
       />
 
-      {/* Problem Section */}
-      <section className="border-t border-border py-20">
-        <div className="mx-auto max-w-6xl px-6">
-          <AnimateIn>
-            <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted">The Problem</p>
-            <h2 className="mt-2 font-heading text-3xl font-bold text-foreground">
-              Smart devices, dumb infrastructure.
-            </h2>
-            <p className="mt-3 max-w-2xl text-muted">
-              Most smart home problems aren&apos;t device problems. They&apos;re
-              network problems.
-            </p>
-          </AnimateIn>
-          <div className="mt-12 grid gap-6 sm:grid-cols-2">
-            {problems.map((p, i) => (
-              <AnimateIn key={p.title} delay={i * 100}>
-                <Card hover className="h-full border-orange/10">
-                  <h3 className="font-heading text-lg font-semibold text-foreground">
-                    {p.title}
-                  </h3>
-                  <p className="mt-2 text-sm leading-relaxed text-muted">
-                    {p.description}
-                  </p>
-                </Card>
-              </AnimateIn>
-            ))}
-          </div>
-        </div>
-      </section>
+      <PainPoints
+        heading="Smart devices, dumb infrastructure."
+        subheading="Most smart home problems aren't device problems. They're network problems."
+        items={painPoints}
+        accent="purple"
+      />
 
-      {/* What's Included — numbered items */}
-      <section className="border-t border-border bg-surface py-20">
-        <div className="mx-auto max-w-4xl px-6">
-          <AnimateIn>
-            <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted">Included</p>
-            <h2 className="mt-2 font-heading text-3xl font-bold text-foreground">
-              What&apos;s included.
-            </h2>
-            <p className="mt-3 max-w-2xl text-muted">
-              A full network redesign built around your automation goals.
-              Everything from switching infrastructure to local automation
-              control.
-            </p>
-          </AnimateIn>
-          <div className="mt-12 space-y-0 divide-y divide-border">
-            {included.map((item, i) => (
-              <AnimateIn key={item.title} delay={i * 80}>
-                <div className="flex gap-6 py-8 first:pt-0 last:pb-0">
-                  <span className="font-mono text-2xl font-bold text-green/30">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <div className="flex-1">
-                    <div className="flex flex-wrap items-center gap-3">
-                      <h3 className="font-heading text-lg font-semibold text-foreground">
-                        {item.title}
-                      </h3>
-                      <Badge variant="purple">{item.badge}</Badge>
-                    </div>
-                    <p className="mt-2 text-sm leading-relaxed text-muted">
-                      {item.description}
-                    </p>
-                  </div>
-                </div>
-              </AnimateIn>
-            ))}
-          </div>
-        </div>
-      </section>
+      <ProcessSteps steps={[]} accent="purple" />
 
-      {/* Pricing */}
-      <section className="border-t border-border py-16">
-        <div className="mx-auto max-w-3xl px-6 text-center">
-          <AnimateIn variant="scale-in">
-            <p className="text-sm font-medium uppercase tracking-widest text-purple">
-              Starting Price
-            </p>
-            <p className="mt-3 font-heading text-5xl font-bold text-foreground md:text-6xl">
-              <span className="text-orange glow-text">$1,500</span>
-            </p>
-            <p className="mt-2 text-lg text-muted">Smart Home Backbone Package</p>
-            <p className="mx-auto mt-4 max-w-xl text-sm text-muted">
-              Full network redesign, managed PoE switch, 2-4 AP installs, VLAN
-              segmentation, structured panel cleanup, and Home Assistant setup.
-              Hardware billed separately or bundled.
-            </p>
-          </AnimateIn>
+      <FeatureGrid features={features} accent="purple" />
+
+      <SpecsTable label="Protocol Support" accent="purple">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border">
+                <th className="py-3 pr-4 text-left font-heading text-xs uppercase tracking-wider text-muted">Protocol</th>
+                <th className="px-4 py-3 text-left font-heading text-xs uppercase tracking-wider text-muted">Range</th>
+                <th className="px-4 py-3 text-left font-heading text-xs uppercase tracking-wider text-muted">Mesh</th>
+                <th className="px-4 py-3 text-left font-heading text-xs uppercase tracking-wider text-muted">Power</th>
+                <th className="px-4 py-3 text-left font-heading text-xs uppercase tracking-wider text-muted">Common Devices</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {protocols.map((p) => (
+                <tr key={p.name}>
+                  <td className="py-3 pr-4 font-medium text-foreground">{p.name}</td>
+                  <td className="px-4 py-3 text-muted">{p.range}</td>
+                  <td className="px-4 py-3 text-muted">{p.mesh}</td>
+                  <td className="px-4 py-3 text-muted">{p.power}</td>
+                  <td className="px-4 py-3 text-muted">{p.devices}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      </section>
+      </SpecsTable>
+
+      <FAQAccordion faqs={faqs} accent="purple" />
+
+      <PricingCard pricing={pricing} accent="purple" />
 
       <CTABand
         headline="Ready to build your smart home backbone?"

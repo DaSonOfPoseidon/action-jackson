@@ -1,185 +1,233 @@
 import { Metadata } from "next";
-import { Hero } from "@/components/sections/Hero";
 import { CTABand } from "@/components/sections/CTABand";
-import { AnimateIn } from "@/components/AnimateIn";
-import { Card } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
+import { ServiceHero } from "@/components/sections/ServiceHero";
+import { PainPoints } from "@/components/sections/PainPoints";
+import { ProcessSteps } from "@/components/sections/ProcessSteps";
+import { FeatureGrid } from "@/components/sections/FeatureGrid";
+import { SpecsTable } from "@/components/sections/SpecsTable";
+import { FAQAccordion } from "@/components/sections/FAQAccordion";
+import { PricingCard } from "@/components/sections/PricingCard";
+import { WiringVisual } from "@/components/icons";
+import type { PainPoint, Feature, FAQItem, PricingInfo } from "@/lib/services";
 
 export const metadata: Metadata = {
-  title: "Structured Wiring",
+  title: "Structured Cabling & Low Voltage",
 };
 
-const problems = [
+const painPoints: PainPoint[] = [
   {
     title: "WiFi-Only Bottleneck",
     description:
       "Your gaming PC, streaming box, and work desktop are all competing for wireless bandwidth. Hardwired connections deliver consistent, full-speed throughput with zero interference.",
+    icon: "fas fa-gauge-high",
   },
   {
     title: "No Wired Backhaul for APs",
     description:
       "Mesh systems using wireless backhaul lose 50% of bandwidth per hop. Hardwired access points deliver the full speed of your internet plan to every corner of the house.",
+    icon: "fas fa-wifi",
   },
   {
-    title: "Cameras Need PoE",
+    title: "Cameras & PoE Devices Need Cable",
     description:
-      "PoE cameras require ethernet runs to each location. Without structured cabling in place, camera installs require fishing cable through finished walls and attics.",
+      "PoE cameras, access points, and VoIP phones all require low-voltage cabling. Without structured cable runs in place, every new device means fishing cable through finished walls.",
+    icon: "fas fa-video",
   },
   {
     title: "No Future-Proofing",
     description:
-      "Builder-grade homes ship with coax and phone lines. Cat6 ethernet supports 10 Gbps and will outlast every wireless standard for the foreseeable future.",
+      "Builder-grade homes ship with coax and phone lines. Cat6 supports 10 Gbps and single mode fiber handles 100 Gbps+. Proper structured cabling outlasts every wireless standard.",
+    icon: "fas fa-forward",
   },
 ];
 
-const included = [
+const features: Feature[] = [
   {
-    title: "Cat6 Ethernet Drops",
-    description:
-      "Each drop is a dedicated Cat6 run from a central patch panel to the destination. Solid copper, rated for 10 Gbps at distances up to 55 meters.",
-    badge: "Cabling",
+    title: "Cat6 / Cat6a Data Drops",
+    summary: "Dedicated data cable runs from patch panel to destination.",
+    detail:
+      "Cat6 rated for 10 Gbps at 55m, Cat6a at 100m. Solid copper conductors with proper shielding. Each drop is a home run to the structured panel — no daisy chains, no splices.",
+    icon: "fas fa-ethernet",
+    badge: "Data Cabling",
+  },
+  {
+    title: "Single Mode Fiber Runs",
+    summary: "Future-proof fiber optic connections for high-bandwidth links.",
+    detail:
+      "Single mode fiber supports 100 Gbps+ over distances up to 10km. Ideal for building-to-building links, backbone connections between floors, or future-proofing critical paths.",
+    icon: "fas fa-bolt",
+    badge: "Fiber",
+  },
+  {
+    title: "Coax Distribution",
+    summary: "RG6 coax runs for antenna, cable TV, and MoCA.",
+    detail:
+      "Proper RG6 runs with compression fittings for OTA antenna distribution, cable TV, or MoCA network backhaul. Splitters, amplifiers, and grounding as needed.",
+    icon: "fas fa-satellite-dish",
+    badge: "Coax",
   },
   {
     title: "Patch Panel Termination",
-    description:
-      "All cables terminate at a structured patch panel with proper strain relief. Clean, organized, and ready for expansion without retermination.",
+    summary: "All cables terminate at a structured patch panel.",
+    detail:
+      "Proper strain relief, clean organization, and labeled ports for easy expansion. Keystone or punch-down depending on panel type. Ready for future additions without retermination.",
+    icon: "fas fa-server",
     badge: "Infrastructure",
   },
   {
     title: "Wall Plate Installation",
-    description:
-      "Low-voltage wall plates with keystone jacks at each drop location. Flush-mount finish that looks clean and professional in any room.",
+    summary: "Low-voltage wall plates with keystone jacks at each location.",
+    detail:
+      "Flush-mount finish that looks clean and professional in any room. Support for data, coax, and fiber keystones in the same plate. Old-work or new-work boxes as needed.",
+    icon: "fas fa-plug",
     badge: "Finish Work",
   },
   {
-    title: "Cable Management",
-    description:
-      "Proper cable routing through attic, crawlspace, or conduit. Bundled, secured, and separated from electrical where required by code.",
-    badge: "Installation",
-  },
-  {
-    title: "Labeling & Documentation",
-    description:
-      "Every cable, patch panel port, and wall plate is labeled with a consistent naming scheme. Documentation provided so you know exactly what goes where.",
-    badge: "Documentation",
-  },
-  {
     title: "Testing & Certification",
-    description:
-      "Every run is tested end-to-end for continuity, speed rating, and proper pin configuration before the job is closed out.",
+    summary: "Every run tested end-to-end before the job is closed out.",
+    detail:
+      "Continuity, speed rating, proper pin configuration, and signal quality verified on every cable. Test results documented and provided with the install package.",
+    icon: "fas fa-clipboard-check",
     badge: "Quality",
   },
 ];
 
+const cableTypes = [
+  {
+    type: "Cat6",
+    speed: "10 Gbps",
+    distance: "55m (10G) / 100m (1G)",
+    useCase: "Data drops, PoE devices, AP backhaul",
+    price: "$150 / drop",
+  },
+  {
+    type: "Cat6a",
+    speed: "10 Gbps",
+    distance: "100m",
+    useCase: "Long runs, 10G backbones, high-PoE",
+    price: "$200 / drop",
+  },
+  {
+    type: "Single Mode Fiber",
+    speed: "100 Gbps+",
+    distance: "10km+",
+    useCase: "Building links, backbone, future-proof",
+    price: "$300+ / run",
+  },
+  {
+    type: "RG6 Coax",
+    speed: "3 Gbps (MoCA 2.5)",
+    distance: "100m",
+    useCase: "Antenna, cable TV, MoCA network",
+    price: "$125 / drop",
+  },
+];
+
+const faqs: FAQItem[] = [
+  {
+    question: "What's the difference between Cat6 and Cat6a?",
+    answer:
+      "Both support 10 Gbps, but Cat6 is limited to 55 meters at that speed while Cat6a supports the full 100 meters. Cat6a also has better shielding against crosstalk. For most residential drops, Cat6 is sufficient.",
+  },
+  {
+    question: "Do I need fiber in my house?",
+    answer:
+      "For most homes, Cat6/Cat6a handles everything. Fiber makes sense for building-to-building links (house to detached garage/office), backbone connections between floors in large homes, or if you want 10/25/100G capacity on specific paths.",
+  },
+  {
+    question: "Can you run cable through finished walls?",
+    answer:
+      "Yes. Most runs go through the attic, crawlspace, or existing conduit. Difficult routes (no attic access, exterior walls, concrete) take more time and are priced accordingly.",
+  },
+  {
+    question: "How many drops do I need?",
+    answer:
+      "At minimum: one per access point location, one per camera location, and one per room where you want hardwired devices (office, entertainment center, gaming setup). We'll recommend a plan during the site survey.",
+  },
+  {
+    question: "Is coax still useful?",
+    answer:
+      "Absolutely. RG6 coax is essential for OTA antenna distribution and MoCA 2.5 provides 2.5 Gbps network backhaul using existing coax — useful when running new data cable isn't practical.",
+  },
+  {
+    question: "Do you handle permits and code compliance?",
+    answer:
+      "Low-voltage cabling typically doesn't require permits in most jurisdictions. All installs follow NEC low-voltage separation requirements and manufacturer specifications for bend radius and cable support.",
+  },
+];
+
+const pricing: PricingInfo = {
+  label: "Starting Price",
+  price: "$150",
+  unit: "/ drop",
+  description: "Standard attic-access data drop",
+  inclusions: [
+    "Cat6 cable run from patch panel to wall plate",
+    "Patch panel termination with strain relief",
+    "Keystone jack and low-voltage wall plate",
+    "Proper cable routing and support",
+    "Labeling and documentation",
+    "End-to-end testing and certification",
+  ],
+  note: "Difficult wall routes (no attic access, exterior walls, concrete) priced at $200-$300 per drop. Cat6a, fiber, and coax priced individually. Volume discount available for 4+ drops.",
+};
+
 export default function WiringPage() {
   return (
     <>
-      <Hero
-        title="Structured Cabling & Ethernet Drops."
-        subtitle="Hardwired connections for maximum performance. Clean installs with proper termination and labeling."
-        primaryCTA={{ label: "Get Started", href: "/get-started" }}
-        secondaryCTA={{ label: "View Packages", href: "/#packages" }}
+      <ServiceHero
+        title="Structured Cabling & Low-Voltage Networking."
+        subtitle="Cat6, Cat6a, single mode fiber, and coax. Clean installs with professional termination, testing, and documentation."
+        badge="Structured Cabling"
+        accent="cyan"
+        visual={<WiringVisual />}
       />
 
-      {/* Problem Section */}
-      <section className="border-t border-border py-20">
-        <div className="mx-auto max-w-6xl px-6">
-          <AnimateIn>
-            <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted">The Problem</p>
-            <h2 className="mt-2 font-heading text-3xl font-bold text-foreground">
-              Why wired still wins.
-            </h2>
-            <p className="mt-3 max-w-2xl text-muted">
-              WiFi is convenient. Ethernet is reliable. The best networks use
-              both, with wired infrastructure as the backbone.
-            </p>
-          </AnimateIn>
-          <div className="mt-12 grid gap-6 sm:grid-cols-2">
-            {problems.map((p, i) => (
-              <AnimateIn key={p.title} delay={i * 100}>
-                <Card hover className="h-full border-orange/10">
-                  <h3 className="font-heading text-lg font-semibold text-foreground">
-                    {p.title}
-                  </h3>
-                  <p className="mt-2 text-sm leading-relaxed text-muted">
-                    {p.description}
-                  </p>
-                </Card>
-              </AnimateIn>
-            ))}
-          </div>
-        </div>
-      </section>
+      <PainPoints
+        heading="Why wired infrastructure still wins."
+        subheading="WiFi is convenient. Structured cabling is reliable. The best networks use both, with low-voltage wiring as the backbone."
+        items={painPoints}
+        accent="cyan"
+      />
 
-      {/* What's Included — numbered items */}
-      <section className="border-t border-border bg-surface py-20">
-        <div className="mx-auto max-w-4xl px-6">
-          <AnimateIn>
-            <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted">Included</p>
-            <h2 className="mt-2 font-heading text-3xl font-bold text-foreground">
-              What&apos;s included.
-            </h2>
-            <p className="mt-3 max-w-2xl text-muted">
-              Every drop is a complete installation from patch panel to wall
-              plate. Tested, labeled, and documented.
-            </p>
-          </AnimateIn>
-          <div className="mt-12 space-y-0 divide-y divide-border">
-            {included.map((item, i) => (
-              <AnimateIn key={item.title} delay={i * 80}>
-                <div className="flex gap-6 py-8 first:pt-0 last:pb-0">
-                  <span className="font-mono text-2xl font-bold text-green/30">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <div className="flex-1">
-                    <div className="flex flex-wrap items-center gap-3">
-                      <h3 className="font-heading text-lg font-semibold text-foreground">
-                        {item.title}
-                      </h3>
-                      <Badge variant="purple">{item.badge}</Badge>
-                    </div>
-                    <p className="mt-2 text-sm leading-relaxed text-muted">
-                      {item.description}
-                    </p>
-                  </div>
-                </div>
-              </AnimateIn>
-            ))}
-          </div>
-        </div>
-      </section>
+      <ProcessSteps steps={[]} accent="cyan" />
 
-      {/* Pricing */}
-      <section className="border-t border-border py-16">
-        <div className="mx-auto max-w-3xl px-6 text-center">
-          <AnimateIn variant="scale-in">
-            <p className="text-sm font-medium uppercase tracking-widest text-purple">
-              Starting Price
-            </p>
-            <p className="mt-3 font-heading text-5xl font-bold text-foreground md:text-6xl">
-              <span className="text-orange glow-text">$150</span>
-              <span className="text-2xl text-muted"> / drop</span>
-            </p>
-            <p className="mt-2 text-lg text-muted">
-              Standard attic-access ethernet drop
-            </p>
-            <div className="mx-auto mt-6 max-w-xl glass rounded-lg px-6 py-4">
-              <p className="text-sm text-muted">
-                Difficult wall routes (no attic access, exterior walls, concrete)
-                priced at{" "}
-                <span className="font-semibold text-foreground">
-                  $200&ndash;$300
-                </span>{" "}
-                per drop. Volume discount available for 4+ drops.
-              </p>
-            </div>
-          </AnimateIn>
+      <FeatureGrid features={features} accent="cyan" />
+
+      <SpecsTable label="Cable Comparison" accent="cyan">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border">
+                <th className="py-3 pr-4 text-left font-heading text-xs uppercase tracking-wider text-muted">Cable Type</th>
+                <th className="px-4 py-3 text-left font-heading text-xs uppercase tracking-wider text-muted">Max Speed</th>
+                <th className="px-4 py-3 text-left font-heading text-xs uppercase tracking-wider text-muted">Max Distance</th>
+                <th className="px-4 py-3 text-left font-heading text-xs uppercase tracking-wider text-muted">Use Case</th>
+                <th className="px-4 py-3 text-left font-heading text-xs uppercase tracking-wider text-muted">Price Range</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {cableTypes.map((c) => (
+                <tr key={c.type}>
+                  <td className="py-3 pr-4 font-medium text-foreground">{c.type}</td>
+                  <td className="px-4 py-3 font-mono text-cyan">{c.speed}</td>
+                  <td className="px-4 py-3 text-muted">{c.distance}</td>
+                  <td className="px-4 py-3 text-muted">{c.useCase}</td>
+                  <td className="px-4 py-3 text-muted">{c.price}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      </section>
+      </SpecsTable>
+
+      <FAQAccordion faqs={faqs} accent="cyan" />
+
+      <PricingCard pricing={pricing} accent="cyan" />
 
       <CTABand
-        headline="Ready to hardwire your home?"
-        subtext="Schedule a consultation and get a custom cabling proposal within 24 hours."
+        headline="Ready to wire your home properly?"
+        subtext="Schedule a consultation and get a custom structured cabling proposal within 24 hours."
       />
     </>
   );

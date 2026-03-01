@@ -1,6 +1,6 @@
 interface BadgeProps {
   children: React.ReactNode;
-  variant?: "default" | "green" | "purple" | "orange" | "glow";
+  variant?: "default" | "green" | "purple" | "orange" | "cyan" | "glow";
   className?: string;
 }
 
@@ -9,6 +9,7 @@ const variants = {
   green: "bg-green-muted/30 text-green border-green/20 backdrop-blur-sm",
   purple: "bg-purple-muted/30 text-purple border-purple/20 backdrop-blur-sm",
   orange: "bg-orange-muted/30 text-orange border-orange/20 backdrop-blur-sm",
+  cyan: "bg-cyan-muted/30 text-cyan border-cyan/20 backdrop-blur-sm",
   glow: "bg-green-muted/30 text-green-vivid border-green/30 backdrop-blur-sm shadow-glow",
 };
 
