@@ -6,9 +6,9 @@
       <div class="error-icon">
         <i class="fas fa-exclamation-triangle"></i>
       </div>
-      
+
       <h1 class="error-title">Oops! Something went wrong</h1>
-      
+
       <p class="error-message">
         <% if (locals.message) { %>
           <%= message %>
@@ -16,81 +16,46 @@
           We're experiencing technical difficulties. Our team has been notified and is working to fix this issue.
         <% } %>
       </p>
-      
+
       <div class="error-code">
         <span>Error Code: <%= locals.statusCode || 500 %></span>
       </div>
-      
+
       <div class="error-actions">
         <a href="/" class="contrast error-btn-primary">
           <i class="fas fa-home"></i>
           Go Home
         </a>
-        
-        <% if (variant === 'portfolio') { %>
-          <a href="https://github.com/DaSonOfPoseidon/action-jackson/issues" class="error-btn-secondary" target="_blank" rel="noopener">
-            <i class="fab fa-github"></i>
-            Report Issue
-          </a>
-        <% } else { %>
-          <button id="goBackBtn" class="error-btn-secondary">
-            <i class="fas fa-arrow-left"></i>
-            Go Back
-          </button>
-        <% } %>
+
+        <button id="goBackBtn" class="error-btn-secondary">
+          <i class="fas fa-arrow-left"></i>
+          Go Back
+        </button>
       </div>
-      
+
       <details class="error-details">
         <summary>Technical Details</summary>
         <div class="tech-info">
           <p><strong>Time:</strong> <span id="errorTime"></span></p>
           <p><strong>Page:</strong> <span id="errorPath"></span></p>
-          <% if (variant === 'portfolio') { %>
-            <p><strong>User Agent:</strong> <span id="userAgent"></span></p>
-          <% } %>
         </div>
       </details>
     </div>
-    
+
     <div class="error-illustration">
-      <% if (variant === 'portfolio') { %>
-        <!-- Developer-themed illustration -->
-        <div class="code-error">
-          <div class="terminal">
-            <div class="terminal-header">
-              <span class="terminal-dot red"></span>
-              <span class="terminal-dot yellow"></span>
-              <span class="terminal-dot green"></span>
-            </div>
-            <div class="terminal-body">
-              <div class="terminal-line">
-                <span class="prompt">$</span> npm run server
-              </div>
-              <div class="terminal-line error-line">
-                <span class="error-text">ERROR: Something went wrong!</span>
-              </div>
-              <div class="terminal-line">
-                <span class="prompt">$</span> <span class="cursor">█</span>
-              </div>
-            </div>
-          </div>
+      <div class="tools-error">
+        <div class="tool-icon">
+          <i class="fas fa-tools"></i>
         </div>
-      <% } else { %>
-        <!-- Business-themed illustration -->
-        <div class="tools-error">
-          <div class="tool-icon">
-            <i class="fas fa-tools"></i>
-          </div>
-          <div class="sparks">
-            <div class="spark"></div>
-            <div class="spark"></div>
-            <div class="spark"></div>
-          </div>
+        <div class="sparks">
+          <div class="spark"></div>
+          <div class="spark"></div>
+          <div class="spark"></div>
         </div>
-      <% } %>
+      </div>
     </div>
   </section>
-  
+
   <section class="error-help">
     <h2>What can you do?</h2>
     <div class="help-cards">
@@ -99,83 +64,48 @@
         <h3>Refresh the page</h3>
         <p>Sometimes a simple refresh fixes temporary issues.</p>
       </article>
-      
+
       <article class="help-card">
         <i class="fas fa-clock"></i>
         <h3>Try again later</h3>
         <p>We might be performing maintenance or updates.</p>
       </article>
-      
-      <% if (variant === 'business') { %>
-        <article class="help-card">
-          <i class="fas fa-phone"></i>
-          <h3>Contact us</h3>
-          <p>If this persists, reach out and we'll help you directly.</p>
-        </article>
-      <% } else { %>
-        <article class="help-card">
-          <i class="fab fa-github"></i>
-          <h3>Report a bug</h3>
-          <p>Help improve the site by reporting this issue on GitHub.</p>
-        </article>
-      <% } %>
+
+      <article class="help-card">
+        <i class="fas fa-phone"></i>
+        <h3>Contact us</h3>
+        <p>If this persists, reach out and we'll help you directly.</p>
+      </article>
     </div>
   </section>
 </main>
 
 <script>
-  // Populate technical details when DOM is ready
   document.addEventListener('DOMContentLoaded', function() {
-    // Populate error time
-    const errorTimeEl = document.getElementById('errorTime');
+    var errorTimeEl = document.getElementById('errorTime');
     if (errorTimeEl) {
       errorTimeEl.textContent = new Date().toLocaleString();
     }
-    
-    // Populate error path
-    const errorPathEl = document.getElementById('errorPath');
+
+    var errorPathEl = document.getElementById('errorPath');
     if (errorPathEl) {
       errorPathEl.textContent = window.location.pathname;
     }
-    
-    <% if (variant === 'portfolio') { %>
-      // Populate user agent for portfolio variant
-      const userAgentEl = document.getElementById('userAgent');
-      if (userAgentEl) {
-        const userAgent = navigator.userAgent;
-        userAgentEl.textContent = userAgent.length > 80 ? 
-          userAgent.substring(0, 80) + '...' : userAgent;
-      }
-    <% } %>
-  });
-  
-  // Add keyboard refresh functionality
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'r' && (e.ctrlKey || e.metaKey)) {
-      e.preventDefault();
-      window.location.reload();
-    }
-  });
-  
-  // Add click refresh functionality to refresh card
-  document.addEventListener('DOMContentLoaded', function() {
-    const refreshCard = document.querySelector('.help-card:first-child');
+
+    var refreshCard = document.querySelector('.help-card:first-child');
     if (refreshCard) {
       refreshCard.style.cursor = 'pointer';
       refreshCard.addEventListener('click', function() {
         window.location.reload();
       });
     }
-    
-    // Add go back functionality
-    const goBackBtn = document.getElementById('goBackBtn');
+
+    var goBackBtn = document.getElementById('goBackBtn');
     if (goBackBtn) {
       goBackBtn.addEventListener('click', function() {
-        // Check if there's history to go back to
         if (window.history.length > 1) {
           window.history.back();
         } else {
-          // If no history, go to home page
           window.location.href = '/';
         }
       });

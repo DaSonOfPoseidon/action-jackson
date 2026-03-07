@@ -10,9 +10,8 @@
   <meta property="og:url" content="https://actionjacksoninstalls.com/" />
   <meta property="og:image" content="https://actionjacksoninstalls.com/preview.png" />
   <%
-  const defaultPageTitle = variant === 'portfolio' ? 'Action Jackson Builds' : 'Action Jackson Installs';
-  const pageTitle = title || defaultPageTitle;
-  const siteName = variant === 'portfolio' ? 'Action Jackson Builds' : 'Action Jackson Installs';
+  const pageTitle = title || 'Action Jackson Installs';
+  const siteName = 'Action Jackson Installs';
   %>
   <title><%= pageTitle %> | <%= siteName %></title>
 
@@ -25,7 +24,7 @@
   />
   <!-- custom overrides -->
   <link rel="stylesheet" href="/styles/base.css">
-  <link rel="stylesheet" href="/styles/<%= variant === 'portfolio' ? 'software' : 'business' %>.css">
+  <link rel="stylesheet" href="/styles/business.css">
 
   <!-- Font Awesome Kit  -->
   <script
@@ -37,24 +36,13 @@
   <header>
     <nav class="container">
       <a href="/" class="contrast brand">
-        <% if (variant === 'portfolio') { %>
-          Action Jackson Builds
-        <% } else { %>
-          Action Jackson Installs
-        <% } %>
+        Action Jackson Installs
       </a>
       <ul>
-        <% if (variant === 'business') { %>
-          <li><a href="/">Home</a></li>
-          <li><a href="/about">About</a></li>
-          <li><a href="/estimate">Estimate</a></li>
-          <li><a href="/quotes" class="contrast">Get Connected</a></li>
-        <% } else { %>
-          <!-- Portfolio nav -->
-          <li><a href="https://www.linkedin.com/in/jackson-keithley-115582213/" target="_blank" rel="noopener noreferrer">LinkedIn</a></li>
-          <li><a href="https://github.com/DaSonOfPoseidon" target="_blank" rel="noopener noreferrer">GitHub</a></li>
-          <li><a href="/resume.pdf" download>Resume</a></li>
-        <% } %>
+        <li><a href="/">Home</a></li>
+        <li><a href="/about">About</a></li>
+        <li><a href="/estimate">Estimate</a></li>
+        <li><a href="/quotes" class="contrast">Get Connected</a></li>
       </ul>
     </nav>
   </header>

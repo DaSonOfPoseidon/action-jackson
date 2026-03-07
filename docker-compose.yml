@@ -43,10 +43,22 @@ services:
       start_period: 10s
     networks:
       - app-network
+
+  portfolio:
+    build: ./portfolio
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3002/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - app-network
     labels:
       cloudflare-tunnel.enable: "true"
       cloudflare-tunnel.subdomain: "dev"
-      cloudflare-tunnel.port: "3001"
+      cloudflare-tunnel.port: "3002"
 
   frontend:
     build: ./frontend

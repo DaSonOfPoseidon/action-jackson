@@ -78,24 +78,10 @@ app.use(session({
   rolling: true // Reset expiration on activity
 }));
 
-// Subdomain-based variant detection: sets which "half" of the site we're on and the switcher URL
+// Set variant for EJS templates (error pages, admin)
 app.use((req, res, next) => {
-  const subdomains = req.subdomains || [];
-  const hostname = req.hostname || req.get('host') || '';
-  
-  // Debug logging
-  //console.log('Host:', req.get('host'));
-  //console.log('Hostname:', hostname);
-  //console.log('Subdomains:', subdomains);
-  
-  // Check if hostname starts with 'dev.' or includes 'dev'
-  const isPortfolio = subdomains.includes('dev') || hostname.startsWith('dev.');
-  res.locals.variant = isPortfolio ? 'portfolio' : 'business';
-  res.locals.switcherUrl = res.locals.variant === 'business'
-    ? 'https://dev.actionjacksoninstalls.com'
-    : 'https://actionjacksoninstalls.com';
-    
-  //console.log('Variant:', res.locals.variant);
+  res.locals.variant = 'business';
+  res.locals.switcherUrl = 'https://dev.actionjacksoninstalls.com';
   next();
 });
 
@@ -141,35 +127,6 @@ app.use('/api/consultations', consultationRoutes);
 app.use('/auth', authRoutes);
 app.use('/admin', adminRoutes);
 
-// Home
-app.get('/', (req, res) => {
-  if (res.locals.variant === 'portfolio') {
-    res.render('portfolio', { title: 'Action Jackson Builds' });
-  } else {
-    res.render('index', { title: 'Home' });
-  }
-});
-
-// Scheduling - redirect to quotes flow
-app.get('/scheduling', (req, res) => {
-  res.redirect('/quotes');
-});
-
-// Quotes
-app.get('/quotes', (req, res) => {
-  res.render('quotes', { title: 'Get Connected' });
-});
-
-// Estimate Builder
-app.get('/estimate', (req, res) => {
-  res.render('estimate', { title: 'Estimate Builder' });
-});
-
-// About
-app.get('/about', (req, res) => {
-  res.render('about', { title: 'About' });
-});
-
 app.get('/healthz', async (req, res) => {
   const payload = { app: 'ok', db: null };
   let healthy = true;
@@ -196,20 +153,9 @@ app.use((err, req, res, next) => {
   console.error(err.stack);
   const statusCode = err.status || err.statusCode || 500;
   const message = statusCode === 500 ? 'Something went wrong on our end.' : err.message;
-  
-  // Determine variant if not already set
-  if (!res.locals.variant) {
-    const hostname = req.hostname || req.get('host') || '';
-    const subdomains = hostname.split('.').slice(0, -2);
-    const isPortfolio = subdomains.includes('dev') || hostname.startsWith('dev.');
-    res.locals.variant = isPortfolio ? 'portfolio' : 'business';
-    res.locals.switcherUrl = res.locals.variant === 'business'
-      ? 'https://dev.actionjacksoninstalls.com'
-      : 'https://actionjacksoninstalls.com';
-  }
-  
-  res.status(statusCode).render('error', { 
-    title: `Error ${statusCode}`, 
+
+  res.status(statusCode).render('error', {
+    title: `Error ${statusCode}`,
     message: message,
     statusCode: statusCode,
     variant: res.locals.variant,
@@ -219,19 +165,8 @@ app.use((err, req, res, next) => {
 
 // 404 handler (must be last)
 app.use((req, res) => {
-  // Determine variant if not already set
-  if (!res.locals.variant) {
-    const hostname = req.hostname || req.get('host') || '';
-    const subdomains = hostname.split('.').slice(0, -2);
-    const isPortfolio = subdomains.includes('dev') || hostname.startsWith('dev.');
-    res.locals.variant = isPortfolio ? 'portfolio' : 'business';
-    res.locals.switcherUrl = res.locals.variant === 'business'
-      ? 'https://dev.actionjacksoninstalls.com'
-      : 'https://actionjacksoninstalls.com';
-  }
-
-  res.status(404).render('error', { 
-    title: 'Page Not Found', 
+  res.status(404).render('error', {
+    title: 'Page Not Found',
     message: 'The page you\'re looking for doesn\'t exist.',
     statusCode: 404,
     variant: res.locals.variant,

@@ -35,48 +35,15 @@ describe('Server Middleware and Routes', () => {
     });
   });
 
-  describe('Domain Variant Detection', () => {
-    test('should set business variant for main domain', async () => {
-      const response = await request(app)
-        .get('/')
-        .set('Host', 'actionjacksoninstalls.com');
-      
-      expect(response.status).toBe(200);
-      expect(response.text).toContain('Home');
-    });
-
-    test('should set portfolio variant for dev subdomain', async () => {
-      const response = await request(app)
-        .get('/')
-        .set('Host', 'dev.actionjacksoninstalls.com');
-      
-      expect(response.status).toBe(200);
-      expect(response.text).toContain('Action Jackson Builds');
-    });
-  });
-
-  describe('Static Routes', () => {
-    test('GET / should render home page', async () => {
+  describe('Public routes removed (served by Next.js frontends)', () => {
+    test('GET / should return 404 (served by Next.js frontend)', async () => {
       const response = await request(app).get('/');
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(404);
     });
 
-    test('GET /scheduling should redirect to quotes', async () => {
-      const response = await request(app).get('/scheduling');
-      expect(response.status).toBe(302);
-      expect(response.headers.location).toBe('/quotes');
-    });
-
-    test('GET /quotes should render quotes page', async () => {
-      const response = await request(app).get('/quotes');
-      expect(response.status).toBe(200);
-      expect(response.text).toContain('Pick Your Package');
-    });
-
-    test('GET /about should render about page', async () => {
+    test('GET /about should return 404 (served by Next.js frontend)', async () => {
       const response = await request(app).get('/about');
-      expect(response.status).toBe(200);
-      expect(response.text).toContain('About');
+      expect(response.status).toBe(404);
     });
   });
 
