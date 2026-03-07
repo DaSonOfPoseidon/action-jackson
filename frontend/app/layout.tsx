@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import { Syne, Figtree, IBM_Plex_Mono } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
 
 const syne = Syne({
   subsets: ["latin"],
@@ -55,11 +53,7 @@ export default function RootLayout({
           strategy="afterInteractive"
         />
       </head>
-      <body className="overflow-x-hidden">
-        <Header />
-        <main className="min-h-screen">{children}</main>
-        <Footer />
-      </body>
+      <body className="overflow-x-hidden">{children}</body>
     </html>
   );
 }

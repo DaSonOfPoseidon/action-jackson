@@ -747,44 +747,24 @@ describe('Admin System Tests', () => {
         });
     });
 
-    describe('GET /admin/login', () => {
-      test('should render login page for unauthenticated users', async () => {
-        const response = await request(app)
-          .get('/admin/login');
+    describe('GET /api/admin/dashboard', () => {
+      test('should return dashboard JSON for authenticated admin', async () => {
+        const response = await adminAgent
+          .get('/api/admin/dashboard');
 
         expect(response.status).toBe(200);
-        expect(response.text).toMatch(/Admin Login/);
+        expect(response.body.stats).toBeDefined();
+        expect(response.body.recentActivity).toBeDefined();
       });
 
-      test('should redirect authenticated users to dashboard', async () => {
-        const response = await adminAgent
-          .get('/admin/login');
-
-        expect(response.status).toBe(302);
-        expect(response.headers.location).toBe('/admin/dashboard');
-      });
-    });
-
-    describe('GET /admin/dashboard', () => {
-      test('should render dashboard for authenticated admin', async () => {
-        const response = await adminAgent
-          .get('/admin/dashboard');
-
-        expect(response.status).toBe(200);
-        expect(response.text).toMatch(/Dashboard/);
-        expect(response.text).toMatch(/testadmin/);
-      });
-
-      test('should redirect unauthenticated users to login', async () => {
+      test('should reject unauthenticated users with 401', async () => {
         const response = await request(app)
-          .get('/admin/dashboard');
+          .get('/api/admin/dashboard');
 
-        expect(response.status).toBe(302);
-        expect(response.headers.location).toMatch(/\/admin\/login/);
+        expect(response.status).toBe(401);
       });
 
       test('should show stats from last 30 days', async () => {
-        // Create some test data
         await Quote.create({
           quoteNumber: String(Math.floor(Math.random() * 90000000) + 10000000),
           customer: {
@@ -799,14 +779,14 @@ describe('Admin System Tests', () => {
         });
 
         const response = await adminAgent
-          .get('/admin/dashboard');
+          .get('/api/admin/dashboard');
 
         expect(response.status).toBe(200);
-        expect(response.text).toMatch(/New Quotes \(30 days\)/);
+        expect(response.body.stats.quotes).toBeGreaterThanOrEqual(1);
       });
     });
 
-    describe('GET /admin/quotes', () => {
+    describe('GET /api/admin/quotes', () => {
       beforeEach(async () => {
         await Quote.create({
           quoteNumber: String(Math.floor(Math.random() * 90000000) + 10000000),
@@ -823,37 +803,39 @@ describe('Admin System Tests', () => {
         });
       });
 
-      test('should render quotes management page', async () => {
+      test('should return quotes JSON', async () => {
         const response = await adminAgent
-          .get('/admin/quotes');
+          .get('/api/admin/quotes');
 
         expect(response.status).toBe(200);
-        expect(response.text).toMatch(/Quote Management/);
-        expect(response.text).toMatch(/John Doe/);
+        expect(response.body.quotes).toBeDefined();
+        expect(response.body.quotes.length).toBeGreaterThanOrEqual(1);
+        expect(response.body.quotes[0].customer.name).toBe('John Doe');
       });
 
       test('should filter quotes by search term', async () => {
         const response = await adminAgent
-          .get('/admin/quotes?search=John');
+          .get('/api/admin/quotes?search=John');
 
         expect(response.status).toBe(200);
-        expect(response.text).toMatch(/John Doe/);
+        expect(response.body.quotes[0].customer.name).toBe('John Doe');
       });
 
       test('should filter quotes by status', async () => {
         const response = await adminAgent
-          .get('/admin/quotes?status=pending');
+          .get('/api/admin/quotes?status=pending');
 
         expect(response.status).toBe(200);
-        expect(response.text).toMatch(/John Doe/);
+        expect(response.body.quotes[0].customer.name).toBe('John Doe');
       });
 
       test('should handle pagination', async () => {
         const response = await adminAgent
-          .get('/admin/quotes?page=1&limit=10');
+          .get('/api/admin/quotes?page=1&limit=10');
 
         expect(response.status).toBe(200);
-        expect(response.text).toMatch(/John Doe/);
+        expect(response.body.pagination).toBeDefined();
+        expect(response.body.quotes.length).toBeGreaterThanOrEqual(1);
       });
     });
 
@@ -879,7 +861,7 @@ describe('Admin System Tests', () => {
 
       test('should update quote status', async () => {
         const response = await adminAgent
-          .put(`/admin/quotes/${quoteId}/status`)
+          .put(`/api/admin/quotes/${quoteId}/status`)
           .send({ status: 'approved' });
 
         expect(response.status).toBe(200);
@@ -892,7 +874,7 @@ describe('Admin System Tests', () => {
 
       test('should reject invalid status', async () => {
         const response = await adminAgent
-          .put(`/admin/quotes/${quoteId}/status`)
+          .put(`/api/admin/quotes/${quoteId}/status`)
           .send({ status: 'invalid_status' });
 
         expect(response.status).toBe(400);
@@ -902,7 +884,7 @@ describe('Admin System Tests', () => {
       test('should handle non-existent quote', async () => {
         const fakeId = new mongoose.Types.ObjectId();
         const response = await adminAgent
-          .put(`/admin/quotes/${fakeId}/status`)
+          .put(`/api/admin/quotes/${fakeId}/status`)
           .send({ status: 'approved' });
 
         expect(response.status).toBe(404);
@@ -949,7 +931,7 @@ describe('Admin System Tests', () => {
 
       test('should allow superadmin to delete quotes', async () => {
         const response = await superAdminAgent
-          .delete(`/admin/quotes/${quoteId}`);
+          .delete(`/api/admin/quotes/${quoteId}`);
 
         expect(response.status).toBe(200);
         expect(response.body.success).toBe(true);
@@ -960,7 +942,7 @@ describe('Admin System Tests', () => {
 
       test('should prevent regular admin from deleting quotes', async () => {
         const response = await adminAgent
-          .delete(`/admin/quotes/${quoteId}`);
+          .delete(`/api/admin/quotes/${quoteId}`);
 
         expect(response.status).toBe(403);
         expect(response.body.error).toBe('Insufficient privileges - superadmin required');
@@ -974,19 +956,17 @@ describe('Admin System Tests', () => {
   describe('Security Tests', () => {
     test('should reject requests without authentication', async () => {
       const response = await request(app)
-        .get('/admin/dashboard');
+        .get('/api/admin/dashboard');
 
-      expect(response.status).toBe(302);
-      expect(response.headers.location).toMatch(/login/);
+      expect(response.status).toBe(401);
     });
 
-    test('should enforce session timeout', async () => {
-      // This would require manipulating session timestamps
-      // For now, we'll test that the middleware exists
+    test('should reject requests with invalid token', async () => {
       const response = await request(app)
-        .get('/admin/dashboard');
+        .get('/api/admin/dashboard')
+        .set('Authorization', 'Bearer invalid-token');
 
-      expect(response.status).toBe(302); // Redirected to login
+      expect(response.status).toBe(401);
     });
 
     test('should sanitize admin inputs', async () => {
@@ -1023,7 +1003,7 @@ describe('Admin System Tests', () => {
 
       // Try to inject malicious status
       const response = await adminAgent
-        .put(`/admin/quotes/${quote._id}/status`)
+        .put(`/api/admin/quotes/${quote._id}/status`)
         .send({ status: '<script>alert("xss")</script>' });
 
       expect(response.status).toBe(400);

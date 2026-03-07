@@ -51,7 +51,7 @@ describe('Server Middleware and Routes', () => {
     test('should return 404 for non-existent routes', async () => {
       const response = await request(app).get('/non-existent-route');
       expect(response.status).toBe(404);
-      expect(response.text).toContain('doesn&#39;t exist');
+      expect(response.body.error).toContain("doesn't exist");
     });
   });
 

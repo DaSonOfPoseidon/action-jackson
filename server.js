@@ -37,9 +37,6 @@ mongoose.set('strictQuery', false);
 app.use(express.urlencoded({ extended: true, limit: '10mb' })); // Limit form data size
 app.use(express.static('public'));
 app.use('/pics', express.static(path.join(__dirname, 'public/pics')));
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
-
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -78,12 +75,6 @@ app.use(session({
   rolling: true // Reset expiration on activity
 }));
 
-// Set variant for EJS templates (error pages, admin)
-app.use((req, res, next) => {
-  res.locals.variant = 'business';
-  res.locals.switcherUrl = 'https://dev.actionjacksoninstalls.com';
-  next();
-});
 
 // Admin authentication system implemented with:
 // - JWT tokens with secure secret management
@@ -110,7 +101,7 @@ const quotesRoutes = require('./routes/quotes');
 const sharedRoutes = require('./routes/shared');
 const invoicesRoutes = require('./routes/invoices');
 const authRoutes = require('./routes/auth');
-const adminRoutes = require('./routes/admin');
+const adminApiRoutes = require('./routes/admin-api');
 const fileRoutes = require('./routes/files');
 const estimateRoutes = require('./routes/estimates');
 const consultationRoutes = require('./routes/consultations');
@@ -125,7 +116,10 @@ app.use('/api/files', fileRoutes);
 app.use('/api/estimates', estimateRoutes);
 app.use('/api/consultations', consultationRoutes);
 app.use('/auth', authRoutes);
-app.use('/admin', adminRoutes);
+
+// Admin API routes (JSON-only, JWT auth)
+const { requireAuth } = require('./middleware/auth');
+app.use('/api/admin', requireAuth, adminApiRoutes);
 
 app.get('/healthz', async (req, res) => {
   const payload = { app: 'ok', db: null };
@@ -154,23 +148,17 @@ app.use((err, req, res, next) => {
   const statusCode = err.status || err.statusCode || 500;
   const message = statusCode === 500 ? 'Something went wrong on our end.' : err.message;
 
-  res.status(statusCode).render('error', {
-    title: `Error ${statusCode}`,
-    message: message,
-    statusCode: statusCode,
-    variant: res.locals.variant,
-    switcherUrl: res.locals.switcherUrl
+  res.status(statusCode).json({
+    error: message,
+    statusCode: statusCode
   });
 });
 
 // 404 handler (must be last)
 app.use((req, res) => {
-  res.status(404).render('error', {
-    title: 'Page Not Found',
-    message: 'The page you\'re looking for doesn\'t exist.',
-    statusCode: 404,
-    variant: res.locals.variant,
-    switcherUrl: res.locals.switcherUrl
+  res.status(404).json({
+    error: 'The resource you\'re looking for doesn\'t exist.',
+    statusCode: 404
   });
 });
 // Start server only if not in test environment

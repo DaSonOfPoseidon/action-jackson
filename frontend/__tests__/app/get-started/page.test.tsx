@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import GetStartedPage from "@/app/get-started/page";
+import GetStartedPage from "@/app/(business)/get-started/page";
 
 // Mock the API module
 vi.mock("@/lib/api", () => ({

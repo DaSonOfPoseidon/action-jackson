@@ -211,30 +211,28 @@ describe('Authentication Middleware Tests', () => {
 
       // Access protected route
       const response = await agent
-        .get('/admin/dashboard');
+        .get('/api/admin/dashboard');
 
       expect(response.status).toBe(200);
     });
 
-    test('should redirect to login without session', async () => {
+    test('should return 401 without authentication', async () => {
       const response = await request(app)
-        .get('/admin/dashboard');
+        .get('/api/admin/dashboard');
 
-      expect(response.status).toBe(302);
-      expect(response.headers.location).toMatch(/\/admin\/login/);
+      expect(response.status).toBe(401);
     });
 
-    test('should redirect with return URL', async () => {
+    test('should return 401 for unauthenticated quotes access', async () => {
       const response = await request(app)
-        .get('/admin/quotes');
+        .get('/api/admin/quotes');
 
-      expect(response.status).toBe(302);
-      expect(response.headers.location).toMatch(/redirect=.*quotes/);
+      expect(response.status).toBe(401);
     });
 
-    test('should redirect inactive admin to login', async () => {
+    test('should return 401 for inactive admin', async () => {
       const agent = request.agent(app);
-      
+
       // Login first
       await agent
         .post('/auth/login')
@@ -250,37 +248,14 @@ describe('Authentication Middleware Tests', () => {
 
       // Try to access protected route
       const response = await agent
-        .get('/admin/dashboard');
+        .get('/api/admin/dashboard');
 
-      expect(response.status).toBe(302);
-      expect(response.headers.location).toMatch(/error=account_invalid/);
+      expect(response.status).toBe(401);
     });
 
-    test('should handle session timeout', async () => {
+    test('should return dashboard JSON for authenticated admin', async () => {
       const agent = request.agent(app);
-      
-      // Login first
-      const loginResponse = await agent
-        .post('/auth/login')
-        .send({
-          username: 'testadmin',
-          password: 'SecurePassword123!',
-          rememberMe: false
-        });
 
-      // Mock old session by manipulating the test
-      // In real scenario, we'd wait for session timeout
-      const response = await request(app)
-        .get('/admin/dashboard')
-        .set('Cookie', loginResponse.headers['set-cookie']);
-
-      // Since we can't easily mock time, we just verify the middleware exists
-      expect(response.status).toBeOneOf([200, 302]);
-    });
-
-    test('should set admin data in request and locals', async () => {
-      const agent = request.agent(app);
-      
       await agent
         .post('/auth/login')
         .send({
@@ -290,10 +265,10 @@ describe('Authentication Middleware Tests', () => {
         });
 
       const response = await agent
-        .get('/admin/dashboard');
+        .get('/api/admin/dashboard');
 
       expect(response.status).toBe(200);
-      expect(response.text).toMatch(/testadmin/); // Admin username should be in page
+      expect(response.body.stats).toBeDefined();
     });
   });
 
@@ -367,7 +342,7 @@ describe('Authentication Middleware Tests', () => {
       // Make several requests sequentially to avoid ECONNRESET
       const responses = [];
       for (let i = 0; i < 10; i++) {
-        responses.push(await agent.get('/admin/dashboard'));
+        responses.push(await agent.get('/api/admin/dashboard'));
       }
 
       // Some requests should succeed, some might be rate limited
@@ -429,7 +404,7 @@ describe('Authentication Middleware Tests', () => {
       // Only test if login succeeded
       if (loginResponse.status === 200) {
         const response = await agent
-          .get('/admin/dashboard');
+          .get('/api/admin/dashboard');
 
         expect(response.status).toBe(200);
         
@@ -447,10 +422,10 @@ describe('Authentication Middleware Tests', () => {
     test('should handle middleware errors gracefully', async () => {
       // Try to access admin route without proper setup
       const response = await request(app)
-        .get('/admin/dashboard')
+        .get('/api/admin/dashboard')
         .set('Authorization', 'Bearer invalid-token');
 
-      expect(response.status).toBe(302); // Should redirect to login
+      expect(response.status).toBe(401); // Invalid token rejected
     });
 
     test('should handle database connection errors in auth', async () => {
@@ -500,7 +475,7 @@ describe('Authentication Middleware Tests', () => {
       // Only test dashboard access if login was successful
       if (response.status === 200) {
         const dashboardResponse = await agent
-          .get('/admin/dashboard');
+          .get('/api/admin/dashboard');
 
         expect(dashboardResponse.status).toBe(200);
       }
@@ -520,7 +495,7 @@ describe('Authentication Middleware Tests', () => {
 
       // Verify session exists
       let response = await agent
-        .get('/admin/dashboard');
+        .get('/api/admin/dashboard');
       expect(response.status).toBe(200);
 
       // Logout
@@ -529,8 +504,8 @@ describe('Authentication Middleware Tests', () => {
 
       // Verify session is destroyed
       response = await agent
-        .get('/admin/dashboard');
-      expect(response.status).toBe(302); // Redirected to login
+        .get('/api/admin/dashboard');
+      expect(response.status).toBe(401); // Token cleared on logout
     });
 
     test('should update session activity', async () => {
@@ -545,12 +520,12 @@ describe('Authentication Middleware Tests', () => {
         });
 
       // Access protected route multiple times
-      await agent.get('/admin/dashboard');
-      await agent.get('/admin/quotes');
-      await agent.get('/admin/schedule');
+      await agent.get('/api/admin/dashboard');
+      await agent.get('/api/admin/quotes');
+      await agent.get('/api/admin/schedule');
 
       // Session should still be valid
-      const response = await agent.get('/admin/dashboard');
+      const response = await agent.get('/api/admin/dashboard');
       expect(response.status).toBe(200);
     });
   });

@@ -1,0 +1,116 @@
+[
+  {
+    "slug": "jobscraper",
+    "title": "JobScraper",
+    "tagline": "Async job scraping with real-time progress streaming",
+    "description": "A multi-user FastAPI web application for scraping fiber installation job data. Uses Celery and Redis for async task processing, PostgreSQL for persistent storage, and Server-Sent Events for real-time progress updates in the browser.",
+    "stack": ["Python", "FastAPI", "Celery", "Redis", "PostgreSQL", "Docker"],
+    "features": [
+      "Multi-user support with isolated scraping sessions",
+      "Celery + Redis async task queue for background processing",
+      "SSE-based real-time progress streaming to the frontend",
+      "795+ automated tests with comprehensive coverage",
+      "Dockerized deployment with full service orchestration"
+    ],
+    "links": {
+      "github": "https://github.com/DaSonOfPoseidon/JobScraper"
+    },
+    "category": "web-app",
+    "highlighted": true
+  },
+  {
+    "slug": "terptracker",
+    "title": "TerpTracker",
+    "tagline": "Terpene-powered strain analysis and recommendations",
+    "description": "A cannabis terpene profile analyzer with a FastAPI backend and Next.js 14 frontend. Aggregates data from multiple sources through a multi-stage pipeline and uses cosine-similarity to predict user preferences based on strain ratings.",
+    "stack": ["Python", "FastAPI", "Next.js", "TypeScript", "PostgreSQL", "Docker"],
+    "features": [
+      "Multi-source data pipeline: scraping, COA parsing, database lookup, API, merge, classify",
+      "Cosine-similarity preference predictions from user strain ratings",
+      "Next.js 14 frontend with server components and TypeScript",
+      "235+ backend tests and full frontend test coverage with Vitest",
+      "Optional user accounts with personalized recommendation engine"
+    ],
+    "links": {
+      "github": "https://github.com/DaSonOfPoseidon/TerpTracker",
+      "live": "https://terps.actionjacksoninstalls.com"
+    },
+    "category": "web-app",
+    "highlighted": true
+  },
+  {
+    "slug": "action-jackson-installs",
+    "title": "Action Jackson Installs",
+    "tagline": "Full-featured business platform with scheduling and invoicing",
+    "description": "A dual-domain Express.js application serving both a business site and developer portfolio. Features an equipment catalog with smart recommendations, an advanced scheduling system with conflict detection, a professional invoicing system, and S3-compatible file storage via MinIO.",
+    "stack": ["Node.js", "Express", "MongoDB", "React", "Next.js", "Docker", "MinIO"],
+    "features": [
+      "Dual-domain routing for business and portfolio content",
+      "Advanced scheduling with conflict detection and email confirmations",
+      "Equipment catalog with speed-tier-based smart recommendations",
+      "Professional invoicing with quote-to-invoice conversion",
+      "S3-compatible file storage with security controls and audit trails"
+    ],
+    "links": {
+      "github": "https://github.com/DaSonOfPoseidon/action-jackson",
+      "live": "https://actionjacksoninstalls.com"
+    },
+    "category": "web-app",
+    "highlighted": true
+  },
+  {
+    "slug": "cloudflare-tunnel-manager",
+    "title": "Cloudflare Tunnel Manager",
+    "tagline": "Zero-touch tunnel routing from Docker labels",
+    "description": "A single-file Python service that watches Docker events and automatically manages Cloudflare Tunnel ingress rules, DNS records, and Zero Trust Access applications. Containers opt in with Docker labels for seamless, zero-touch public access.",
+    "stack": ["Python", "Docker API", "Cloudflare API"],
+    "features": [
+      "Automatic ingress rule and DNS record management from Docker labels",
+      "Zero Trust Access policy provisioning with Google sign-in support",
+      "Real-time Docker event watching for instant route updates",
+      "Single-file deployment with minimal dependencies"
+    ],
+    "links": {
+      "github": "https://github.com/DaSonOfPoseidon/cloudflare-tunnel-manager"
+    },
+    "category": "infrastructure",
+    "highlighted": false
+  },
+  {
+    "slug": "repo-manager",
+    "title": "Repo Manager",
+    "tagline": "Automated GitHub repo syncing with a single command",
+    "description": "A Bash CLI tool for cloning, tracking, and auto-syncing GitHub repositories. Supports cron-based scheduled syncs with flock concurrency protection, stash-based dirty-tree handling, and a clean status dashboard.",
+    "stack": ["Bash", "GitHub CLI", "Cron"],
+    "features": [
+      "Clone and track repos with a single command",
+      "Cron-based auto-sync with flock concurrency safety",
+      "Smart sync: stash dirty trees, fast-forward merge, restore stash",
+      "Interactive status dashboard for all tracked repositories"
+    ],
+    "links": {
+      "github": "https://github.com/DaSonOfPoseidon/repo-manager"
+    },
+    "category": "tool",
+    "highlighted": false
+  },
+  {
+    "slug": "developer-portfolio",
+    "title": "Developer Portfolio",
+    "tagline": "Dark-themed portfolio with PDF resume export",
+    "description": "This portfolio site, built with Next.js 14 and Tailwind CSS. Features a professional dark theme, animated page transitions with Framer Motion, project showcases, and a downloadable PDF resume.",
+    "stack": ["Next.js", "TypeScript", "Tailwind CSS", "Framer Motion"],
+    "features": [
+      "Next.js 14 App Router with server and client components",
+      "Responsive dark theme with Tailwind CSS",
+      "Animated transitions and interactions via Framer Motion",
+      "PDF resume generation and download"
+    ],
+    "links": {
+      "github": "https://github.com/DaSonOfPoseidon/action-jackson",
+      "live": "https://dev.actionjacksoninstalls.com"
+    },
+    "category": "web-app",
+    "highlighted": false
+  }
+]

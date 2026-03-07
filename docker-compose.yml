@@ -35,6 +35,7 @@ services:
       EMAIL_PASS: "${EMAIL_PASS}"
       ADMIN_EMAIL: "${ADMIN_EMAIL}"
       ADMIN_SESSION_SECRET: "${ADMIN_SESSION_SECRET}"
+      ADMIN_JWT_SECRET: "${ADMIN_JWT_SECRET}"
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:3001/healthz || exit 1"]
       interval: 30s
@@ -43,22 +44,6 @@ services:
       start_period: 10s
     networks:
       - app-network
-
-  portfolio:
-    build: ./portfolio
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:3002/ || exit 1"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 15s
-    networks:
-      - app-network
-    labels:
-      cloudflare-tunnel.enable: "true"
-      cloudflare-tunnel.subdomain: "dev"
-      cloudflare-tunnel.port: "3002"
 
   frontend:
     build: ./frontend
@@ -69,6 +54,7 @@ services:
       - "3000:3000"
     environment:
       API_URL: "http://api:3001"
+      ADMIN_JWT_SECRET: "${ADMIN_JWT_SECRET}"
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:3000/ || exit 1"]
       interval: 30s

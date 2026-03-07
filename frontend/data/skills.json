@@ -1,0 +1,38 @@
+[
+  {
+    "category": "Languages",
+    "icon": "terminal",
+    "color": "purple",
+    "skills": ["Python", "TypeScript", "JavaScript", "Bash", "SQL", "HTML/CSS"]
+  },
+  {
+    "category": "Frameworks",
+    "icon": "layers",
+    "color": "pink",
+    "skills": ["Next.js", "React", "FastAPI", "Express.js", "Celery", "Tailwind CSS"]
+  },
+  {
+    "category": "Infrastructure",
+    "icon": "server",
+    "color": "green",
+    "skills": ["Docker", "Cloudflare Tunnels", "Nginx", "CI/CD", "Linux", "Cron"]
+  },
+  {
+    "category": "Databases",
+    "icon": "database",
+    "color": "cyan",
+    "skills": ["PostgreSQL", "MongoDB", "Redis", "SQLite"]
+  },
+  {
+    "category": "Tools",
+    "icon": "wrench",
+    "color": "purple",
+    "skills": ["Git", "GitHub Actions", "VS Code", "Vitest", "Jest", "Pytest"]
+  },
+  {
+    "category": "Networking",
+    "icon": "wifi",
+    "color": "pink",
+    "skills": ["Fiber Installation", "Structured Wiring", "VLANs", "PoE", "Ubiquiti"]
+  }
+]

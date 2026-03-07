@@ -124,31 +124,22 @@ describe('Essential Admin System Tests', () => {
       // If login succeeds, test dashboard access
       if (loginResponse.status === 200) {
         const dashboardResponse = await agent
-          .get('/admin/dashboard');
+          .get('/api/admin/dashboard');
 
         expect(dashboardResponse.status).toBe(200);
-        expect(dashboardResponse.text).toMatch(/Dashboard/);
-        expect(dashboardResponse.text).toMatch(/testadmin/);
+        expect(dashboardResponse.body.stats).toBeDefined();
+        expect(dashboardResponse.body.recentActivity).toBeDefined();
       } else {
         // If rate limited, just verify the system responds
         expect([200, 429]).toContain(loginResponse.status);
       }
     });
 
-    test('Admin login page renders correctly', async () => {
-      const response = await request(app)
-        .get('/admin/login');
-
-      expect(response.status).toBe(200);
-      expect(response.text).toMatch(/Admin Login/);
-    });
-
     test('Unauthenticated access is properly blocked', async () => {
       const response = await request(app)
-        .get('/admin/dashboard');
+        .get('/api/admin/dashboard');
 
-      expect(response.status).toBe(302); // Redirect to login
-      expect(response.headers.location).toMatch(/login/);
+      expect(response.status).toBe(401);
     });
 
     test('Quote and Schedule data structures work with admin system', async () => {

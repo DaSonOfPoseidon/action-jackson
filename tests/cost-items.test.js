@@ -535,23 +535,23 @@ describe('Cost Item System Tests', () => {
         });
     });
 
-    describe('GET /admin/cost-items', () => {
+    describe('GET /api/admin/cost-items', () => {
 
-      test('should render cost items page for authenticated admin', async () => {
-        const response = await adminAgent.get('/admin/cost-items');
+      test('should return cost items JSON for authenticated admin', async () => {
+        const response = await adminAgent.get('/api/admin/cost-items');
 
         expect(response.status).toBe(200);
-        expect(response.text).toMatch(/Cost Item Management/);
+        expect(response.body.costItems).toBeDefined();
+        expect(response.body.pagination).toBeDefined();
       });
 
-      test('should redirect unauthenticated users to login', async () => {
-        const response = await request(app).get('/admin/cost-items');
+      test('should reject unauthenticated users with 401', async () => {
+        const response = await request(app).get('/api/admin/cost-items');
 
-        expect(response.status).toBe(302);
-        expect(response.headers.location).toMatch(/\/admin\/login/);
+        expect(response.status).toBe(401);
       });
 
-      test('should display cost items in table', async () => {
+      test('should return cost items in response', async () => {
         await CostItem.create({
           code: 'CAT6-RUN',
           name: 'Cat6 Cable Run',
@@ -560,11 +560,11 @@ describe('Cost Item System Tests', () => {
           price: 100
         });
 
-        const response = await adminAgent.get('/admin/cost-items');
+        const response = await adminAgent.get('/api/admin/cost-items');
 
         expect(response.status).toBe(200);
-        expect(response.text).toMatch(/CAT6-RUN/);
-        expect(response.text).toMatch(/Cat6 Cable Run/);
+        const codes = response.body.costItems.map(i => i.code);
+        expect(codes).toContain('CAT6-RUN');
       });
 
       test('should filter by category', async () => {
@@ -573,11 +573,12 @@ describe('Cost Item System Tests', () => {
           { code: 'AP', name: 'AP Mount', category: 'Services', unitType: 'per-unit', price: 25 }
         ]);
 
-        const response = await adminAgent.get('/admin/cost-items?category=Cable Runs');
+        const response = await adminAgent.get('/api/admin/cost-items?category=Cable Runs');
 
         expect(response.status).toBe(200);
-        expect(response.text).toMatch(/CAT6/);
-        expect(response.text).not.toMatch(/>AP</);
+        const codes = response.body.costItems.map(i => i.code);
+        expect(codes).toContain('CAT6');
+        expect(codes).not.toContain('AP');
       });
 
       test('should filter by search term', async () => {
@@ -586,10 +587,11 @@ describe('Cost Item System Tests', () => {
           { code: 'AP-MOUNT', name: 'Access Point Mount', category: 'Services', unitType: 'per-unit', price: 25 }
         ]);
 
-        const response = await adminAgent.get('/admin/cost-items?search=cat6');
+        const response = await adminAgent.get('/api/admin/cost-items?search=cat6');
 
         expect(response.status).toBe(200);
-        expect(response.text).toMatch(/CAT6-RUN/);
+        const codes = response.body.costItems.map(i => i.code);
+        expect(codes).toContain('CAT6-RUN');
       });
 
       test('should filter by active status', async () => {
@@ -598,21 +600,22 @@ describe('Cost Item System Tests', () => {
           { code: 'INACTIVE-ITEM', name: 'Inactive', category: 'Services', unitType: 'per-unit', price: 20, isActive: false }
         ]);
 
-        const response = await adminAgent.get('/admin/cost-items?status=active');
+        const response = await adminAgent.get('/api/admin/cost-items?status=active');
 
         expect(response.status).toBe(200);
-        expect(response.text).toMatch(/ACTIVE-ITEM/);
-        expect(response.text).not.toMatch(/INACTIVE-ITEM/);
+        const codes = response.body.costItems.map(i => i.code);
+        expect(codes).toContain('ACTIVE-ITEM');
+        expect(codes).not.toContain('INACTIVE-ITEM');
       });
 
-      test('should show empty state when no items exist', async () => {
-        const response = await adminAgent.get('/admin/cost-items');
+      test('should return empty array when no items exist', async () => {
+        const response = await adminAgent.get('/api/admin/cost-items');
 
         expect(response.status).toBe(200);
-        expect(response.text).toMatch(/No Cost Items Found/);
+        expect(response.body.costItems).toHaveLength(0);
       });
 
-      test('should display material cost and labor hours columns', async () => {
+      test('should include material cost and labor hours in response', async () => {
         await CostItem.create({
           code: 'COST-COLS',
           name: 'Cost Columns Test',
@@ -623,22 +626,19 @@ describe('Cost Item System Tests', () => {
           laborHours: 0.8
         });
 
-        const response = await adminAgent.get('/admin/cost-items');
+        const response = await adminAgent.get('/api/admin/cost-items');
 
         expect(response.status).toBe(200);
-        expect(response.text).toMatch(/Material Cost/);
-        expect(response.text).toMatch(/Labor Hours/);
-        expect(response.text).toMatch(/Labor Cost/);
-        expect(response.text).toMatch(/\$25\.00/);
-        expect(response.text).toMatch(/0\.8 hrs/);
+        const item = response.body.costItems.find(i => i.code === 'COST-COLS');
+        expect(item.materialCost).toBe(25);
+        expect(item.laborHours).toBe(0.8);
       });
 
-      test('should display labor rate settings bar', async () => {
-        const response = await adminAgent.get('/admin/cost-items');
+      test('should include labor rate in response', async () => {
+        const response = await adminAgent.get('/api/admin/cost-items');
 
         expect(response.status).toBe(200);
-        expect(response.text).toMatch(/Labor Rate/);
-        expect(response.text).toMatch(/saveLaborRateBtn/);
+        expect(response.body.laborRate).toBeDefined();
       });
     });
 
@@ -646,7 +646,7 @@ describe('Cost Item System Tests', () => {
 
       test('should create a new cost item', async () => {
         const response = await adminAgent
-          .post('/admin/cost-items')
+          .post('/api/admin/cost-items')
           .send({
             code: 'NEW-ITEM',
             name: 'New Item',
@@ -676,7 +676,7 @@ describe('Cost Item System Tests', () => {
         });
 
         const response = await adminAgent
-          .post('/admin/cost-items')
+          .post('/api/admin/cost-items')
           .send({
             code: 'FULL-ITEM',
             name: 'Full Item',
@@ -705,7 +705,7 @@ describe('Cost Item System Tests', () => {
 
       test('should reject missing required fields', async () => {
         const response = await adminAgent
-          .post('/admin/cost-items')
+          .post('/api/admin/cost-items')
           .send({
             name: 'Missing Code'
           });
@@ -724,7 +724,7 @@ describe('Cost Item System Tests', () => {
         });
 
         const response = await adminAgent
-          .post('/admin/cost-items')
+          .post('/api/admin/cost-items')
           .send({
             code: 'DUP-CODE',
             name: 'Duplicate',
@@ -740,7 +740,7 @@ describe('Cost Item System Tests', () => {
       test('should reject non-existent BOM item IDs', async () => {
         const fakeId = new mongoose.Types.ObjectId();
         const response = await adminAgent
-          .post('/admin/cost-items')
+          .post('/api/admin/cost-items')
           .send({
             code: 'BAD-BOM',
             name: 'Bad BOM',
@@ -759,7 +759,7 @@ describe('Cost Item System Tests', () => {
 
       test('should seed default items for superadmin with laborHours', async () => {
         const response = await superAdminAgent
-          .post('/admin/cost-items/seed');
+          .post('/api/admin/cost-items/seed');
 
         expect(response.status).toBe(200);
         expect(response.body.success).toBe(true);
@@ -805,7 +805,7 @@ describe('Cost Item System Tests', () => {
         });
 
         const response = await superAdminAgent
-          .post('/admin/cost-items/seed');
+          .post('/api/admin/cost-items/seed');
 
         expect(response.status).toBe(200);
         expect(response.body.created).toBe(12);
@@ -818,7 +818,7 @@ describe('Cost Item System Tests', () => {
 
       test('should prevent regular admin from seeding', async () => {
         const response = await adminAgent
-          .post('/admin/cost-items/seed');
+          .post('/api/admin/cost-items/seed');
 
         expect(response.status).toBe(403);
         expect(response.body.error).toBe('Insufficient privileges - superadmin required');
@@ -837,7 +837,7 @@ describe('Cost Item System Tests', () => {
         });
 
         const response = await adminAgent
-          .put(`/admin/cost-items/${item._id}`)
+          .put(`/api/admin/cost-items/${item._id}`)
           .send({
             name: 'Updated Name',
             price: 45
@@ -870,7 +870,7 @@ describe('Cost Item System Tests', () => {
         });
 
         const response = await adminAgent
-          .put(`/admin/cost-items/${item._id}`)
+          .put(`/api/admin/cost-items/${item._id}`)
           .send({
             costUnitType: 'per-foot',
             materialCost: 30,
@@ -902,7 +902,7 @@ describe('Cost Item System Tests', () => {
 
         const fakeId = new mongoose.Types.ObjectId();
         const response = await adminAgent
-          .put(`/admin/cost-items/${item._id}`)
+          .put(`/api/admin/cost-items/${item._id}`)
           .send({
             billOfMaterials: [{ item: fakeId.toString(), quantity: 1 }]
           });
@@ -914,7 +914,7 @@ describe('Cost Item System Tests', () => {
       test('should return 404 for non-existent item', async () => {
         const fakeId = new mongoose.Types.ObjectId();
         const response = await adminAgent
-          .put(`/admin/cost-items/${fakeId}`)
+          .put(`/api/admin/cost-items/${fakeId}`)
           .send({ name: 'Ghost' });
 
         expect(response.status).toBe(404);
@@ -925,7 +925,7 @@ describe('Cost Item System Tests', () => {
     describe('Labor Rate Settings Routes', () => {
 
       test('GET /admin/settings/labor-rate should return default rate', async () => {
-        const response = await adminAgent.get('/admin/settings/labor-rate');
+        const response = await adminAgent.get('/api/admin/settings/labor-rate');
 
         expect(response.status).toBe(200);
         expect(response.body.laborRate).toBe(50);
@@ -933,7 +933,7 @@ describe('Cost Item System Tests', () => {
 
       test('PUT /admin/settings/labor-rate should update rate', async () => {
         const response = await adminAgent
-          .put('/admin/settings/labor-rate')
+          .put('/api/admin/settings/labor-rate')
           .send({ laborRate: 75 });
 
         expect(response.status).toBe(200);
@@ -947,7 +947,7 @@ describe('Cost Item System Tests', () => {
 
       test('PUT /admin/settings/labor-rate should reject negative rate', async () => {
         const response = await adminAgent
-          .put('/admin/settings/labor-rate')
+          .put('/api/admin/settings/labor-rate')
           .send({ laborRate: -10 });
 
         expect(response.status).toBe(400);
@@ -956,7 +956,7 @@ describe('Cost Item System Tests', () => {
 
       test('PUT /admin/settings/labor-rate should reject missing rate', async () => {
         const response = await adminAgent
-          .put('/admin/settings/labor-rate')
+          .put('/api/admin/settings/labor-rate')
           .send({});
 
         expect(response.status).toBe(400);
@@ -965,7 +965,7 @@ describe('Cost Item System Tests', () => {
 
       test('PUT /admin/settings/labor-rate should allow zero rate', async () => {
         const response = await adminAgent
-          .put('/admin/settings/labor-rate')
+          .put('/api/admin/settings/labor-rate')
           .send({ laborRate: 0 });
 
         expect(response.status).toBe(200);
@@ -981,7 +981,7 @@ describe('Cost Item System Tests', () => {
           { code: 'KEYSTONE', name: 'Keystone Jack', category: 'Equipment', unitType: 'per-unit', price: 5 }
         ]);
 
-        const response = await adminAgent.get('/admin/cost-items/search?q=rj45');
+        const response = await adminAgent.get('/api/admin/cost-items/search?q=rj45');
 
         expect(response.status).toBe(200);
         expect(response.body).toHaveLength(1);
@@ -996,7 +996,7 @@ describe('Cost Item System Tests', () => {
           { code: 'KEYSTONE', name: 'Keystone Jack', category: 'Equipment', unitType: 'per-unit', price: 5 }
         ]);
 
-        const response = await adminAgent.get('/admin/cost-items/search?q=keystone');
+        const response = await adminAgent.get('/api/admin/cost-items/search?q=keystone');
 
         expect(response.status).toBe(200);
         expect(response.body).toHaveLength(1);
@@ -1011,7 +1011,7 @@ describe('Cost Item System Tests', () => {
           code: 'EXCL-2', name: 'Exclude 2', category: 'Equipment', unitType: 'per-unit', price: 5
         });
 
-        const response = await adminAgent.get(`/admin/cost-items/search?q=excl&exclude=${item1._id}`);
+        const response = await adminAgent.get(`/api/admin/cost-items/search?q=excl&exclude=${item1._id}`);
 
         expect(response.status).toBe(200);
         expect(response.body).toHaveLength(1);
@@ -1024,7 +1024,7 @@ describe('Cost Item System Tests', () => {
           { code: 'INACTIVE-SRCH', name: 'Inactive Search', category: 'Equipment', unitType: 'per-unit', price: 5, isActive: false }
         ]);
 
-        const response = await adminAgent.get('/admin/cost-items/search?q=srch');
+        const response = await adminAgent.get('/api/admin/cost-items/search?q=srch');
 
         expect(response.status).toBe(200);
         expect(response.body).toHaveLength(1);
@@ -1032,7 +1032,7 @@ describe('Cost Item System Tests', () => {
       });
 
       test('should return empty array for empty query', async () => {
-        const response = await adminAgent.get('/admin/cost-items/search?q=');
+        const response = await adminAgent.get('/api/admin/cost-items/search?q=');
 
         expect(response.status).toBe(200);
         expect(response.body).toEqual([]);
@@ -1051,7 +1051,7 @@ describe('Cost Item System Tests', () => {
         }
         await CostItem.create(items);
 
-        const response = await adminAgent.get('/admin/cost-items/search?q=limit');
+        const response = await adminAgent.get('/api/admin/cost-items/search?q=limit');
 
         expect(response.status).toBe(200);
         expect(response.body.length).toBeLessThanOrEqual(20);
@@ -1071,7 +1071,7 @@ describe('Cost Item System Tests', () => {
         });
 
         const response = await adminAgent
-          .put(`/admin/cost-items/${item._id}/toggle`);
+          .put(`/api/admin/cost-items/${item._id}/toggle`);
 
         expect(response.status).toBe(200);
         expect(response.body.success).toBe(true);
@@ -1092,7 +1092,7 @@ describe('Cost Item System Tests', () => {
         });
 
         const response = await adminAgent
-          .put(`/admin/cost-items/${item._id}/toggle`);
+          .put(`/api/admin/cost-items/${item._id}/toggle`);
 
         expect(response.status).toBe(200);
         expect(response.body.costItem.isActive).toBe(true);
@@ -1101,7 +1101,7 @@ describe('Cost Item System Tests', () => {
       test('should return 404 for non-existent item', async () => {
         const fakeId = new mongoose.Types.ObjectId();
         const response = await adminAgent
-          .put(`/admin/cost-items/${fakeId}/toggle`);
+          .put(`/api/admin/cost-items/${fakeId}/toggle`);
 
         expect(response.status).toBe(404);
       });
@@ -1119,7 +1119,7 @@ describe('Cost Item System Tests', () => {
         });
 
         const response = await superAdminAgent
-          .delete(`/admin/cost-items/${item._id}`);
+          .delete(`/api/admin/cost-items/${item._id}`);
 
         expect(response.status).toBe(200);
         expect(response.body.success).toBe(true);
@@ -1138,7 +1138,7 @@ describe('Cost Item System Tests', () => {
         });
 
         const response = await adminAgent
-          .delete(`/admin/cost-items/${item._id}`);
+          .delete(`/api/admin/cost-items/${item._id}`);
 
         expect(response.status).toBe(403);
         expect(response.body.error).toBe('Insufficient privileges - superadmin required');
@@ -1150,7 +1150,7 @@ describe('Cost Item System Tests', () => {
       test('should return 404 for non-existent item', async () => {
         const fakeId = new mongoose.Types.ObjectId();
         const response = await superAdminAgent
-          .delete(`/admin/cost-items/${fakeId}`);
+          .delete(`/api/admin/cost-items/${fakeId}`);
 
         expect(response.status).toBe(404);
         expect(response.body.error).toBe('Cost item not found');

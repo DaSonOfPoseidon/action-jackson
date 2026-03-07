@@ -1,0 +1,127 @@
+{
+  "contact": {
+    "name": "Jackson Keithley",
+    "title": "Full-Stack Developer & Automation Engineer",
+    "email": "jackson@actionjacksoninstalls.com",
+    "location": "Columbia, MO",
+    "github": "DaSonOfPoseidon",
+    "linkedin": "jackson-keithley-115582213",
+    "website": "dev.actionjacksoninstalls.com"
+  },
+  "summary": "Full-stack developer and automation engineer with hands-on experience building production web applications, async data pipelines, and self-hosted infrastructure. Combines a background in fiber-optic network installation with a passion for writing clean, well-tested software that solves real problems.",
+  "experience": [
+    {
+      "company": "Action Jackson Installs & Builds Software",
+      "role": "Founder & Full-Stack Developer",
+      "startDate": "2023-01",
+      "endDate": "Present",
+      "description": "Design, build, and maintain a suite of self-hosted web applications and developer tools serving both business operations and personal projects.",
+      "highlights": [
+        "Built a multi-user job-scraping platform with FastAPI, Celery, and SSE real-time streaming, backed by 795+ automated tests",
+        "Developed a cannabis terpene analyzer with a Next.js frontend, FastAPI backend, and cosine-similarity recommendation engine",
+        "Architected a dual-domain Express.js application with equipment catalog, scheduling, invoicing, and S3-compatible file storage",
+        "Designed a Docker-label-driven Cloudflare Tunnel manager that auto-provisions DNS, ingress rules, and Zero Trust Access policies",
+        "Managed all infrastructure on a self-hosted Linux server with Docker Compose, Cloudflare Tunnels, and automated CI/CD"
+      ],
+      "tech": ["Python", "FastAPI", "Next.js", "React", "Express.js", "Docker", "PostgreSQL", "MongoDB", "Redis", "Celery", "Cloudflare"],
+      "type": "work"
+    },
+    {
+      "company": "CenturyLink / Lumen Technologies",
+      "role": "Fiber Installation Technician",
+      "startDate": "2021-06",
+      "endDate": "Present",
+      "description": "Install and maintain residential and commercial fiber-optic internet service, including structured wiring, ONT configuration, and network troubleshooting.",
+      "highlights": [
+        "Completed 1,000+ fiber installations with consistently high customer satisfaction ratings",
+        "Performed structured wiring, media panel installs, and whole-home networking solutions",
+        "Diagnosed and resolved complex network issues across GPON and XGS-PON architectures",
+        "Trained new technicians on installation best practices and safety procedures"
+      ],
+      "tech": ["Fiber Optics", "GPON", "Structured Wiring", "Networking", "Ubiquiti"],
+      "type": "work"
+    },
+    {
+      "company": "Freelance",
+      "role": "Web Developer",
+      "startDate": "2022-03",
+      "endDate": "2023-01",
+      "description": "Built websites and internal tools for small businesses, focusing on responsive design and reliable hosting.",
+      "highlights": [
+        "Delivered full-stack web applications for local businesses using Node.js and React",
+        "Set up Docker-based hosting environments with automated backups and monitoring",
+        "Implemented payment processing, booking systems, and contact forms with input validation and security hardening"
+      ],
+      "tech": ["JavaScript", "React", "Node.js", "Express.js", "MongoDB", "Docker"],
+      "type": "work"
+    }
+  ],
+  "education": [
+    {
+      "institution": "University of Missouri",
+      "degree": "Coursework",
+      "field": "Information Technology",
+      "startDate": "2019-08",
+      "endDate": "2021-05",
+      "description": "Focused on programming fundamentals, networking, and systems administration."
+    },
+    {
+      "institution": "Self-Directed",
+      "degree": "Continuous Learning",
+      "field": "Software Engineering & DevOps",
+      "startDate": "2021-01",
+      "endDate": "Present",
+      "description": "Ongoing self-education through building production applications, contributing to open source, and completing online courses in full-stack development, cloud infrastructure, and automation."
+    }
+  ],
+  "skills": [
+    {
+      "category": "Languages",
+      "icon": "terminal",
+      "color": "purple",
+      "skills": ["Python", "TypeScript", "JavaScript", "Bash", "SQL", "HTML/CSS"]
+    },
+    {
+      "category": "Frameworks",
+      "icon": "layers",
+      "color": "pink",
+      "skills": ["Next.js", "React", "FastAPI", "Express.js", "Celery", "Tailwind CSS"]
+    },
+    {
+      "category": "Infrastructure",
+      "icon": "server",
+      "color": "green",
+      "skills": ["Docker", "Cloudflare Tunnels", "Nginx", "CI/CD", "Linux", "Cron"]
+    },
+    {
+      "category": "Databases",
+      "icon": "database",
+      "color": "cyan",
+      "skills": ["PostgreSQL", "MongoDB", "Redis", "SQLite"]
+    },
+    {
+      "category": "Tools",
+      "icon": "wrench",
+      "color": "purple",
+      "skills": ["Git", "GitHub Actions", "VS Code", "Vitest", "Jest", "Pytest"]
+    },
+    {
+      "category": "Networking",
+      "icon": "wifi",
+      "color": "pink",
+      "skills": ["Fiber Installation", "Structured Wiring", "VLANs", "PoE", "Ubiquiti"]
+    }
+  ],
+  "certifications": [
+    {
+      "name": "CompTIA Network+",
+      "issuer": "CompTIA",
+      "date": "2022-09"
+    },
+    {
+      "name": "Fiber Optic Installer Certification",
+      "issuer": "Fiber Optic Association",
+      "date": "2021-11"
+    }
+  ]
+}

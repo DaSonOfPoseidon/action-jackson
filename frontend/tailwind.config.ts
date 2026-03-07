@@ -26,6 +26,7 @@ const config: Config = {
           DEFAULT: '#9333ea',
           dark: '#7e22ce',
           muted: '#581c87',
+          vivid: '#d8b4fe',
         },
         orange: {
           DEFAULT: '#ea580c',
@@ -37,6 +38,11 @@ const config: Config = {
           dark: '#0891b2',
           muted: '#164e63',
           vivid: '#22d3ee',
+        },
+        pink: {
+          DEFAULT: '#fb7185',
+          dark: '#f43f5e',
+          muted: '#881337',
         },
       },
       fontFamily: {
@@ -50,6 +56,8 @@ const config: Config = {
         'glow-purple': '0 0 20px rgba(147, 51, 234, 0.15)',
         'glow-orange': '0 0 20px rgba(234, 88, 12, 0.15)',
         'glow-cyan': '0 0 20px rgba(6, 182, 212, 0.15)',
+        'glow-pink': '0 0 20px rgba(251, 113, 133, 0.15)',
+        'glow-green': '0 0 20px rgba(134, 239, 172, 0.15)',
         'inner-glow': 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
       },
       backgroundImage: {
@@ -82,6 +90,10 @@ const config: Config = {
           '0%, 100%': { r: '3', opacity: '0.6' },
           '50%': { r: '5', opacity: '1' },
         },
+        'terminal-blink': {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0' },
+        },
       },
       animation: {
         'fade-in-up': 'fade-in-up 0.6s ease-out forwards',
@@ -90,6 +102,7 @@ const config: Config = {
         'line-draw': 'line-draw 2s ease-out forwards',
         'scan-beam': 'scan-beam 3s ease-in-out infinite',
         'pulse-node': 'pulse-node 2s ease-in-out infinite',
+        'terminal-blink': 'terminal-blink 1s step-end infinite',
       },
     },
   },
