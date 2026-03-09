@@ -32,6 +32,8 @@ export function FAQAccordion({ faqs, accent }: FAQAccordionProps) {
         <div className="mt-12 divide-y divide-border">
           {faqs.map((faq, i) => {
             const isOpen = openIndex === i;
+            const panelId = `faq-panel-${i}`;
+            const buttonId = `faq-button-${i}`;
             return (
               <motion.div
                 key={i}
@@ -41,8 +43,11 @@ export function FAQAccordion({ faqs, accent }: FAQAccordionProps) {
                 transition={{ duration: 0.3, delay: i * 0.05 }}
               >
                 <button
+                  id={buttonId}
                   className="flex w-full items-center justify-between py-5 text-left"
                   onClick={() => setOpenIndex(isOpen ? null : i)}
+                  aria-expanded={isOpen}
+                  aria-controls={panelId}
                 >
                   <span className="pr-4 font-heading text-base font-semibold text-foreground">
                     {faq.question}
@@ -59,6 +64,9 @@ export function FAQAccordion({ faqs, accent }: FAQAccordionProps) {
                 <AnimatePresence>
                   {isOpen && (
                     <motion.div
+                      id={panelId}
+                      role="region"
+                      aria-labelledby={buttonId}
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}

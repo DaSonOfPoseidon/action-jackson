@@ -8,10 +8,13 @@ import { SpecsTable } from "@/components/sections/SpecsTable";
 import { FAQAccordion } from "@/components/sections/FAQAccordion";
 import { PricingCard } from "@/components/sections/PricingCard";
 import { WiringVisual } from "@/components/icons";
+import { JsonLd } from "@/components/JsonLd";
 import type { PainPoint, Feature, FAQItem, PricingInfo } from "@/lib/services";
 
 export const metadata: Metadata = {
   title: "Structured Cabling & Low Voltage",
+  description:
+    "Cat6, Cat6a, and fiber optic cabling installation for homes in Columbia, MO. Patch panels, wall plates, and certified testing for future-proof connectivity.",
 };
 
 const painPoints: PainPoint[] = [
@@ -177,9 +180,31 @@ const pricing: PricingInfo = {
   note: "Difficult wall routes (no attic access, exterior walls, concrete) priced at $200-$300 per drop. Cat6a, fiber, and coax priced individually. Volume discount available for 4+ drops.",
 };
 
+const breadcrumbSchema = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Home", item: "https://actionjacksoninstalls.com" },
+    { "@type": "ListItem", position: 2, name: "Services" },
+    { "@type": "ListItem", position: 3, name: "Structured Cabling", item: "https://actionjacksoninstalls.com/services/wiring" },
+  ],
+};
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.map((faq) => ({
+    "@type": "Question",
+    name: faq.question,
+    acceptedAnswer: { "@type": "Answer", text: faq.answer },
+  })),
+};
+
 export default function WiringPage() {
   return (
     <>
+      <JsonLd data={breadcrumbSchema} />
+      <JsonLd data={faqSchema} />
       <ServiceHero
         title="Structured Cabling & Low-Voltage Networking."
         subtitle="Cat6, Cat6a, single mode fiber, and coax. Clean installs with professional termination, testing, and documentation."

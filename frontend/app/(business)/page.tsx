@@ -1,9 +1,25 @@
+import type { Metadata } from "next";
 import { Hero } from "@/components/sections/Hero";
 import { PackageCard } from "@/components/sections/PackageCard";
 import { NetworkDiagram } from "@/components/sections/NetworkDiagram";
 import { CTABand } from "@/components/sections/CTABand";
 import { AnimateIn } from "@/components/AnimateIn";
 import { Card } from "@/components/ui/Card";
+
+export const metadata: Metadata = {
+  title: "Action Jackson Installs | Smart Home Networking & Automation",
+  description:
+    "Upgrade your builder-grade home network with engineered WiFi, VLAN segmentation, PoE cameras, and structured wiring. Serving Columbia, MO.",
+  keywords: [
+    "home networking",
+    "smart home automation",
+    "PoE cameras",
+    "structured cabling",
+    "Columbia MO",
+    "VLAN segmentation",
+    "WiFi installation",
+  ],
+};
 
 const problems = [
   {

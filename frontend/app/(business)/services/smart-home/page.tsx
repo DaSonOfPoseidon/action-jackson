@@ -8,10 +8,13 @@ import { SpecsTable } from "@/components/sections/SpecsTable";
 import { FAQAccordion } from "@/components/sections/FAQAccordion";
 import { PricingCard } from "@/components/sections/PricingCard";
 import { SmartHomeVisual } from "@/components/icons";
+import { JsonLd } from "@/components/JsonLd";
 import type { PainPoint, Feature, FAQItem, PricingInfo } from "@/lib/services";
 
 export const metadata: Metadata = {
   title: "Smart Home Automation",
+  description:
+    "Smart home automation with dedicated IoT VLANs, Home Assistant, and managed PoE switches. Zigbee, Z-Wave, Matter, and Thread support in Columbia, MO.",
 };
 
 const painPoints: PainPoint[] = [
@@ -182,9 +185,31 @@ const pricing: PricingInfo = {
   ],
 };
 
+const breadcrumbSchema = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Home", item: "https://actionjacksoninstalls.com" },
+    { "@type": "ListItem", position: 2, name: "Services" },
+    { "@type": "ListItem", position: 3, name: "Smart Home Automation", item: "https://actionjacksoninstalls.com/services/smart-home" },
+  ],
+};
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.map((faq) => ({
+    "@type": "Question",
+    name: faq.question,
+    acceptedAnswer: { "@type": "Answer", text: faq.answer },
+  })),
+};
+
 export default function SmartHomePage() {
   return (
     <>
+      <JsonLd data={breadcrumbSchema} />
+      <JsonLd data={faqSchema} />
       <ServiceHero
         title="Smart Home Infrastructure That Actually Works."
         subtitle="Stop adding smart devices to a network that can't support them. Build the backbone first."

@@ -12,16 +12,26 @@ export default function AdminLayout({
   const pathname = usePathname();
   const isLoginPage = pathname === "/admin/login";
 
+  const noIndexMeta = (
+    <head>
+      <meta name="robots" content="noindex, nofollow" />
+    </head>
+  );
+
   if (isLoginPage) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        {children}
-      </div>
+      <>
+        {noIndexMeta}
+        <div className="flex min-h-screen items-center justify-center bg-background">
+          {children}
+        </div>
+      </>
     );
   }
 
   return (
     <AuthProvider>
+      {noIndexMeta}
       <div className="flex min-h-screen bg-background">
         <Sidebar />
         <main className="ml-60 flex-1 p-6">{children}</main>

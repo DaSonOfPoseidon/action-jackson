@@ -8,10 +8,13 @@ import { SpecsTable } from "@/components/sections/SpecsTable";
 import { FAQAccordion } from "@/components/sections/FAQAccordion";
 import { PricingCard } from "@/components/sections/PricingCard";
 import { NetworkVisual } from "@/components/icons";
+import { JsonLd } from "@/components/JsonLd";
 import type { PainPoint, Feature, FAQItem, PricingInfo } from "@/lib/services";
 
 export const metadata: Metadata = {
   title: "Networking Services",
+  description:
+    "Professional home network design and installation in Columbia, MO. Mesh WiFi, VLAN segmentation, managed switches, and wired backhaul for reliable whole-home coverage.",
 };
 
 const painPoints: PainPoint[] = [
@@ -133,9 +136,31 @@ const pricing: PricingInfo = {
   ],
 };
 
+const breadcrumbSchema = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Home", item: "https://actionjacksoninstalls.com" },
+    { "@type": "ListItem", position: 2, name: "Services" },
+    { "@type": "ListItem", position: 3, name: "Networking", item: "https://actionjacksoninstalls.com/services/networking" },
+  ],
+};
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.map((faq) => ({
+    "@type": "Question",
+    name: faq.question,
+    acceptedAnswer: { "@type": "Answer", text: faq.answer },
+  })),
+};
+
 export default function NetworkingPage() {
   return (
     <>
+      <JsonLd data={breadcrumbSchema} />
+      <JsonLd data={faqSchema} />
       <ServiceHero
         title="Engineered WiFi & Network Performance."
         subtitle="Replace your ISP router with a properly designed, segmented network built for speed and reliability."

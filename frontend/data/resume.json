@@ -65,6 +65,38 @@
           ]
         }
       ]
+    },
+    {
+      "company": "Best Buy",
+      "startDate": "2022-01",
+      "endDate": "2024-06",
+      "description": "Progressed from in-store consultation to hands-on automotive technology installation, combining customer-facing sales expertise with technical installation skills",
+      "tech": ["Car Audio", "Remote Start", "GPS", "Dash Cameras", "Customer Consultation", "Sales"],
+      "type": "work",
+      "roles": [
+        {
+          "title": "AutoTech",
+          "startDate": "2023-06",
+          "endDate": "2024-06",
+          "highlights": [
+            "Installed car electronics including stereos, speakers, amplifiers, remote starts, dash cameras, and GPS systems",
+            "Diagnosed and resolved complex vehicle electrical issues, ensuring quality installations across a wide range of makes and models",
+            "Maintained a high customer satisfaction rating through attention to detail and clean, professional installations"
+          ],
+          "stats": []
+        },
+        {
+          "title": "Consultation Agent",
+          "startDate": "2022-01",
+          "endDate": "2023-06",
+          "highlights": [
+            "Provided expert product consultation to customers on home theater, networking, smart home, and car electronics solutions",
+            "Assessed customer needs and designed tailored technology solutions, driving attachment rates and repeat business",
+            "Collaborated with installation teams to ensure seamless handoffs from sales to service delivery"
+          ],
+          "stats": []
+        }
+      ]
     }
   ],
   "education": [

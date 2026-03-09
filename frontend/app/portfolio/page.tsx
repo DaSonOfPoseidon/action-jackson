@@ -1,9 +1,16 @@
+import type { Metadata } from "next";
 import { AnimateIn } from "@/components/portfolio/AnimateIn";
 import { ProjectCard } from "@/components/portfolio/ProjectCard";
 import { SkillGrid } from "@/components/portfolio/SkillGrid";
 import projects from "@/data/projects.json";
 import resume from "@/data/resume.json";
 import type { Project, ResumeData, SkillCategory } from "@/lib/portfolio-types";
+
+export const metadata: Metadata = {
+  title: "Jackson Keithley | Developer Portfolio",
+  description:
+    "Full-stack developer and automation engineer building web apps, infrastructure tools, and home automation systems. Available for hire in Columbia, MO.",
+};
 
 const skills = (resume as ResumeData).skills;
 import Link from "next/link";

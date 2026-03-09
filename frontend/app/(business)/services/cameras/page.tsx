@@ -8,10 +8,13 @@ import { SpecsTable } from "@/components/sections/SpecsTable";
 import { FAQAccordion } from "@/components/sections/FAQAccordion";
 import { PricingCard } from "@/components/sections/PricingCard";
 import { CameraVisual } from "@/components/icons";
+import { JsonLd } from "@/components/JsonLd";
 import type { PainPoint, Feature, FAQItem, PricingInfo } from "@/lib/services";
 
 export const metadata: Metadata = {
   title: "PoE Camera Systems",
+  description:
+    "Local PoE security camera installation with no monthly fees. NVR setup, night vision, motion detection, and remote access in Columbia, MO.",
 };
 
 const painPoints: PainPoint[] = [
@@ -141,9 +144,31 @@ const pricing: PricingInfo = {
   note: "Cameras are also included in the Security package (2\u20134 cameras) starting at $999. Low-voltage cabling billed separately if new runs are needed.",
 };
 
+const breadcrumbSchema = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Home", item: "https://actionjacksoninstalls.com" },
+    { "@type": "ListItem", position: 2, name: "Services" },
+    { "@type": "ListItem", position: 3, name: "PoE Camera Systems", item: "https://actionjacksoninstalls.com/services/cameras" },
+  ],
+};
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.map((faq) => ({
+    "@type": "Question",
+    name: faq.question,
+    acceptedAnswer: { "@type": "Answer", text: faq.answer },
+  })),
+};
+
 export default function CamerasPage() {
   return (
     <>
+      <JsonLd data={breadcrumbSchema} />
+      <JsonLd data={faqSchema} />
       <ServiceHero
         title="Subscription-Free Security Cameras."
         subtitle="PoE cameras with local NVR storage. No monthly fees, no cloud dependency, full ownership of your footage."

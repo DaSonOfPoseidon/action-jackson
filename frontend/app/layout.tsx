@@ -23,6 +23,7 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://actionjacksoninstalls.com"),
   title: {
     default: "Action Jackson Installs | Smart Home Networking & Automation",
     template: "%s | Action Jackson Installs",
@@ -33,6 +34,9 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     siteName: "Action Jackson Installs",
+  },
+  twitter: {
+    card: "summary_large_image",
   },
 };
 
