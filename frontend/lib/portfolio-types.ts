@@ -8,15 +8,39 @@ export interface ContactInfo {
   website: string;
 }
 
+export interface Stat {
+  label: string;
+  value: string;
+}
+
+export interface Role {
+  title: string;
+  startDate: string;
+  endDate: string;
+  highlights: string[];
+  stats?: Stat[];
+  notableProjects?: string[];
+}
+
+export interface LifeEvent {
+  title: string;
+  date: string;
+  icon: string;
+  description?: string;
+}
+
 export interface Experience {
   company: string;
-  role: string;
+  role?: string;
+  roles?: Role[];
   startDate: string;
   endDate: string;
   description: string;
-  highlights: string[];
+  highlights?: string[];
+  stats?: Stat[];
   tech: string[];
   type: 'work' | 'education';
+  notableProjects?: string[];
 }
 
 export interface Education {
@@ -49,6 +73,7 @@ export interface ResumeData {
   education: Education[];
   skills: SkillCategory[];
   certifications: Certification[];
+  lifeEvents?: LifeEvent[];
 }
 
 export interface ProjectLink {
@@ -65,6 +90,7 @@ export interface Project {
   stack: string[];
   features: string[];
   links: ProjectLink;
-  category: 'web-app' | 'tool' | 'infrastructure';
+  tags: string[];
   highlighted: boolean;
+  isPrivate?: boolean;
 }

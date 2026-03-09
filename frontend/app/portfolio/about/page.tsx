@@ -2,28 +2,40 @@ import type { Metadata } from "next";
 import { AnimateIn } from "@/components/portfolio/AnimateIn";
 import { SkillGrid } from "@/components/portfolio/SkillGrid";
 import { Timeline } from "@/components/portfolio/Timeline";
+import type { TimelineEntry } from "@/components/portfolio/Timeline";
 import resume from "@/data/resume.json";
-import type { ResumeData, SkillCategory, Experience } from "@/lib/portfolio-types";
+import type { ResumeData, SkillCategory } from "@/lib/portfolio-types";
 
 const data = resume as ResumeData;
 
-const timelineEntries: Experience[] = [
-  ...data.experience,
+const timelineEntries: TimelineEntry[] = [
+  ...data.experience.map((exp) => ({
+    ...exp,
+    _kind: "experience" as const,
+  })),
   ...data.education.map((edu) => ({
     company: edu.institution,
     role: `${edu.degree} in ${edu.field}`,
     startDate: edu.startDate,
     endDate: edu.endDate,
     description: edu.description || "",
-    highlights: [],
-    tech: [],
+    tech: [] as string[],
     type: "education" as const,
+    _kind: "experience" as const,
+  })),
+  ...(data.lifeEvents ?? []).map((le) => ({
+    ...le,
+    _kind: "lifeEvent" as const,
   })),
 ].sort((a, b) => {
-  const dateA = new Date(a.startDate);
-  const dateB = new Date(b.startDate);
+  const dateA = new Date(
+    a._kind === "lifeEvent" ? (a as { date: string }).date : (a as { startDate: string }).startDate,
+  );
+  const dateB = new Date(
+    b._kind === "lifeEvent" ? (b as { date: string }).date : (b as { startDate: string }).startDate,
+  );
   return dateB.getTime() - dateA.getTime();
-});
+}) as TimelineEntry[];
 
 export const metadata: Metadata = {
   title: "About",

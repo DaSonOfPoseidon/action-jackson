@@ -1,77 +1,88 @@
 {
   "contact": {
     "name": "Jackson Keithley",
-    "title": "Full-Stack Developer & Automation Engineer",
-    "email": "jackson@actionjacksoninstalls.com",
+    "title": "Backend & Automation Engineer",
+    "email": "keithleyjj@gmail.com",
     "location": "Columbia, MO",
     "github": "DaSonOfPoseidon",
     "linkedin": "jackson-keithley-115582213",
     "website": "dev.actionjacksoninstalls.com"
   },
-  "summary": "Full-stack developer and automation engineer with hands-on experience building production web applications, async data pipelines, and self-hosted infrastructure. Combines a background in fiber-optic network installation with a passion for writing clean, well-tested software that solves real problems.",
+  "summary": "Full-stack developer and automation engineer with hands-on experience building production web and desktop applications, async data pipelines, and self-hosted infrastructure. Combines a background in technical problem solving with a passion for identifying and automating manual processes to drive operational efficiency. Currently focused on backend development and process automation.",
   "experience": [
     {
-      "company": "Action Jackson Installs & Builds Software",
-      "role": "Founder & Full-Stack Developer",
-      "startDate": "2023-01",
+      "company": "Socket Fiber",
+      "startDate": "2024-06",
       "endDate": "Present",
-      "description": "Design, build, and maintain a suite of self-hosted web applications and developer tools serving both business operations and personal projects.",
-      "highlights": [
-        "Built a multi-user job-scraping platform with FastAPI, Celery, and SSE real-time streaming, backed by 795+ automated tests",
-        "Developed a cannabis terpene analyzer with a Next.js frontend, FastAPI backend, and cosine-similarity recommendation engine",
-        "Architected a dual-domain Express.js application with equipment catalog, scheduling, invoicing, and S3-compatible file storage",
-        "Designed a Docker-label-driven Cloudflare Tunnel manager that auto-provisions DNS, ingress rules, and Zero Trust Access policies",
-        "Managed all infrastructure on a self-hosted Linux server with Docker Compose, Cloudflare Tunnels, and automated CI/CD"
-      ],
-      "tech": ["Python", "FastAPI", "Next.js", "React", "Express.js", "Docker", "PostgreSQL", "MongoDB", "Redis", "Celery", "Cloudflare"],
-      "type": "work"
-    },
-    {
-      "company": "CenturyLink / Lumen Technologies",
-      "role": "Fiber Installation Technician",
-      "startDate": "2021-06",
-      "endDate": "Present",
-      "description": "Install and maintain residential and commercial fiber-optic internet service, including structured wiring, ONT configuration, and network troubleshooting.",
-      "highlights": [
-        "Completed 1,000+ fiber installations with consistently high customer satisfaction ratings",
-        "Performed structured wiring, media panel installs, and whole-home networking solutions",
-        "Diagnosed and resolved complex network issues across GPON and XGS-PON architectures",
-        "Trained new technicians on installation best practices and safety procedures"
-      ],
-      "tech": ["Fiber Optics", "GPON", "Structured Wiring", "Networking", "Ubiquiti"],
-      "type": "work"
-    },
-    {
-      "company": "Freelance",
-      "role": "Web Developer",
-      "startDate": "2022-03",
-      "endDate": "2023-01",
-      "description": "Built websites and internal tools for small businesses, focusing on responsive design and reliable hosting.",
-      "highlights": [
-        "Delivered full-stack web applications for local businesses using Node.js and React",
-        "Set up Docker-based hosting environments with automated backups and monitoring",
-        "Implemented payment processing, booking systems, and contact forms with input validation and security hardening"
-      ],
-      "tech": ["JavaScript", "React", "Node.js", "Express.js", "MongoDB", "Docker"],
-      "type": "work"
+      "description": "Progressed through three roles in under two years at a rapidly growing fiber ISP, driving operational automation and team leadership through a cost-first approach",
+      "tech": ["Fiber Optics", "GPON", "Networking", "Python", "OSS-BSS Software"],
+      "type": "work",
+      "roles": [
+        {
+          "title": "Operations Automation Engineer",
+          "startDate": "2026-02",
+          "endDate": "Present",
+          "highlights": [
+            "Automated technician management and reporting processes using Python, reducing manual work by 50+ hours per week",
+            "Integrated with custom legacy OSS/BSS software to streamline routing and automate assignment of installation and repair tickets based on technician availability, location, and skill set",
+            "Developed dashboard tools for real-time monitoring of automation processes and job statistics, improving visibility and enabling data-driven decision making"
+          ],
+          "stats": [
+            { "label": "Hours saved weekly", "value": "50+" },
+            { "label": "Programs written", "value": "5" }
+          ],
+          "notableProjects": ["calendarbuddy"]
+        },
+        {
+          "title": "Lead Residential Dispatcher",
+          "startDate": "2025-07",
+          "endDate": "2026-02",
+          "highlights": [
+            "Hand-selected to build out the Technical Operations team, training 6 new Dispatchers and establishing dispatch procedures",
+            "Managed scheduling and dispatches, implementing tools to optimize route planning, completion rate and job costs",
+            "Implemented assignment tracking procedures, eliminating missed appointments and improving technician accountability"
+          ],
+          "stats": [
+            { "label": "Technicians managed", "value": "50+" },
+            { "label": "Job completion rate", "value": "93%" },
+            { "label": "Companies Orchestrated", "value": "8" },
+            { "label": "Average Daily Jobs", "value": "150" }
+          ],
+          "notableProjects": ["jobscraper", "assigner"]
+        },
+        {
+          "title": "Tech Support Supervisor",
+          "startDate": "2025-01",
+          "endDate": "2025-07",
+          "highlights": [
+            "Led a team of ~15 support technicians, reducing average ticket lifespan to 48 hours through targeted training and process improvements",
+            "Coordinated with ILECs and third-party vendors to resolve complex technical issues and escalations in a timely manner"
+          ],
+          "stats": [
+            { "label": "Team size", "value": "15" },
+            { "label": "NPS", "value": "87%" },
+            { "label": "Average Ticket Lifespan", "value": "48 hours" }
+          ]
+        }
+      ]
     }
   ],
   "education": [
     {
       "institution": "University of Missouri",
-      "degree": "Coursework",
+      "degree": "Bachelor of Science",
       "field": "Information Technology",
-      "startDate": "2019-08",
-      "endDate": "2021-05",
-      "description": "Focused on programming fundamentals, networking, and systems administration."
+      "startDate": "2022-08",
+      "endDate": "2026-12",
+      "description": "Focused on programming, networking, and systems administration fundamentals."
     },
     {
-      "institution": "Self-Directed",
-      "degree": "Continuous Learning",
-      "field": "Software Engineering & DevOps",
+      "institution": "Southwestern Illinois College",
+      "degree": "Associate of Science",
+      "field": "Computer Science",
       "startDate": "2021-01",
-      "endDate": "Present",
-      "description": "Ongoing self-education through building production applications, contributing to open source, and completing online courses in full-stack development, cloud infrastructure, and automation."
+      "endDate": "2022-07",
+      "description": "2/3 completed. Transferred to University of Missouri in Fall 2022."
     }
   ],
   "skills": [
@@ -79,13 +90,13 @@
       "category": "Languages",
       "icon": "terminal",
       "color": "purple",
-      "skills": ["Python", "TypeScript", "JavaScript", "Bash", "SQL", "HTML/CSS"]
+      "skills": ["Python", "TypeScript", "JavaScript", "Swift", "C", "C#", "Bash", "SQL", "HTML/CSS"]
     },
     {
       "category": "Frameworks",
       "icon": "layers",
       "color": "pink",
-      "skills": ["Next.js", "React", "FastAPI", "Express.js", "Celery", "Tailwind CSS"]
+      "skills": ["Next.js", "React", "FastAPI", "Flask", "Express.js", "SQLAlchemy", "Tailwind CSS", "Playwright", "Vitest", "Jest", "Pytest"]
     },
     {
       "category": "Infrastructure",
@@ -103,25 +114,21 @@
       "category": "Tools",
       "icon": "wrench",
       "color": "purple",
-      "skills": ["Git", "GitHub Actions", "VS Code", "Vitest", "Jest", "Pytest"]
+      "skills": ["Git", "GitHub Actions", "VS Code", "Celery", "Pandas", "NumPy", "Claude Code", "Codex"]
     },
     {
       "category": "Networking",
       "icon": "wifi",
       "color": "pink",
-      "skills": ["Fiber Installation", "Structured Wiring", "VLANs", "PoE", "Ubiquiti"]
-    }
-  ],
-  "certifications": [
-    {
-      "name": "CompTIA Network+",
-      "issuer": "CompTIA",
-      "date": "2022-09"
+      "skills": ["Fiber Optics", "Structured Wiring", "VLANs", "GPON", "Wireless Connectivity", "DHCP", "DNS", "Network Troubleshooting"]
     },
     {
-      "name": "Fiber Optic Installer Certification",
-      "issuer": "Fiber Optic Association",
-      "date": "2021-11"
+      "category": "Professional",
+      "icon": "briefcase",
+      "color": "orange",
+      "skills": ["Agile/Scrum", "Microsoft Office 365", "Google Workspace", "Technical Documentation", "Team Leadership", "ArcGIS"]
     }
-  ]
+  ],
+  "certifications": [],
+  "lifeEvents": []
 }

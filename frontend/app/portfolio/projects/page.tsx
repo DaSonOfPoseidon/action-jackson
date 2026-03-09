@@ -7,13 +7,18 @@ import projects from "@/data/projects.json";
 import type { Project } from "@/lib/portfolio-types";
 
 const allProjects = projects as Project[];
-const categories = ["all", "web-app", "tool", "infrastructure"] as const;
+const tags = ["all", "professional", "personal", "school", "desktop", "mobile", "infrastructure", "web", "tool"] as const;
 
-const categoryLabels: Record<string, string> = {
+const tagLabels: Record<string, string> = {
   all: "All",
-  "web-app": "Web Apps",
-  tool: "Tools",
+  professional: "Professional",
+  personal: "Personal",
+  school: "School",
+  desktop: "Desktop",
+  mobile: "Mobile",
   infrastructure: "Infrastructure",
+  web: "Web",
+  tool: "Tool",
 };
 
 export default function ProjectsPage() {
@@ -22,7 +27,7 @@ export default function ProjectsPage() {
   const filtered =
     filter === "all"
       ? allProjects
-      : allProjects.filter((p) => p.category === filter);
+      : allProjects.filter((p) => p.tags.includes(filter));
 
   return (
     <div className="pt-24">
@@ -43,17 +48,17 @@ export default function ProjectsPage() {
 
           <AnimateIn delay={100}>
             <div className="flex flex-wrap gap-2 mb-10">
-              {categories.map((cat) => (
+              {tags.map((tag) => (
                 <button
-                  key={cat}
-                  onClick={() => setFilter(cat)}
+                  key={tag}
+                  onClick={() => setFilter(tag)}
                   className={`px-4 py-2 rounded-lg font-mono text-sm transition-all ${
-                    filter === cat
+                    filter === tag
                       ? "bg-purple/20 border border-purple/40 text-purple"
                       : "border border-border text-muted hover:text-foreground hover:border-purple/30"
                   }`}
                 >
-                  {categoryLabels[cat]}
+                  {tagLabels[tag]}
                 </button>
               ))}
             </div>
@@ -69,7 +74,7 @@ export default function ProjectsPage() {
 
           {filtered.length === 0 && (
             <div className="text-center py-16">
-              <p className="text-muted font-mono">No projects in this category yet.</p>
+              <p className="text-muted font-mono">No projects with this tag yet.</p>
             </div>
           )}
         </div>

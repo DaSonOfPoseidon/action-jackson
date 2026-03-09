@@ -2,8 +2,10 @@ import { AnimateIn } from "@/components/portfolio/AnimateIn";
 import { ProjectCard } from "@/components/portfolio/ProjectCard";
 import { SkillGrid } from "@/components/portfolio/SkillGrid";
 import projects from "@/data/projects.json";
-import skills from "@/data/skills.json";
-import type { Project, SkillCategory } from "@/lib/portfolio-types";
+import resume from "@/data/resume.json";
+import type { Project, ResumeData, SkillCategory } from "@/lib/portfolio-types";
+
+const skills = (resume as ResumeData).skills;
 import Link from "next/link";
 
 const featured = (projects as Project[]).filter((p) => p.highlighted);

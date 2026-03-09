@@ -8,11 +8,14 @@ import {
   StyleSheet,
   Link,
 } from "@react-pdf/renderer";
-import type { ResumeData } from "@/lib/portfolio-types";
+import type { ResumeData, Project } from "@/lib/portfolio-types";
+import projects from "@/data/projects.json";
+
+const allProjects = projects as Project[];
 
 const styles = StyleSheet.create({
   page: {
-    padding: 40,
+    padding: 34,
     fontFamily: "Helvetica",
     fontSize: 10,
     color: "#1a1a2e",
@@ -50,7 +53,7 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 1.5,
     marginBottom: 8,
-    marginTop: 14,
+    marginTop: 10,
   },
   entryHeader: {
     flexDirection: "row",
@@ -70,10 +73,10 @@ const styles = StyleSheet.create({
     color: "#7c3aed",
     marginBottom: 4,
   },
-  entryDescription: {
+  roleLineItem: {
     fontSize: 9,
-    color: "#444",
-    marginBottom: 4,
+    color: "#333",
+    marginBottom: 1,
   },
   bullet: {
     flexDirection: "row",
@@ -127,6 +130,21 @@ const styles = StyleSheet.create({
     color: "#333",
     marginBottom: 4,
   },
+  projectLine: {
+    flexDirection: "row",
+    marginBottom: 2,
+    fontSize: 9,
+  },
+  projectTitle: {
+    fontFamily: "Helvetica-Bold",
+    fontSize: 9,
+    color: "#7c3aed",
+    textDecoration: "none",
+  },
+  projectTagline: {
+    fontSize: 9,
+    color: "#444",
+  },
 });
 
 interface ResumePDFProps {
@@ -134,6 +152,28 @@ interface ResumePDFProps {
 }
 
 export function ResumePDF({ data }: ResumePDFProps) {
+  // Collect all notable project slugs from experience
+  const notableSlugs = new Set<string>();
+  for (const exp of data.experience) {
+    if (exp.notableProjects) {
+      for (const slug of exp.notableProjects) {
+        notableSlugs.add(slug);
+      }
+    }
+    if (exp.roles) {
+      for (const role of exp.roles) {
+        if (role.notableProjects) {
+          for (const slug of role.notableProjects) {
+            notableSlugs.add(slug);
+          }
+        }
+      }
+    }
+  }
+  const notableProjects = allProjects
+    .filter((p) => notableSlugs.has(p.slug))
+    .slice(0, 3);
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -170,35 +210,98 @@ export function ResumePDF({ data }: ResumePDFProps) {
 
         {/* Experience */}
         <Text style={styles.sectionTitle}>Experience</Text>
-        {data.experience.map((exp, i) => (
-          <View key={i} wrap={false}>
-            <View style={styles.entryHeader}>
-              <Text style={styles.entryRole}>{exp.role}</Text>
-              <Text style={styles.entryDate}>
-                {exp.startDate} - {exp.endDate}
-              </Text>
-            </View>
-            <Text style={styles.entryCompany}>{exp.company}</Text>
-            {exp.description ? (
-              <Text style={styles.entryDescription}>{exp.description}</Text>
-            ) : null}
-            {exp.highlights.map((h, j) => (
-              <View key={j} style={styles.bullet}>
-                <Text style={styles.bulletDot}>{"\u2022"}</Text>
-                <Text style={styles.bulletText}>{h}</Text>
-              </View>
-            ))}
-            {exp.tech.length > 0 && (
-              <View style={styles.techRow}>
-                {exp.tech.map((t) => (
-                  <Text key={t} style={styles.techBadge}>
-                    {t}
+        {data.experience.map((exp, i) => {
+          const hasRoles = exp.roles && exp.roles.length > 0;
+
+          if (hasRoles) {
+            // Consolidated multi-role block
+            const allHighlights = exp.roles!.flatMap((r) => r.highlights);
+            const bestHighlights = allHighlights.slice(0, 4);
+
+            return (
+              <View key={i} wrap={false}>
+                <View style={styles.entryHeader}>
+                  <Text style={styles.entryRole}>{exp.company}</Text>
+                  <Text style={styles.entryDate}>
+                    {exp.startDate} - {exp.endDate}
+                  </Text>
+                </View>
+                {/* List role titles with dates */}
+                {exp.roles!.map((role, ri) => (
+                  <Text key={ri} style={styles.roleLineItem}>
+                    {role.title} ({role.startDate} – {role.endDate})
                   </Text>
                 ))}
+                {/* Combined highlights */}
+                <View style={{ marginTop: 3 }}>
+                  {bestHighlights.map((h, j) => (
+                    <View key={j} style={styles.bullet}>
+                      <Text style={styles.bulletDot}>{"\u2022"}</Text>
+                      <Text style={styles.bulletText}>{h}</Text>
+                    </View>
+                  ))}
+                </View>
+                {exp.tech.length > 0 && (
+                  <View style={styles.techRow}>
+                    {exp.tech.map((t) => (
+                      <Text key={t} style={styles.techBadge}>
+                        {t}
+                      </Text>
+                    ))}
+                  </View>
+                )}
               </View>
-            )}
-          </View>
-        ))}
+            );
+          }
+
+          // Single role entry — no description (highlights are sufficient)
+          return (
+            <View key={i} wrap={false}>
+              <View style={styles.entryHeader}>
+                <Text style={styles.entryRole}>{exp.role}</Text>
+                <Text style={styles.entryDate}>
+                  {exp.startDate} - {exp.endDate}
+                </Text>
+              </View>
+              <Text style={styles.entryCompany}>{exp.company}</Text>
+              {(exp.highlights ?? []).map((h, j) => (
+                <View key={j} style={styles.bullet}>
+                  <Text style={styles.bulletDot}>{"\u2022"}</Text>
+                  <Text style={styles.bulletText}>{h}</Text>
+                </View>
+              ))}
+              {exp.tech.length > 0 && (
+                <View style={styles.techRow}>
+                  {exp.tech.map((t) => (
+                    <Text key={t} style={styles.techBadge}>
+                      {t}
+                    </Text>
+                  ))}
+                </View>
+              )}
+            </View>
+          );
+        })}
+
+        {/* Notable Projects */}
+        {notableProjects.length > 0 && (
+          <>
+            <Text style={styles.sectionTitle}>Notable Projects</Text>
+            {notableProjects.map((project) => {
+              const href = project.links.live || project.links.github || "";
+              return (
+                <View key={project.slug} style={styles.projectLine}>
+                  <Link src={href} style={styles.projectTitle}>
+                    {project.title}
+                  </Link>
+                  <Text style={styles.projectTagline}>
+                    {" "}&mdash; {project.tagline}
+                  </Text>
+                </View>
+              );
+            })}
+          </>
+        )}
 
         {/* Education */}
         <Text style={styles.sectionTitle}>Education</Text>
@@ -233,7 +336,7 @@ export function ResumePDF({ data }: ResumePDFProps) {
               <View key={i} style={styles.certRow}>
                 <Text>
                   <Text style={styles.entryRole}>{cert.name}</Text>
-                  <Text style={styles.entryDescription}>
+                  <Text style={{ fontSize: 9, color: "#444" }}>
                     {" "}
                     - {cert.issuer}
                   </Text>

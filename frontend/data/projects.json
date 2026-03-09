@@ -2,21 +2,23 @@
   {
     "slug": "jobscraper",
     "title": "JobScraper",
-    "tagline": "Async job scraping with real-time progress streaming",
-    "description": "A multi-user FastAPI web application for scraping fiber installation job data. Uses Celery and Redis for async task processing, PostgreSQL for persistent storage, and Server-Sent Events for real-time progress updates in the browser.",
-    "stack": ["Python", "FastAPI", "Celery", "Redis", "PostgreSQL", "Docker"],
+    "tagline": "Playwright browser automation with route optimization",
+    "description": "A Python scraping engine that uses Playwright to automate browser sessions and extract fiber installation job data. Orchestrates 8-16 concurrent browser workers with async task management, parses job text into structured data, and feeds results into a VRPTW route optimizer powered by a VROOM solver with OSRM routing and Nominatim geocoding backends.",
+    "stack": ["Python", "Playwright", "Pandas", "VROOM", "OSRM", "Nominatim"],
     "features": [
-      "Multi-user support with isolated scraping sessions",
-      "Celery + Redis async task queue for background processing",
-      "SSE-based real-time progress streaming to the frontend",
-      "795+ automated tests with comprehensive coverage",
-      "Dockerized deployment with full service orchestration"
+      "Playwright browser automation with 8-16 concurrent worker orchestration",
+      "Job text parsing and structured data extraction pipeline",
+      "VRPTW route optimization via self-hosted VROOM solver",
+      "Self-hosted geocoding (Nominatim) and routing (OSRM) backends",
+      "Strategy pattern for swappable geocoding/routing backends with cloud fallbacks",
+      "795+ automated tests with comprehensive coverage"
     ],
     "links": {
       "github": "https://github.com/DaSonOfPoseidon/JobScraper"
     },
-    "category": "web-app",
-    "highlighted": true
+    "tags": ["professional", "tool"],
+    "highlighted": true,
+    "isPrivate": true
   },
   {
     "slug": "terptracker",
@@ -35,7 +37,7 @@
       "github": "https://github.com/DaSonOfPoseidon/TerpTracker",
       "live": "https://terps.actionjacksoninstalls.com"
     },
-    "category": "web-app",
+    "tags": ["personal", "web"],
     "highlighted": true
   },
   {
@@ -55,7 +57,7 @@
       "github": "https://github.com/DaSonOfPoseidon/action-jackson",
       "live": "https://actionjacksoninstalls.com"
     },
-    "category": "web-app",
+    "tags": ["professional", "web"],
     "highlighted": true
   },
   {
@@ -63,7 +65,7 @@
     "title": "Cloudflare Tunnel Manager",
     "tagline": "Zero-touch tunnel routing from Docker labels",
     "description": "A single-file Python service that watches Docker events and automatically manages Cloudflare Tunnel ingress rules, DNS records, and Zero Trust Access applications. Containers opt in with Docker labels for seamless, zero-touch public access.",
-    "stack": ["Python", "Docker API", "Cloudflare API"],
+    "stack": ["Python", "Docker", "Cloudflare API"],
     "features": [
       "Automatic ingress rule and DNS record management from Docker labels",
       "Zero Trust Access policy provisioning with Google sign-in support",
@@ -73,7 +75,7 @@
     "links": {
       "github": "https://github.com/DaSonOfPoseidon/cloudflare-tunnel-manager"
     },
-    "category": "infrastructure",
+    "tags": ["infrastructure", "tool"],
     "highlighted": false
   },
   {
@@ -91,7 +93,7 @@
     "links": {
       "github": "https://github.com/DaSonOfPoseidon/repo-manager"
     },
-    "category": "tool",
+    "tags": ["infrastructure", "tool"],
     "highlighted": false
   },
   {
@@ -110,7 +112,122 @@
       "github": "https://github.com/DaSonOfPoseidon/action-jackson",
       "live": "https://dev.actionjacksoninstalls.com"
     },
-    "category": "web-app",
+    "tags": ["personal", "web"],
+    "highlighted": false
+  },
+  {
+    "slug": "calendarbuddy",
+    "title": "CalendarBuddy",
+    "tagline": "Web portal that wraps and automates desktop tools",
+    "description": "A multi-user web platform that wraps three desktop automation tools — JobScraper (browser-based job scraping), Spreader (route optimization and Contractor assignment), and ASSigner (contractor job parsing + processing) — into a unified, automated portal. Built with FastAPI, Celery, and Redis to orchestrate background execution of each tool, with SSE progress streaming, multi-user auth, and a calendar dashboard.",
+    "stack": ["Python", "FastAPI", "Celery", "Redis", "PostgreSQL", "Docker"],
+    "features": [
+      "Orchestrates JobScraper, Spreader, and ASSigner as background tasks",
+      "Celery + Redis task queue for automated tool execution",
+      "SSE-based real-time progress streaming per tool run",
+      "Multi-user authentication with Argon2 hashing",
+      "Calendar dashboard with color-coded freshness indicators",
+      "Excel and TXT export with admin dashboard"
+    ],
+    "links": {
+      "github": "https://github.com/DaSonOfPoseidon/CalendarBuddy"
+    },
+    "tags": ["professional", "web"],
+    "highlighted": true,
+    "isPrivate": true
+  },
+  {
+    "slug": "assigner",
+    "title": "ASSigner",
+    "tagline": "Desktop automation for parsing and assigning 100+ contractor jobs nightly",
+    "description": "A desktop automation tool that parses and assigns over 100 contractor jobs nightly. Built with pure Python, Tkinter GUI, Playwright browser automation, and Pandas. Features 8 contractor-specific format parsers, drag-and-drop GUI, fuzzy name matching, email integration via IMAP, and PyInstaller .exe distribution.",
+    "stack": ["Python", "Tkinter", "Playwright", "Pandas", "PyInstaller"],
+    "features": [
+      "8 contractor-specific format parsers for diverse job data",
+      "Drag-and-drop Tkinter GUI for manual assignment overrides",
+      "Fuzzy name matching for contractor identification",
+      "Email integration via IMAP for automated job intake",
+      "PyInstaller .exe distribution for non-technical users",
+      "198 automated tests covering all parsers and workflows"
+    ],
+    "links": {
+      "github": "https://github.com/DaSonOfPoseidon/JobAssignment"
+    },
+    "tags": ["professional", "desktop", "tool"],
+    "highlighted": false,
+    "isPrivate": true
+  },
+  {
+    "slug": "browseshield",
+    "title": "BrowseShield",
+    "tagline": "Browser extension for real-time website security assessments",
+    "description": "A browser extension and web portal for real-time website security assessments. Built with JavaScript (Manifest V3), Node.js/Express, and PostgreSQL. Mizzou Capstone project featuring visual risk indicators, confidence scoring, multi-user family accounts, and a password strength checker.",
+    "stack": ["JavaScript", "Node.js", "Express", "PostgreSQL", "Chrome Extension"],
+    "features": [
+      "Manifest V3 browser extension with real-time risk analysis",
+      "Visual risk indicators with confidence scoring",
+      "Multi-user family accounts with shared protection",
+      "Password strength checker and security recommendations",
+      "Web portal for account management and history"
+    ],
+    "links": {
+      "github": "https://github.com/DaSonOfPoseidon/BrowseShield"
+    },
+    "tags": ["school", "web"],
+    "highlighted": false
+  },
+  {
+    "slug": "maybemap",
+    "title": "MaybeMap",
+    "tagline": "Transform Excel spreadsheets into professional regional maps",
+    "description": "A Python tool that transforms Excel spreadsheets into professional regional maps. Uses Geoapify geocoding, Folium, and OSMnx for mapping. Features smart label placement with a zero-overlap guarantee, numbered dense areas, and outputs both interactive HTML and high-res PNG maps.",
+    "stack": ["Python", "Folium", "OSMnx", "Geoapify", "Pandas"],
+    "features": [
+      "Excel-to-map pipeline with automatic geocoding",
+      "Smart label placement with zero-overlap guarantee",
+      "Numbered dense area handling for crowded regions",
+      "Interactive HTML map output with pan and zoom",
+      "High-resolution PNG export for print and presentations"
+    ],
+    "links": {
+      "github": "https://github.com/DaSonOfPoseidon/MaybeMap"
+    },
+    "tags": ["professional", "tool"],
+    "highlighted": false
+  },
+  {
+    "slug": "pokedex",
+    "title": "Pokedex",
+    "tagline": "iOS Pokedex app with browsing and detailed Pokémon info",
+    "description": "An iOS Pokedex app built in Swift. Originally a course final project with continued updates. Features Pokémon browsing, detailed info display, and comprehensive unit and UI tests.",
+    "stack": ["Swift", "iOS", "XCTest"],
+    "features": [
+      "Browse and search Pokémon by name or number",
+      "Detailed Pokémon info display with stats and types",
+      "Unit and UI test coverage"
+    ],
+    "links": {
+      "github": "https://github.com/DaSonOfPoseidon/pokedexFinal"
+    },
+    "tags": ["school", "mobile"],
+    "highlighted": false
+  },
+  {
+    "slug": "debt-calculator",
+    "title": "DebtCalculator",
+    "tagline": ".NET desktop app for tracking and calculating debt payoff",
+    "description": "A .NET/WPF desktop application for tracking and calculating debt payoff strategies. Built with C#. Features credit card and loan minimum payment calculations, user profiles, and a hamburger navigation UI.",
+    "stack": ["C#", ".NET", "WPF", "XAML"],
+    "features": [
+      "Credit card minimum payment calculations",
+      "Loan payoff tracking and projections",
+      "User profiles for managing multiple debt scenarios",
+      "Hamburger navigation UI for clean desktop experience"
+    ],
+    "links": {
+      "github": "https://github.com/DaSonOfPoseidon/DebtCalculator"
+    },
+    "tags": ["school", "desktop"],
     "highlighted": false
   }
 ]
