@@ -269,7 +269,7 @@ export function ResumeView({ data }: ResumeViewProps) {
                   <span className="text-foreground font-medium">{cert.name}</span>
                   <span className="text-muted text-sm ml-2">&mdash; {cert.issuer}</span>
                 </div>
-                <span className="font-mono text-xs text-muted">{cert.date}</span>
+                {cert.date && <span className="font-mono text-xs text-muted">{cert.date}</span>}
               </div>
             ))}
           </div>

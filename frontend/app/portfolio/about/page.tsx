@@ -65,21 +65,41 @@ export default function AboutPage() {
 
               <AnimateIn delay={200}>
                 <p className="text-lg text-muted leading-relaxed mb-4">
-                  {data.summary}
+                  Hello! My name is Jackson. I&apos;m 22 years old and currently
+                  a senior in Information Technology at Mizzou. I have experience
+                  building and deploying Python and C family applications on both
+                  desktop and web applications; you can check out my{" "}
+                  <a
+                    href={`https://github.com/${data.contact.github}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-purple hover:text-purple/80 transition-colors underline underline-offset-2"
+                  >
+                    GitHub
+                  </a>{" "}
+                  to see what I&apos;ve been working on recently.
                 </p>
               </AnimateIn>
 
               <AnimateIn delay={300}>
-                <p className="text-muted leading-relaxed mb-6">
-                  Based in {data.contact.location}, I split my time between
-                  building production web applications and running a networking
-                  installation business. This dual background gives me a unique
-                  perspective — I don&apos;t just write code, I deploy and maintain
-                  the physical and virtual infrastructure it runs on.
+                <p className="text-muted leading-relaxed mb-4">
+                  I currently work for Socket Fiber, where I wrote and maintain
+                  CalendarBuddy. I also provide advanced networking, provisioning,
+                  and other technical support to field technicians as needed.
                 </p>
               </AnimateIn>
 
               <AnimateIn delay={400}>
+                <p className="text-muted leading-relaxed mb-6">
+                  In my free time, I enjoy all things technology: writing software,
+                  playing video games, watching TV, building my homelab, and kitting
+                  out my &ldquo;smart&rdquo; home. I live with my fianc&eacute;,
+                  Emily, and our two children (cats), Oliver and Mae, who, quite
+                  frankly, are over my smart home shenanigans.
+                </p>
+              </AnimateIn>
+
+              <AnimateIn delay={500}>
                 <div className="flex flex-wrap gap-3">
                   <a
                     href={`https://github.com/${data.contact.github}`}

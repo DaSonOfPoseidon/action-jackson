@@ -160,7 +160,7 @@ const faqs: FAQItem[] = [
   {
     question: "Do I need to buy my own materials?",
     answer:
-      "You can purchase cable, keystones, and wall plates yourself or have us source everything. We recommend specific brands and grades based on your project requirements. Materials are billed separately from labor. If we purchase equipment or materials on your behalf, a 5\u201310% acquisition and stocking fee applies.",
+      "You can purchase cable, keystones, and wall plates yourself or have us source everything. We recommend specific brands and grades based on your project requirements. Materials are billed separately from labor. If we purchase equipment or materials on your behalf, a 20% acquisition and stocking fee applies.",
   },
 ];
 

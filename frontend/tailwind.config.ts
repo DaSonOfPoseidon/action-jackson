@@ -76,7 +76,7 @@ const config: Config = {
         },
         'pulse-glow': {
           '0%, 100%': { boxShadow: '0 0 20px rgba(34, 197, 94, 0.15)' },
-          '50%': { boxShadow: '0 0 40px rgba(34, 197, 94, 0.3), 0 0 80px rgba(34, 197, 94, 0.1)' },
+          '50%': { boxShadow: '0 0 30px rgba(34, 197, 94, 0.25), 0 0 50px rgba(34, 197, 94, 0.08)' },
         },
         'line-draw': {
           '0%': { strokeDashoffset: '100' },
@@ -98,7 +98,7 @@ const config: Config = {
       animation: {
         'fade-in-up': 'fade-in-up 0.6s ease-out forwards',
         'gradient-shift': 'gradient-shift 8s ease infinite',
-        'pulse-glow': 'pulse-glow 3s ease-in-out infinite',
+        'pulse-glow': 'pulse-glow 10s ease-in-out infinite',
         'line-draw': 'line-draw 2s ease-out forwards',
         'scan-beam': 'scan-beam 3s ease-in-out infinite',
         'pulse-node': 'pulse-node 2s ease-in-out infinite',

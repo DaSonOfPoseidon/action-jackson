@@ -114,7 +114,7 @@ const packages = [
       "Local NVR setup (no subscriptions)",
       "Detection zone configuration",
       "Night vision optimization",
-      "Secure remote access",
+      "Remote access (add-on available)",
       "Camera VLAN isolation",
     ],
     accent: "orange" as const,
@@ -237,6 +237,14 @@ export default function HomePage() {
               </AnimateIn>
             ))}
           </div>
+          <AnimateIn delay={500}>
+            <p className="mx-auto mt-10 max-w-xl text-center text-sm text-muted">
+              Just need a few cable drops or a single service? We do standalone work too — no package required.{" "}
+              <a href="/get-started" className="text-green underline underline-offset-2 hover:text-green-vivid transition-colors">
+                Get a quote
+              </a>.
+            </p>
+          </AnimateIn>
         </div>
       </section>
 

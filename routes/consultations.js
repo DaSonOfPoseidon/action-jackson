@@ -92,7 +92,7 @@ const PACKAGES = [
       'Local NVR setup (no subscriptions)',
       'Detection zone configuration',
       'Night vision optimization',
-      'Secure remote access',
+      'Remote access (add-on available)',
       'Camera VLAN isolation'
     ]
   },

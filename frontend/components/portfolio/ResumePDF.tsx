@@ -341,7 +341,7 @@ export function ResumePDF({ data }: ResumePDFProps) {
                     - {cert.issuer}
                   </Text>
                 </Text>
-                <Text style={styles.entryDate}>{cert.date}</Text>
+                {cert.date && <Text style={styles.entryDate}>{cert.date}</Text>}
               </View>
             ))}
           </>

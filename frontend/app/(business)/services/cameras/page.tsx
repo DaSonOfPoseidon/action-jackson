@@ -62,20 +62,20 @@ const features: Feature[] = [
     badge: "Storage",
   },
   {
-    title: "Secure Remote Access",
-    summary: "View cameras from anywhere through encrypted connections.",
+    title: "Remote Access (Add-On)",
+    summary: "Optional upgrade: view cameras from anywhere through encrypted connections.",
     detail:
-      "No port forwarding, no cloud relay, no third-party account required. VPN or Cloudflare Tunnel access to your NVR interface from any device.",
+      "Many cameras include their own apps for basic mobile viewing. For self-hosted remote access to your full NVR interface — via VPN or Cloudflare Tunnel, with no port forwarding or cloud relay — we offer an optional remote access add-on.",
     icon: "fas fa-globe",
-    badge: "Access",
+    badge: "Add-On",
   },
   {
-    title: "Motion Detection Configuration",
-    summary: "Zone-based motion detection tuned to reduce false positives.",
+    title: "Motion Detection Setup",
+    summary: "Basic zone-based detection included. Advanced smart detection available as upgrade.",
     detail:
-      "Separate sensitivity settings for driveways, entry points, and perimeter areas. Vehicle vs. person detection where supported. Custom notification rules per zone.",
+      "Every install includes zone-based motion detection with separate sensitivity settings for driveways, entry points, and perimeter areas. Advanced features — person/vehicle classification, facial recognition — are available upgrades on supported models.",
     icon: "fas fa-bullseye",
-    badge: "Configuration",
+    badge: "Basic + Upgrades",
   },
   {
     title: "Night Vision Optimization",
@@ -114,7 +114,7 @@ const faqs: FAQItem[] = [
   {
     question: "Can I view cameras on my phone?",
     answer:
-      "Yes. The NVR provides mobile apps and web interfaces for live viewing and playback. Remote access is configured through a secure tunnel — no port forwarding or cloud relay.",
+      "Yes. Most cameras have their own apps for basic mobile viewing and playback. For full NVR access from anywhere, the optional remote access add-on provides self-hosted connectivity via VPN or Cloudflare Tunnel — no port forwarding or cloud relay required.",
   },
   {
     question: "What camera brands do you recommend?",
@@ -124,7 +124,7 @@ const faqs: FAQItem[] = [
   {
     question: "Do I need to buy my own equipment?",
     answer:
-      "You can purchase cameras and NVR hardware yourself or have us source it. We recommend specific models based on your property layout and recording requirements. Hardware is billed separately from labor. If we purchase equipment on your behalf, a 5\u201310% acquisition and stocking fee applies.",
+      "You can purchase cameras and NVR hardware yourself or have us source it. We recommend specific models based on your property layout and recording requirements. Hardware is billed separately from labor. If we purchase equipment on your behalf, a 20% acquisition and stocking fee applies.",
   },
 ];
 
@@ -137,7 +137,7 @@ const pricing: PricingInfo = {
     "Professional mounting with weatherproof housings",
     "Concealed low-voltage cabling",
     "NVR configuration and zone setup",
-    "Motion detection tuning",
+    "Basic motion detection setup",
     "Night vision optimization",
     "Network VLAN integration",
   ],
@@ -200,7 +200,7 @@ export default function CamerasPage() {
             {
               title: "Recording Modes",
               value: "24/7 + Motion",
-              detail: "Continuous recording with motion-tagged event search. Smart detection (person/vehicle) on supported models. Configurable schedules per camera.",
+              detail: "Continuous recording with motion-tagged event search. Basic motion detection included with every install. Smart detection (person/vehicle/facial recognition) available as upgrades on supported models. Configurable schedules per camera.",
               icon: "fas fa-circle-dot",
             },
             {

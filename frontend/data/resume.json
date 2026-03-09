@@ -14,7 +14,7 @@
       "company": "Socket Fiber",
       "startDate": "2024-06",
       "endDate": "Present",
-      "description": "Progressed through three roles in under two years at a rapidly growing fiber ISP, driving operational automation and team leadership through a cost-first approach",
+      "description": "Quickly rose through multiple roles in under two years at a rapidly growing fiber ISP, driving operational automation and team leadership through a cost-first approach",
       "tech": ["Fiber Optics", "GPON", "Networking", "Python", "OSS-BSS Software"],
       "type": "work",
       "roles": [
@@ -158,9 +158,14 @@
       "category": "Professional",
       "icon": "briefcase",
       "color": "orange",
-      "skills": ["Agile/Scrum", "Microsoft Office 365", "Google Workspace", "Technical Documentation", "Team Leadership", "ArcGIS"]
+      "skills": ["Agile/Scrum", "Microsoft Office 365", "Google Workspace", "Technical Documentation", "Interpersonal Communications", "ArcGIS"]
     }
   ],
-  "certifications": [],
+  "certifications": [
+    { "name": "Web and Mobile Development Certificate", "issuer": "University of Missouri" },
+    { "name": "Cybersecurity Certificate", "issuer": "University of Missouri" },
+    { "name": "Information Systems Certificate", "issuer": "University of Missouri" },
+    { "name": "Media and Design Certificate", "issuer": "University of Missouri" }
+  ],
   "lifeEvents": []
 }

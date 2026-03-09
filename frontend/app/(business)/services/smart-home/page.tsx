@@ -167,7 +167,7 @@ const faqs: FAQItem[] = [
   {
     question: "Do I need to buy my own equipment?",
     answer:
-      "You can purchase hardware yourself or have us source it. We recommend specific switches, access points, and hubs based on your home's size and device count. Hardware is billed separately from labor. If we purchase equipment on your behalf, a 5\u201310% acquisition and stocking fee applies.",
+      "You can purchase hardware yourself or have us source it. We recommend specific switches, access points, and hubs based on your home's size and device count. Hardware is billed separately from labor. If we purchase equipment on your behalf, a 20% acquisition and stocking fee applies.",
   },
 ];
 
