@@ -38,7 +38,7 @@
           "notableProjects": ["calendarbuddy"]
         },
         {
-          "title": "Lead Residential Dispatcher",
+          "title": "Senior Residential Dispatcher",
           "startDate": "2025-07",
           "endDate": "2026-02",
           "location": "Columbia, MO",
@@ -58,15 +58,14 @@
           "notableProjects": ["jobscraper", "assigner"]
         },
         {
-          "title": "Tech Support Supervisor",
-          "startDate": "2025-01",
-          "endDate": "2025-07",
+          "title": "Technical Support Tier II",
+          "startDate": "2025-07",
+          "endDate": "2024-07",
           "location": "Columbia, MO",
           "highlights": [
             "Led a team of ~15 support technicians, reducing average ticket lifespan to 48 hours through targeted training and process improvements",
             "Coordinated with ILECs and third-party vendors to resolve complex technical issues and escalations in a timely manner",
-            "Maintained an NPS score of 87% through quality-focused support processes and team accountability",
-            "Created KPI reporting dashboards to track team performance metrics and identify areas for improvement"
+            "Maintained an NPS score of 87% through quality-focused support processes and team accountability"
           ],
           "stats": [
             { "label": "Team size", "value": "15" },
