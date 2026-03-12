@@ -15,7 +15,8 @@ const app = express();
 const allowedOrigins = [
   'http://localhost:3000',
   'https://actionjacksoninstalls.com',
-  'https://www.actionjacksoninstalls.com'
+  'https://www.actionjacksoninstalls.com',
+  'https://dev.actionjacksoninstalls.com'
 ];
 app.use(cors({
   origin: (origin, callback) => {

@@ -19,7 +19,7 @@ describe("GetStartedPage", () => {
     expect(screen.getByText("Property Details")).toBeInTheDocument();
     expect(screen.getByText("Current Issues")).toBeInTheDocument();
     expect(screen.getByText("Services Interested In *")).toBeInTheDocument();
-    expect(screen.getByText("Package Interest")).toBeInTheDocument();
+    expect(screen.getByText("Service Scope")).toBeInTheDocument();
   });
 
   it("renders square footage options", () => {

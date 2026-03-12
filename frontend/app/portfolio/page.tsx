@@ -45,10 +45,9 @@ export default function HomePage() {
 
           <AnimateIn variant="fade-up" delay={250}>
             <p className="text-muted text-lg md:text-xl max-w-2xl leading-relaxed mb-10">
-              I build web applications, infrastructure tools, and home automation
-              systems. From FastAPI backends to Next.js frontends, Docker
-              deployments to fiber installations &mdash; I engineer solutions
-              end-to-end.
+              I enjoy engineering solutions to today&apos;s and tomorrow&apos;s
+              problems &mdash; from FastAPI backends to Next.js frontends,
+              Docker deployments to fiber installations.
             </p>
           </AnimateIn>
 
@@ -159,11 +158,11 @@ export default function HomePage() {
               Get In Touch
             </p>
             <h2 className="font-heading text-3xl md:text-4xl font-bold mb-6">
-              Let&apos;s Build Something
+              Open to Opportunities
             </h2>
             <p className="text-muted text-lg mb-8">
-              Looking for a developer who bridges software and infrastructure?
-              Check out my work or reach out directly.
+              I&apos;m looking to continue my growth &mdash; if you need a
+              reliable, outside-the-box problem solver, look no further.
             </p>
           </AnimateIn>
           <AnimateIn delay={150}>

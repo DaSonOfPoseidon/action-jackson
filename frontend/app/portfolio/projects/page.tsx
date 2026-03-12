@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { AnimateIn } from "@/components/portfolio/AnimateIn";
 import { ProjectCard } from "@/components/portfolio/ProjectCard";
 import projects from "@/data/projects.json";
@@ -65,11 +66,20 @@ export default function ProjectsPage() {
           </AnimateIn>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filtered.map((project, i) => (
-              <AnimateIn key={project.slug} delay={i * 80}>
-                <ProjectCard project={project} />
-              </AnimateIn>
-            ))}
+            <AnimatePresence mode="popLayout">
+              {filtered.map((project) => (
+                <motion.div
+                  key={project.slug}
+                  layout
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <ProjectCard project={project} />
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
 
           {filtered.length === 0 && (

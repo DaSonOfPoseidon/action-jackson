@@ -10,6 +10,9 @@ const data = resume as ResumeData;
 export const metadata: Metadata = {
   title: "Resume",
   description: `Resume for ${data.contact.name} - ${data.contact.title}`,
+  alternates: {
+    canonical: "https://dev.actionjacksoninstalls.com/resume",
+  },
 };
 
 export default function ResumePage() {

@@ -41,6 +41,9 @@ export const metadata: Metadata = {
   title: "About",
   description:
     "Full-stack developer and automation engineer based in Columbia, MO. Building web apps, infrastructure tools, and home networking solutions.",
+  alternates: {
+    canonical: "https://dev.actionjacksoninstalls.com/about",
+  },
 };
 
 export default function AboutPage() {
@@ -65,8 +68,8 @@ export default function AboutPage() {
 
               <AnimateIn delay={200}>
                 <p className="text-lg text-muted leading-relaxed mb-4">
-                  Hello! My name is Jackson. I&apos;m 22 years old and currently
-                  a senior in Information Technology at Mizzou. I have experience
+                  Hello! My name is Jackson. I&apos;m currently a senior in
+                  Information Technology at Mizzou. I have experience
                   building and deploying Python and C family applications on both
                   desktop and web applications; you can check out my{" "}
                   <a

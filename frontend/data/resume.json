@@ -1,7 +1,7 @@
 {
   "contact": {
     "name": "Jackson Keithley",
-    "title": "Backend & Automation Engineer",
+    "title": "Full-Stack Developer & Automation Engineer",
     "email": "keithleyjj@gmail.com",
     "location": "Columbia, MO",
     "github": "DaSonOfPoseidon",
@@ -59,8 +59,8 @@
         },
         {
           "title": "Technical Support Tier II",
-          "startDate": "2025-07",
-          "endDate": "2024-07",
+          "startDate": "2024-06",
+          "endDate": "2025-07",
           "location": "Columbia, MO",
           "highlights": [
             "Led a team of ~15 support technicians, reducing average ticket lifespan to 48 hours through targeted training and process improvements",

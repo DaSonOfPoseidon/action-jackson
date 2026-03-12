@@ -1,6 +1,12 @@
 import type { MetadataRoute } from "next";
+import { headers } from "next/headers";
+import projects from "@/data/projects.json";
 
 export default function sitemap(): MetadataRoute.Sitemap {
+  const headersList = headers();
+  const host = headersList.get("host") ?? "";
+  const isPortfolio = host.startsWith("dev.");
+
   const businessBase = "https://actionjacksoninstalls.com";
   const portfolioBase = "https://dev.actionjacksoninstalls.com";
 
@@ -49,6 +55,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ];
 
+  const projectSlugs = (projects as { slug: string }[]).map((p) => p.slug);
+
   const portfolioPages: MetadataRoute.Sitemap = [
     {
       url: portfolioBase,
@@ -74,7 +82,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 0.8,
     },
+    ...projectSlugs.map((slug) => ({
+      url: `${portfolioBase}/projects/${slug}`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
+    })),
   ];
 
-  return [...businessPages, ...portfolioPages];
+  if (isPortfolio) {
+    return portfolioPages;
+  }
+
+  return businessPages;
 }

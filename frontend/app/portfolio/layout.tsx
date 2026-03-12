@@ -15,6 +15,25 @@ const personSchema = {
       "https://github.com/DaSonOfPoseidon",
       "https://www.linkedin.com/in/jackson-keithley-115582213/",
     ],
+    worksFor: {
+      "@type": "Organization",
+      name: "Socket Fiber",
+    },
+    alumniOf: {
+      "@type": "CollegeOrUniversity",
+      name: "University of Missouri",
+    },
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: "Columbia",
+      addressRegion: "MO",
+    },
+    hasCredential: [
+      { "@type": "EducationalOccupationalCredential", name: "Web and Mobile Development Certificate", credentialCategory: "certificate" },
+      { "@type": "EducationalOccupationalCredential", name: "Cybersecurity Certificate", credentialCategory: "certificate" },
+      { "@type": "EducationalOccupationalCredential", name: "Information Systems Certificate", credentialCategory: "certificate" },
+      { "@type": "EducationalOccupationalCredential", name: "Media and Design Certificate", credentialCategory: "certificate" },
+    ],
     knowsAbout: [
       "Next.js",
       "React",
@@ -47,6 +66,15 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     siteName: "Jackson Keithley - Developer Portfolio",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Jackson Keithley | Developer Portfolio",
+    description:
+      "Full-stack developer & automation engineer building web apps, infrastructure tools, and home automation systems in Columbia, MO.",
+  },
+  alternates: {
+    canonical: "https://dev.actionjacksoninstalls.com",
   },
 };
 

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { AnimateIn } from "@/components/portfolio/AnimateIn";
 import type { Project } from "@/lib/portfolio-types";
@@ -105,9 +106,11 @@ export function ProjectCard({ project, delay = 0 }: ProjectCardProps) {
         </div>
 
         {/* Title & tagline */}
-        <h3 className="mb-2 font-heading text-lg font-semibold text-foreground transition-colors group-hover:text-purple">
-          {project.title}
-        </h3>
+        <Link href={`/projects/${project.slug}`} className="block">
+          <h3 className="mb-2 font-heading text-lg font-semibold text-foreground transition-colors group-hover:text-purple">
+            {project.title}
+          </h3>
+        </Link>
         <p className="mb-4 flex-1 text-sm leading-relaxed text-muted">
           {project.tagline}
         </p>
