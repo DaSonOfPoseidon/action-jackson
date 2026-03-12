@@ -17,6 +17,7 @@ export interface Role {
   title: string;
   startDate: string;
   endDate: string;
+  location?: string;
   highlights: string[];
   stats?: Stat[];
   notableProjects?: string[];
@@ -31,6 +32,7 @@ export interface LifeEvent {
 
 export interface Experience {
   company: string;
+  companyDescription?: string;
   role?: string;
   roles?: Role[];
   startDate: string;
@@ -41,6 +43,19 @@ export interface Experience {
   tech: string[];
   type: 'work' | 'education';
   notableProjects?: string[];
+}
+
+export interface PdfSkillLine {
+  label: string;
+  items: string[];
+}
+
+export interface PdfProject {
+  name: string;
+  startDate: string;
+  endDate: string;
+  highlights: string[];
+  tech: string;
 }
 
 export interface Education {
@@ -74,6 +89,8 @@ export interface ResumeData {
   skills: SkillCategory[];
   certifications: Certification[];
   lifeEvents?: LifeEvent[];
+  pdfSkills?: PdfSkillLine[];
+  pdfProjects?: PdfProject[];
 }
 
 export interface ProjectLink {

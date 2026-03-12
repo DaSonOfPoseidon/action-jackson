@@ -12,6 +12,7 @@
   "experience": [
     {
       "company": "Socket Fiber",
+      "companyDescription": "Socket Fiber is a leading telecommunications provider in Missouri, offering fiber-optic internet, DSL, and home phone services to residential and business customers, known for its high-speed broadband and community-focused operations.",
       "startDate": "2024-06",
       "endDate": "Present",
       "description": "Quickly rose through multiple roles in under two years at a rapidly growing fiber ISP, driving operational automation and team leadership through a cost-first approach",
@@ -22,10 +23,13 @@
           "title": "Operations Automation Engineer",
           "startDate": "2026-02",
           "endDate": "Present",
+          "location": "Columbia, MO",
           "highlights": [
             "Automated technician management and reporting processes using Python, reducing manual work by 50+ hours per week",
             "Integrated with custom legacy OSS/BSS software to streamline routing and automate assignment of installation and repair tickets based on technician availability, location, and skill set",
-            "Developed dashboard tools for real-time monitoring of automation processes and job statistics, improving visibility and enabling data-driven decision making"
+            "Developed dashboard tools for real-time monitoring of automation processes and job statistics, improving visibility and enabling data-driven decision making",
+            "Built a multi-user web platform (CalendarBuddy) wrapping three desktop automation tools into a unified portal with Celery + Redis task queue and SSE-based real-time progress streaming",
+            "Engineered a Python scraping engine using Playwright to automate browser sessions and extract fiber installation job data, orchestrating 8-16 concurrent browser workers with async task management"
           ],
           "stats": [
             { "label": "Hours saved weekly", "value": "50+" },
@@ -37,10 +41,13 @@
           "title": "Lead Residential Dispatcher",
           "startDate": "2025-07",
           "endDate": "2026-02",
+          "location": "Columbia, MO",
           "highlights": [
             "Hand-selected to build out the Technical Operations team, training 6 new Dispatchers and establishing dispatch procedures",
-            "Managed scheduling and dispatches, implementing tools to optimize route planning, completion rate and job costs",
-            "Implemented assignment tracking procedures, eliminating missed appointments and improving technician accountability"
+            "Managed scheduling and dispatches for 50+ technicians across 8 contracting companies, averaging 150 daily jobs",
+            "Implemented tools to optimize route planning, achieving a 93% job completion rate while reducing average job costs",
+            "Implemented assignment tracking procedures, eliminating missed appointments and improving technician accountability",
+            "Developed a VRPTW route optimizer with self-hosted geocoding (Nominatim) and routing (OSRM) backends"
           ],
           "stats": [
             { "label": "Technicians managed", "value": "50+" },
@@ -54,9 +61,12 @@
           "title": "Tech Support Supervisor",
           "startDate": "2025-01",
           "endDate": "2025-07",
+          "location": "Columbia, MO",
           "highlights": [
             "Led a team of ~15 support technicians, reducing average ticket lifespan to 48 hours through targeted training and process improvements",
-            "Coordinated with ILECs and third-party vendors to resolve complex technical issues and escalations in a timely manner"
+            "Coordinated with ILECs and third-party vendors to resolve complex technical issues and escalations in a timely manner",
+            "Maintained an NPS score of 87% through quality-focused support processes and team accountability",
+            "Created KPI reporting dashboards to track team performance metrics and identify areas for improvement"
           ],
           "stats": [
             { "label": "Team size", "value": "15" },
@@ -68,6 +78,7 @@
     },
     {
       "company": "Best Buy",
+      "companyDescription": "Geek Squad is a leading tech support service provider, specializing in installation, maintenance, and repair of consumer electronics and appliances.",
       "startDate": "2022-01",
       "endDate": "2024-06",
       "description": "Progressed from in-store consultation to hands-on automotive technology installation, combining customer-facing sales expertise with technical installation skills",
@@ -78,10 +89,12 @@
           "title": "AutoTech",
           "startDate": "2023-06",
           "endDate": "2024-06",
+          "location": "Columbia, MO",
           "highlights": [
             "Installed car electronics including stereos, speakers, amplifiers, remote starts, dash cameras, and GPS systems",
             "Diagnosed and resolved complex vehicle electrical issues, ensuring quality installations across a wide range of makes and models",
-            "Maintained a high customer satisfaction rating through attention to detail and clean, professional installations"
+            "Maintained a high customer satisfaction rating through attention to detail and clean, professional installations",
+            "Trained new installers on proper techniques, wiring standards, and safety procedures"
           ],
           "stats": []
         },
@@ -89,10 +102,12 @@
           "title": "Consultation Agent",
           "startDate": "2022-01",
           "endDate": "2023-06",
+          "location": "Fairview Heights, IL",
           "highlights": [
             "Provided expert product consultation to customers on home theater, networking, smart home, and car electronics solutions",
             "Assessed customer needs and designed tailored technology solutions, driving attachment rates and repeat business",
-            "Collaborated with installation teams to ensure seamless handoffs from sales to service delivery"
+            "Collaborated with installation teams to ensure seamless handoffs from sales to service delivery",
+            "Consistently exceeded monthly revenue targets through needs-based selling and relationship building"
           ],
           "stats": []
         }
@@ -166,6 +181,42 @@
     { "name": "Cybersecurity Certificate", "issuer": "University of Missouri" },
     { "name": "Information Systems Certificate", "issuer": "University of Missouri" },
     { "name": "Media and Design Certificate", "issuer": "University of Missouri" }
+  ],
+  "pdfSkills": [
+    {
+      "label": "Skills",
+      "items": ["Technical Documentation", "Troubleshooting", "Agile Methodologies", "CI/CD", "Technical Support", "Web Development", "Cybersecurity", "Process Automation", "KPI Reporting", "Dispatching"]
+    },
+    {
+      "label": "Technologies",
+      "items": ["Python", "C/C#/C++", "ArcGIS", "Git", "SQL", "AI", "Microsoft Office", "Mac/PC/Linux", "GPON Fiber Optic Networks"]
+    },
+    {
+      "label": "Interests",
+      "items": ["AI + Automation", "Networking", "Building Computers", "Weightlifting", "DIY Home Improvement"]
+    }
+  ],
+  "pdfProjects": [
+    {
+      "name": "CalendarBuddy",
+      "startDate": "Jan. 2025",
+      "endDate": "Jul. 2025",
+      "highlights": [
+        "A multi-user web platform that wraps three desktop automation tools — JobScraper, Spreader, and ASSigner — into a unified, automated portal with Celery + Redis task queue, SSE-based real-time progress streaming, and a calendar dashboard.",
+        "Built with FastAPI, Celery, Redis, PostgreSQL, and Docker. Multi-user authentication with Argon2 hashing, Excel/TXT export, and admin dashboard."
+      ],
+      "tech": "Python · FastAPI · Celery · Redis · PostgreSQL · Docker"
+    },
+    {
+      "name": "JobScraper",
+      "startDate": "Oct. 2024",
+      "endDate": "Present",
+      "highlights": [
+        "A Python scraping engine using Playwright to automate browser sessions and extract fiber installation job data. Orchestrates 8-16 concurrent browser workers with async task management and feeds results into a VRPTW route optimizer.",
+        "795+ automated tests. Self-hosted geocoding (Nominatim) and routing (OSRM) backends with strategy pattern for swappable providers."
+      ],
+      "tech": "Python · Playwright · Pandas · VROOM · OSRM · Nominatim"
+    }
   ],
   "lifeEvents": []
 }

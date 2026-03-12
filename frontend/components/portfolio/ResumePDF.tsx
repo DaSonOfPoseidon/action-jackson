@@ -8,142 +8,135 @@ import {
   StyleSheet,
   Link,
 } from "@react-pdf/renderer";
-import type { ResumeData, Project } from "@/lib/portfolio-types";
-import projects from "@/data/projects.json";
-
-const allProjects = projects as Project[];
+import type { ResumeData } from "@/lib/portfolio-types";
 
 const styles = StyleSheet.create({
   page: {
-    padding: 34,
+    padding: 32,
     fontFamily: "Helvetica",
-    fontSize: 10,
-    color: "#1a1a2e",
-    lineHeight: 1.4,
+    fontSize: 9.5,
+    color: "#333",
+    lineHeight: 1.25,
   },
   header: {
-    marginBottom: 16,
-    borderBottom: "2px solid #c084fc",
-    paddingBottom: 12,
+    marginBottom: 10,
+    alignItems: "center",
   },
   name: {
-    fontSize: 24,
+    fontSize: 21,
     fontFamily: "Helvetica-Bold",
+    color: "#000",
     marginBottom: 4,
-  },
-  title: {
-    fontSize: 12,
-    color: "#7c3aed",
-    marginBottom: 8,
   },
   contactRow: {
     flexDirection: "row",
-    gap: 8,
+    gap: 6,
     fontSize: 9,
-    color: "#666",
+    color: "#444",
   },
   contactLink: {
-    color: "#7c3aed",
+    color: "#333",
     textDecoration: "none",
   },
   sectionTitle: {
-    fontSize: 12,
+    fontSize: 10.5,
     fontFamily: "Helvetica-Bold",
-    color: "#7c3aed",
+    color: "#000",
     textTransform: "uppercase",
-    letterSpacing: 1.5,
-    marginBottom: 8,
-    marginTop: 10,
+    letterSpacing: 1,
+    marginTop: 9,
+    marginBottom: 4,
+    paddingBottom: 2,
+    borderBottom: "1pt solid #000",
   },
-  entryHeader: {
+  companyRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 2,
+    marginTop: 4,
   },
-  entryRole: {
+  companyName: {
     fontFamily: "Helvetica-Bold",
     fontSize: 10,
+    color: "#000",
   },
-  entryDate: {
+  dateText: {
     fontSize: 9,
     color: "#666",
   },
-  entryCompany: {
-    fontSize: 9,
-    color: "#7c3aed",
-    marginBottom: 4,
+  companyDescription: {
+    fontSize: 8.5,
+    color: "#555",
+    marginBottom: 2,
+    fontStyle: "italic",
   },
-  roleLineItem: {
-    fontSize: 9,
+  roleRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 2,
+  },
+  roleTitle: {
+    fontSize: 9.5,
+    fontFamily: "Helvetica-Oblique",
     color: "#333",
-    marginBottom: 1,
+  },
+  roleLocation: {
+    fontSize: 9,
+    color: "#666",
   },
   bullet: {
     flexDirection: "row",
-    gap: 6,
-    marginBottom: 2,
+    gap: 5,
+    marginBottom: 1.5,
+    paddingLeft: 8,
   },
   bulletDot: {
     fontSize: 9,
-    color: "#7c3aed",
+    color: "#333",
   },
   bulletText: {
     fontSize: 9,
     color: "#444",
     flex: 1,
   },
-  techRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 4,
-    marginTop: 4,
-    marginBottom: 8,
-  },
-  techBadge: {
-    fontSize: 8,
-    color: "#666",
-    backgroundColor: "#f0f0f5",
-    padding: "2 6",
-    borderRadius: 3,
-  },
-  skillRow: {
-    flexDirection: "row",
-    marginBottom: 4,
-  },
-  skillCategory: {
-    fontFamily: "Helvetica-Bold",
-    fontSize: 9,
-    width: 100,
-  },
-  skillList: {
-    fontSize: 9,
-    color: "#444",
-    flex: 1,
-  },
-  certRow: {
+  projectHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 3,
+    marginTop: 4,
   },
-  summary: {
+  projectName: {
+    fontFamily: "Helvetica-Bold",
     fontSize: 10,
-    color: "#333",
-    marginBottom: 4,
+    color: "#000",
   },
-  projectLine: {
+  skillBullet: {
     flexDirection: "row",
-    marginBottom: 2,
-    fontSize: 9,
+    gap: 5,
+    marginBottom: 1.5,
+    paddingLeft: 8,
   },
-  projectTitle: {
+  skillLabel: {
     fontFamily: "Helvetica-Bold",
     fontSize: 9,
-    color: "#7c3aed",
-    textDecoration: "none",
+    color: "#333",
   },
-  projectTagline: {
+  skillItems: {
     fontSize: 9,
     color: "#444",
+  },
+  eduRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 4,
+  },
+  eduSchool: {
+    fontFamily: "Helvetica-Bold",
+    fontSize: 10,
+    color: "#000",
+  },
+  eduDegree: {
+    fontFamily: "Helvetica-Oblique",
+    fontSize: 9.5,
+    color: "#333",
   },
 });
 
@@ -152,47 +145,24 @@ interface ResumePDFProps {
 }
 
 export function ResumePDF({ data }: ResumePDFProps) {
-  // Collect all notable project slugs from experience
-  const notableSlugs = new Set<string>();
-  for (const exp of data.experience) {
-    if (exp.notableProjects) {
-      for (const slug of exp.notableProjects) {
-        notableSlugs.add(slug);
-      }
-    }
-    if (exp.roles) {
-      for (const role of exp.roles) {
-        if (role.notableProjects) {
-          for (const slug of role.notableProjects) {
-            notableSlugs.add(slug);
-          }
-        }
-      }
-    }
-  }
-  const notableProjects = allProjects
-    .filter((p) => notableSlugs.has(p.slug))
-    .slice(0, 3);
-
   return (
     <Document>
       <Page size="A4" style={styles.page}>
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.name}>{data.contact.name}</Text>
-          <Text style={styles.title}>{data.contact.title}</Text>
           <View style={styles.contactRow}>
-            <Text>{data.contact.location}</Text>
-            <Text>|</Text>
             <Link src={`mailto:${data.contact.email}`} style={styles.contactLink}>
               {data.contact.email}
             </Link>
             <Text>|</Text>
+            <Text>{data.contact.location}</Text>
+            <Text>|</Text>
             <Link
-              src={`https://github.com/${data.contact.github}`}
+              src={`https://linkedin.com/in/${data.contact.linkedin}`}
               style={styles.contactLink}
             >
-              github.com/{data.contact.github}
+              LinkedIn
             </Link>
             <Text>|</Text>
             <Link
@@ -204,148 +174,124 @@ export function ResumePDF({ data }: ResumePDFProps) {
           </View>
         </View>
 
-        {/* Summary */}
-        <Text style={styles.sectionTitle}>Summary</Text>
-        <Text style={styles.summary}>{data.summary}</Text>
+        {/* Work Experience */}
+        <Text style={styles.sectionTitle}>Work Experience</Text>
+        {data.experience.map((exp, i) => (
+          <View key={i}>
+            {/* Company + date range */}
+            <View style={styles.companyRow}>
+              <Text style={styles.companyName}>{exp.company}</Text>
+              <Text style={styles.dateText}>
+                {exp.startDate} – {exp.endDate}
+              </Text>
+            </View>
 
-        {/* Experience */}
-        <Text style={styles.sectionTitle}>Experience</Text>
-        {data.experience.map((exp, i) => {
-          const hasRoles = exp.roles && exp.roles.length > 0;
+            {/* Company description */}
+            {exp.companyDescription && (
+              <Text style={styles.companyDescription}>{exp.companyDescription}</Text>
+            )}
 
-          if (hasRoles) {
-            // Consolidated multi-role block
-            const allHighlights = exp.roles!.flatMap((r) => r.highlights);
-            const bestHighlights = allHighlights.slice(0, 4);
-
-            return (
-              <View key={i} wrap={false}>
-                <View style={styles.entryHeader}>
-                  <Text style={styles.entryRole}>{exp.company}</Text>
-                  <Text style={styles.entryDate}>
-                    {exp.startDate} - {exp.endDate}
+            {/* Roles */}
+            {exp.roles?.map((role, ri) => (
+              <View key={ri}>
+                <View style={styles.roleRow}>
+                  <Text style={styles.roleTitle}>
+                    {role.title} | {role.startDate} – {role.endDate}
                   </Text>
+                  {role.location && (
+                    <Text style={styles.roleLocation}>{role.location}</Text>
+                  )}
                 </View>
-                {/* List role titles with dates */}
-                {exp.roles!.map((role, ri) => (
-                  <Text key={ri} style={styles.roleLineItem}>
-                    {role.title} ({role.startDate} – {role.endDate})
-                  </Text>
-                ))}
-                {/* Combined highlights */}
-                <View style={{ marginTop: 3 }}>
-                  {bestHighlights.map((h, j) => (
+                <View style={{ marginTop: 1.5 }}>
+                  {role.highlights.map((h, j) => (
                     <View key={j} style={styles.bullet}>
                       <Text style={styles.bulletDot}>{"\u2022"}</Text>
                       <Text style={styles.bulletText}>{h}</Text>
                     </View>
                   ))}
                 </View>
-                {exp.tech.length > 0 && (
-                  <View style={styles.techRow}>
-                    {exp.tech.map((t) => (
-                      <Text key={t} style={styles.techBadge}>
-                        {t}
-                      </Text>
-                    ))}
+              </View>
+            ))}
+
+            {/* Single-role fallback */}
+            {!exp.roles && exp.highlights && (
+              <View style={{ marginTop: 1.5 }}>
+                {exp.highlights.map((h, j) => (
+                  <View key={j} style={styles.bullet}>
+                    <Text style={styles.bulletDot}>{"\u2022"}</Text>
+                    <Text style={styles.bulletText}>{h}</Text>
                   </View>
-                )}
+                ))}
               </View>
-            );
-          }
+            )}
+          </View>
+        ))}
 
-          // Single role entry — no description (highlights are sufficient)
-          return (
-            <View key={i} wrap={false}>
-              <View style={styles.entryHeader}>
-                <Text style={styles.entryRole}>{exp.role}</Text>
-                <Text style={styles.entryDate}>
-                  {exp.startDate} - {exp.endDate}
-                </Text>
-              </View>
-              <Text style={styles.entryCompany}>{exp.company}</Text>
-              {(exp.highlights ?? []).map((h, j) => (
-                <View key={j} style={styles.bullet}>
-                  <Text style={styles.bulletDot}>{"\u2022"}</Text>
-                  <Text style={styles.bulletText}>{h}</Text>
-                </View>
-              ))}
-              {exp.tech.length > 0 && (
-                <View style={styles.techRow}>
-                  {exp.tech.map((t) => (
-                    <Text key={t} style={styles.techBadge}>
-                      {t}
-                    </Text>
-                  ))}
-                </View>
-              )}
-            </View>
-          );
-        })}
-
-        {/* Notable Projects */}
-        {notableProjects.length > 0 && (
+        {/* Projects */}
+        {data.pdfProjects && data.pdfProjects.length > 0 && (
           <>
-            <Text style={styles.sectionTitle}>Notable Projects</Text>
-            {notableProjects.map((project) => {
-              const href = project.links.live || project.links.github || "";
-              return (
-                <View key={project.slug} style={styles.projectLine}>
-                  <Link src={href} style={styles.projectTitle}>
-                    {project.title}
-                  </Link>
-                  <Text style={styles.projectTagline}>
-                    {" "}&mdash; {project.tagline}
+            <Text style={styles.sectionTitle}>Projects</Text>
+            {data.pdfProjects.map((proj, i) => (
+              <View key={i}>
+                <View style={styles.projectHeader}>
+                  <Text style={styles.projectName}>{proj.name}</Text>
+                  <Text style={styles.dateText}>
+                    {proj.startDate} – {proj.endDate}
                   </Text>
                 </View>
-              );
-            })}
+                <View style={{ marginTop: 1.5 }}>
+                  {proj.highlights.map((h, j) => (
+                    <View key={j} style={styles.bullet}>
+                      <Text style={styles.bulletDot}>{"\u2022"}</Text>
+                      <Text style={styles.bulletText}>{h}</Text>
+                    </View>
+                  ))}
+                  <View style={styles.bullet}>
+                    <Text style={styles.bulletDot}>{"\u2022"}</Text>
+                    <Text style={styles.bulletText}>{proj.tech}</Text>
+                  </View>
+                </View>
+              </View>
+            ))}
+          </>
+        )}
+
+        {/* Skills, Technologies & Interests */}
+        {data.pdfSkills && data.pdfSkills.length > 0 && (
+          <>
+            <Text style={styles.sectionTitle}>
+              Skills, Technologies & Interests
+            </Text>
+            {data.pdfSkills.map((line, i) => (
+              <View key={i} style={styles.skillBullet}>
+                <Text style={styles.bulletDot}>{"\u2022"}</Text>
+                <Text style={styles.skillItems}>
+                  <Text style={styles.skillLabel}>{line.label}: </Text>
+                  {line.items.join("; ")}
+                </Text>
+              </View>
+            ))}
           </>
         )}
 
         {/* Education */}
         <Text style={styles.sectionTitle}>Education</Text>
         {data.education.map((edu, i) => (
-          <View key={i} wrap={false}>
-            <View style={styles.entryHeader}>
-              <Text style={styles.entryRole}>
-                {edu.degree} in {edu.field}
-              </Text>
-              <Text style={styles.entryDate}>
-                {edu.startDate} - {edu.endDate}
+          <View key={i}>
+            <View style={styles.eduRow}>
+              <Text style={styles.eduSchool}>{edu.institution}</Text>
+              <Text style={styles.dateText}>
+                {edu.endDate}
               </Text>
             </View>
-            <Text style={styles.entryCompany}>{edu.institution}</Text>
+            <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+              <Text style={styles.eduDegree}>
+                {edu.degree} in {edu.field}
+              </Text>
+              <Text style={styles.roleLocation}>{data.contact.location}</Text>
+            </View>
           </View>
         ))}
-
-        {/* Skills */}
-        <Text style={styles.sectionTitle}>Skills</Text>
-        {data.skills.map((cat) => (
-          <View key={cat.category} style={styles.skillRow}>
-            <Text style={styles.skillCategory}>{cat.category}</Text>
-            <Text style={styles.skillList}>{cat.skills.join(", ")}</Text>
-          </View>
-        ))}
-
-        {/* Certifications */}
-        {data.certifications.length > 0 && (
-          <>
-            <Text style={styles.sectionTitle}>Certifications</Text>
-            {data.certifications.map((cert, i) => (
-              <View key={i} style={styles.certRow}>
-                <Text>
-                  <Text style={styles.entryRole}>{cert.name}</Text>
-                  <Text style={{ fontSize: 9, color: "#444" }}>
-                    {" "}
-                    - {cert.issuer}
-                  </Text>
-                </Text>
-                {cert.date && <Text style={styles.entryDate}>{cert.date}</Text>}
-              </View>
-            ))}
-          </>
-        )}
       </Page>
     </Document>
   );
