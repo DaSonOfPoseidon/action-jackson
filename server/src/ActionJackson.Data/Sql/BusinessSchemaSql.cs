@@ -4,7 +4,8 @@ using ActionJackson.Data.Modeling;
 namespace ActionJackson.Data.Sql;
 
 // The SQL that EF's model cannot express. The lan and car migrations both call these, so the two
-// schemas cannot drift apart.
+// schemas cannot drift apart. A migration that already ran is never edited: if the blocking statuses
+// change, a new migration drops and re-adds appointments_no_overlap (and the model's filtered index).
 public static class BusinessSchemaSql
 {
     // status IN ('Scheduled', 'Confirmed', 'InProgress'): the statuses that hold a time slot.

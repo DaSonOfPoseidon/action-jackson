@@ -136,6 +136,13 @@ docker-compose.yml     — 3-service orchestration (mongo, api, frontend)
 - `scripts/dotnet.sh build server/ActionJackson.slnx` — build the solution
 - `scripts/dotnet.sh test server/ActionJackson.slnx` — run the server tests
 - `scripts/dotnet.sh format server/ActionJackson.slnx` — format the code
+- `scripts/test-db.sh up` — start the throwaway Postgres (`aj-testdb`) that the data tests use; `scripts/test-db.sh down`
+  removes it. `scripts/check.sh` starts it, and `scripts/dotnet.sh` joins its network and sets `TEST_DATABASE_URL`. Without
+  it the database tests are skipped locally. In CI (`CI=true`) a missing database fails them.
+- `scripts/dotnet.sh ef migrations add <Name> --context <X>DbContext -o Migrations/<X> --project server/src/ActionJackson.Data
+  --startup-project server/src/ActionJackson.Data` — add a migration (`dotnet-ef` is a local tool, `.config/dotnet-tools.json`).
+  Each context has its own migrations folder: Core, Lan, Car, Main and Dev. A change to the business model needs a
+  migration in both Lan and Car. Never edit a migration that has run.
 - The SDK runs in a container (`mcr.microsoft.com/dotnet/sdk:10.0`), so the host needs only Docker.
 
 ### Docker

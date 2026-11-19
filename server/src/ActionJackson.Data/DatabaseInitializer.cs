@@ -1,0 +1,21 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace ActionJackson.Data;
+
+public static class DatabaseInitializer
+{
+    // Brings the database up to date: migrates core, lan, car, main and dev, in that order. Running
+    // it again changes nothing. The caller registers the contexts with AddActionJacksonData.
+    public static async Task MigrateAndSeedAsync(IServiceProvider services, CancellationToken cancellationToken = default)
+    {
+        await using var scope = services.CreateAsyncScope();
+        var provider = scope.ServiceProvider;
+
+        await provider.GetRequiredService<CoreDbContext>().Database.MigrateAsync(cancellationToken);
+        await provider.GetRequiredService<LanDbContext>().Database.MigrateAsync(cancellationToken);
+        await provider.GetRequiredService<CarDbContext>().Database.MigrateAsync(cancellationToken);
+        await provider.GetRequiredService<MainDbContext>().Database.MigrateAsync(cancellationToken);
+        await provider.GetRequiredService<DevDbContext>().Database.MigrateAsync(cancellationToken);
+    }
+}
