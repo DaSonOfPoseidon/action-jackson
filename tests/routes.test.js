@@ -27,8 +27,10 @@ beforeAll(async () => {
 
   app = require('../server');
 
-  await mongoose.connection.once('open', () => {
-    console.log('Test database connected');
+  // server.js connects in the background; wait until the connection is actually open.
+  await new Promise((resolve) => {
+    if (mongoose.connection.readyState === 1) return resolve();
+    mongoose.connection.once('open', resolve);
   });
 });
 
