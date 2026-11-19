@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/ActionJackson.Api/ActionJackson.Api.csproj" />
+    <Project Path="src/ActionJackson.Core/ActionJackson.Core.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/ActionJackson.Api.Tests/ActionJackson.Api.Tests.csproj" />
