@@ -1,0 +1,33 @@
+name: Codex review
+
+# Sets the `codex-review` status that branch protection requires, via claude-ship's reusable workflow (the bot
+# filter, per-PR concurrency and the action live there). It re-checks on a new commit, a Codex review, or an
+# edit to Codex's summary comment (how it reports a finished review).
+# Resolving a thread triggers nothing, so run it by hand: gh workflow run codex-review.yml -f pr=<number>
+# This file's own PR can't get the status (issue_comment runs the default branch's copy, which lacks it yet):
+# require `codex-review` in branch protection only after that PR merges.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  pull_request_review:
+    types: [submitted]
+  issue_comment:
+    types: [created, edited]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: Pull request number
+        required: true
+
+# A called workflow can't exceed these.
+permissions:
+  # codex-status.sh reads the branch's push activity, which needs contents read.
+  contents: read
+  issues: read
+  pull-requests: read
+  statuses: write
+
+jobs:
+  codex-review:
+    # claude-ship's v1 tag decides, not this repo's files; it moves (owner only) on release.
+    uses: DaSonOfPoseidon/claude-ship/.github/workflows/codex-status.yml@v1
