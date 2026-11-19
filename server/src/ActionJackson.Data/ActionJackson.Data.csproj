@@ -5,6 +5,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Seed\lan-catalog.json" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\ActionJackson.Core\ActionJackson.Core.csproj" />
   </ItemGroup>
 
