@@ -197,6 +197,49 @@ public class ConstraintTests(TestDatabase database) : IClassFixture<TestDatabase
     }
 
     [DbTheory]
+    [InlineData("Lan")]
+    [InlineData("LAN")]
+    [InlineData("other")]
+    public async Task A_site_column_accepts_only_the_lowercase_site_names(string site)
+    {
+        var failure = await Rows.ExecuteFailureAsync(
+            database,
+            $"INSERT INTO core.settings (site, data, updated_at) VALUES ('{site}', '{{}}', now())");
+
+        Assert.Equal(Check, failure?.SqlState);
+        Assert.Equal("ck_settings_site", failure?.ConstraintName);
+    }
+
+    [DbFact]
+    public async Task A_server_error_upsert_on_source_and_fingerprint_increments_the_count()
+    {
+        var fingerprint = Guid.NewGuid().ToString("N");
+        var upsert =
+            "INSERT INTO core.server_errors (source, fingerprint, type, message, stack, path, count, first_seen, last_seen) " +
+            $"VALUES ('Api', '{fingerprint}', 'T', 'm', 's', '/p', 1, now(), now()) " +
+            "ON CONFLICT (source, fingerprint) DO UPDATE SET count = server_errors.count + 1, last_seen = now()";
+
+        await Rows.ExecuteAsync(database, upsert);
+        await Rows.ExecuteAsync(database, upsert);
+        await Rows.ExecuteAsync(database, upsert);
+
+        Assert.Equal(3, await Rows.ScalarAsync<int>(database, $"SELECT count FROM core.server_errors WHERE fingerprint = '{fingerprint}'"));
+        Assert.Equal(1, await Rows.ScalarAsync<long>(database, $"SELECT count(*) FROM core.server_errors WHERE fingerprint = '{fingerprint}'"));
+    }
+
+    [DbFact]
+    public async Task An_error_source_must_be_one_of_the_enum_names()
+    {
+        var failure = await Rows.ExecuteFailureAsync(
+            database,
+            "INSERT INTO core.client_errors (source, fingerprint, type, message, stack, url, count, first_seen, last_seen) " +
+            "VALUES ('browser', 'f', 'T', 'm', 's', '/u', 1, now(), now())");
+
+        Assert.Equal(Check, failure?.SqlState);
+        Assert.Equal("ck_client_errors_source", failure?.ConstraintName);
+    }
+
+    [DbTheory]
     [InlineData("[]")]
     [InlineData("1")]
     [InlineData("\"text\"")]

@@ -21,6 +21,7 @@ public static class DataServiceCollectionExtensions
         services.AddDbContext<CarDbContext>((sp, o) => Configure(o, connectionString(sp), Site.Car.Schema()));
         services.AddDbContext<MainDbContext>((sp, o) => Configure(o, connectionString(sp), Site.Main.Schema()));
         services.AddDbContext<DevDbContext>((sp, o) => Configure(o, connectionString(sp), Site.Dev.Schema()));
+        services.AddScoped<NumberAllocator>();
         return services;
     }
 
