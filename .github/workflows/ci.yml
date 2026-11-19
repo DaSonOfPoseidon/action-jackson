@@ -8,6 +8,18 @@ on:
 jobs:
   dotnet:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      # A missing database fails the data tests in CI (the test fixture only skips locally).
+      TEST_DATABASE_URL: Host=localhost;Username=postgres;Password=test
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-dotnet@v5
