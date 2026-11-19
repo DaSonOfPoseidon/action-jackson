@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  dotnet:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: server/global.json
+      - run: dotnet build server/ActionJackson.slnx
+      - run: dotnet format server/ActionJackson.slnx --verify-no-changes --no-restore
+      - run: dotnet test server/ActionJackson.slnx --no-build
+
+  legacy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      # --ignore-scripts is fine: mongodb-memory-server downloads its mongod at first use.
+      - run: npm ci --ignore-scripts && npm test
+      - run: npm ci --ignore-scripts && npm test
+        working-directory: frontend
