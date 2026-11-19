@@ -1,5 +1,69 @@
 # AGENTS.md
 
+## Code Review Rules
+
+Codex's PR review and the pre-push review gate both follow this section. Rate every finding on this scale:
+
+- **P0**: data loss, a security hole, or a change that breaks the main path for everyone. Never merge.
+- **P1**: wrong behaviour on a real path, untrusted input that can be misparsed, a broken project invariant
+  (below), or a doc that would lead a user to do something harmful.
+- **P2**: an edge case that breaks (0, max, max+1, empty, error paths), a doc or comment promise the code
+  doesn't keep, a test that can pass while the code is wrong, or CI/script behaviour that differs from its
+  description.
+- **P3**: a minor issue a strict reviewer might still flag. The gate files its P3s as follow-up issues.
+  A Codex P3 is filed too, unless the round already needs another review; then it is fixed in that round.
+
+Every finding needs a concrete failure scenario (input or state → wrong result). Don't flag style, naming,
+or anything CI already checks (formatting, lints, tests).
+
+### Project invariants
+
+The repo is moving from Next.js + Express + Mongo to Angular + ASP.NET Core + Postgres (issue #1; the design is in
+`docs/superpowers/specs/2026-11-19-split-subdomains-design.md`). Rules 1–9 apply to the new code under `server/`,
+`apps/web/`, `contracts/` and `deploy/`.
+
+1. **Untrusted input:** request bodies, query strings, route values, the `Host` header, every other header, and
+   uploaded files. The API trusts `X-Client-IP` only on a request with a valid `X-Edge-Key`. The edge strips both
+   headers from inbound requests and sets its own. An upload's type comes from its magic bytes, never from the
+   client's MIME header or file name.
+2. **Site isolation:** a request for one site (lan, car) never reads or writes another site's schema. Every
+   business query goes through that site's `BusinessDbContext`.
+3. **Admin endpoints** require the auth cookie and antiforgery. Cloudflare Access is defense in depth, never the
+   only check.
+4. **Money and numbers:** money is `decimal`, rounded once, away from zero, to cents. Never `double` or `float`.
+   Document numbers (invoice, quote, request) come from a DB sequence or a unique constraint with retry, never
+   read-max-then-insert.
+5. **Status values** come from the shared enums only: no free strings and no case variants. An update validates
+   the value before it is written.
+6. **Public pages** never depend on the API at request time. They are prerendered and served by the edge, and their
+   forms show the offline notice when the API is down.
+7. **Accessibility:** every text/background token pair meets WCAG AAA (≥ 7:1, or ≥ 4.5:1 for large text). A
+   checkbox and its label are on the same line.
+8. **Routing:** an unknown host falls back to the main site. Every redirect is a 301 that keeps the path and query.
+9. **Secrets** live only in a gitignored `.env`: never in compose, code, `contracts/` or the Angular bundle, and
+   never a framework default. Compose files follow `/srv/CLAUDE.md`: `restart: unless-stopped`, memory caps,
+   monitoring and WUD labels, healthchecks built from tools in the image, and a literal `$` written as `$$`.
+10. **Legacy code is frozen:** `frontend/`, `server.js`, `routes/`, `models/`, `middleware/`, `services/`,
+    `config/` and `tests/` get no new features. They are deleted in the last unit of #1. A finding in legacy
+    code that a PR didn't touch is out of scope.
+11. **Commits:** Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`, `ci:`), with an
+    optional scope. Only the last unit of #1 says `Fixes #1`.
+
+### Known pitfalls
+
+Classes of bug past reviews caught here are in [`docs/pitfalls.md`](docs/pitfalls.md); check every change
+against them.
+
+### Known false positives
+
+Findings past reviews raised that were judged wrong are in [`docs/false-positives.md`](docs/false-positives.md);
+the gate shows them to its reviewers. Add an entry when a finding is answered "not valid" or waived.
+
+## PR loop
+
+- checks: `scripts/check.sh`
+- merge: yes
+
 ## Purpose
 
 Provide structured instructions and conventions for both human contributors and automated/AI agents interacting with the Action Jackson codebase. The goal is safe, incremental, observable, and reversible changes while preserving dual-domain semantics (branding vs. portfolio).
@@ -52,6 +116,8 @@ docker-compose.yml     — 3-service orchestration (mongo, api, frontend)
 ```
 
 ## 2. Build / Dev / Test Commands
+
+`scripts/check.sh`: every check for the stacks in this checkout. The PR loop, CI and humans all run this.
 
 ### Backend (root directory)
 - `npm install` — install backend dependencies
