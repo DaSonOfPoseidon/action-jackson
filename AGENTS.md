@@ -132,6 +132,12 @@ docker-compose.yml     — 3-service orchestration (mongo, api, frontend)
 - `cd frontend && npm run lint` — ESLint
 - `cd frontend && npm test` — Vitest test suite (5 test files)
 
+### Server (.NET, in Docker)
+- `scripts/dotnet.sh build server/ActionJackson.slnx` — build the solution
+- `scripts/dotnet.sh test server/ActionJackson.slnx` — run the server tests
+- `scripts/dotnet.sh format server/ActionJackson.slnx` — format the code
+- The SDK runs in a container (`mcr.microsoft.com/dotnet/sdk:10.0`), so the host needs only Docker.
+
 ### Docker
 - `docker compose up --build -d` — build and start all 3 services
 - `docker compose ps` — verify health status

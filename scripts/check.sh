@@ -26,5 +26,13 @@ if [ -f frontend/package.json ]; then
   (cd frontend && npm test)
 fi
 
-# Later units add the server/ (.NET) and apps/web/ (Angular) blocks here,
-# in the same "only when present" style.
+# Server (.NET, run in a container by scripts/dotnet.sh): runs only when the solution exists.
+if [ -f server/ActionJackson.slnx ]; then
+  echo "== .NET"
+  # -m:1 keeps the SDK container under the host's 1 GiB container cap (/srv/compose/mem-guard).
+  scripts/dotnet.sh build server/ActionJackson.slnx
+  scripts/dotnet.sh format server/ActionJackson.slnx --verify-no-changes --no-restore
+  scripts/dotnet.sh test server/ActionJackson.slnx --no-build -m:1
+fi
+
+# A later unit adds the apps/web/ (Angular) block here, in the same "only when present" style.
