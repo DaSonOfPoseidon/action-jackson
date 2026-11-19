@@ -1,3 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
+  <ItemGroup>
+    <ProjectReference Include="..\ActionJackson.Data\ActionJackson.Data.csproj" />
+  </ItemGroup>
+
 </Project>
