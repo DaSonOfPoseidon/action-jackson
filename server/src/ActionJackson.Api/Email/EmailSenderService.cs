@@ -50,6 +50,8 @@ public sealed class EmailSenderService(
 
     private const int MaxLastError = 2000;
 
+    private static readonly TimeSpan ResultWriteTimeout = TimeSpan.FromSeconds(10);
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         if (!smtpOptions.Value.Enabled)
@@ -114,7 +116,7 @@ public sealed class EmailSenderService(
             // back, and the next poll claims them afresh.
             if (i > 0 && !HasTimeToSend(clock.Elapsed, settings.ClaimLease))
             {
-                await ReleaseAsync(core, rows.Skip(i), DateTimeOffset.UtcNow, cancellationToken);
+                await ReleaseAsync(core, rows.Skip(i), DateTimeOffset.UtcNow);
                 logger.LogInformation("The email sender gave back {Count} claimed rows before their claim ran out.", rows.Count - i);
                 return true;
             }
@@ -122,7 +124,7 @@ public sealed class EmailSenderService(
             var failure = await TrySendAsync(transport, row, settings, cancellationToken);
             if (failure is null)
             {
-                await FinishAsync(core, row.Id, EmailStatus.Sent, row.Attempts + 1, DateTimeOffset.UtcNow, null, DateTimeOffset.UtcNow, cancellationToken);
+                await FinishAsync(core, row.Id, EmailStatus.Sent, row.Attempts + 1, DateTimeOffset.UtcNow, null, DateTimeOffset.UtcNow);
                 logger.LogInformation("Email {EmailId} ({Template}) was sent.", row.Id, row.Template);
                 continue;
             }
@@ -138,8 +140,7 @@ public sealed class EmailSenderService(
                 attempts,
                 next,
                 DescribeError(failure.Value.Error, smtpOptions.Value.Password),
-                null,
-                cancellationToken);
+                null);
             logger.LogWarning(
                 "Email {EmailId} ({Template}) was not sent: {ErrorType}. Attempt {Attempts} of {MaxAttempts}; now {Status}.",
                 row.Id,
@@ -153,7 +154,7 @@ public sealed class EmailSenderService(
             {
                 // Do not let every remaining row burn an attempt on the same broken server: they wait out
                 // the same backoff, with their attempt counts untouched.
-                await ReleaseAsync(core, rows.Skip(i + 1), next, cancellationToken);
+                await ReleaseAsync(core, rows.Skip(i + 1), next);
                 return false;
             }
         }
@@ -251,7 +252,9 @@ public sealed class EmailSenderService(
     }
 
     // Writes the result of one send. Only a row that is still Pending is touched: if another sender sent
-    // it after this one's claim ran out, its result stands.
+    // it after this one's claim ran out, its result stands. It deliberately ignores the host's shutdown
+    // token: a send that already happened must have its result recorded, or the row is sent again. A
+    // database that does not answer within ResultWriteTimeout is given up on (the row is then resent).
     private static async Task FinishAsync(
         CoreDbContext core,
         Guid id,
@@ -259,9 +262,9 @@ public sealed class EmailSenderService(
         int attempts,
         DateTimeOffset nextAttemptAt,
         string? lastError,
-        DateTimeOffset? sentAt,
-        CancellationToken cancellationToken)
+        DateTimeOffset? sentAt)
     {
+        using var limit = new CancellationTokenSource(ResultWriteTimeout);
         var pending = EmailStatus.Pending;
         await core.EmailOutbox
             .Where(m => m.Id == id && m.Status == pending)
@@ -272,15 +275,14 @@ public sealed class EmailSenderService(
                     .SetProperty(m => m.NextAttemptAt, nextAttemptAt)
                     .SetProperty(m => m.LastError, lastError)
                     .SetProperty(m => m.SentAt, sentAt),
-                cancellationToken);
+                limit.Token);
     }
 
-    // Makes rows due again at `at`, attempts untouched.
+    // Makes rows due again at `at`, attempts untouched. Like FinishAsync, it ignores the shutdown token.
     private static async Task ReleaseAsync(
         CoreDbContext core,
         IEnumerable<EmailOutboxMessage> rows,
-        DateTimeOffset at,
-        CancellationToken cancellationToken)
+        DateTimeOffset at)
     {
         var ids = rows.Select(r => r.Id).ToList();
         if (ids.Count == 0)
@@ -288,10 +290,11 @@ public sealed class EmailSenderService(
             return;
         }
 
+        using var limit = new CancellationTokenSource(ResultWriteTimeout);
         var pending = EmailStatus.Pending;
         await core.EmailOutbox
             .Where(m => ids.Contains(m.Id) && m.Status == pending)
-            .ExecuteUpdateAsync(set => set.SetProperty(m => m.NextAttemptAt, at), cancellationToken);
+            .ExecuteUpdateAsync(set => set.SetProperty(m => m.NextAttemptAt, at), limit.Token);
     }
 
     // Whether a batch that started `elapsed` ago can still send one more row before its claims run out.
