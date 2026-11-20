@@ -1,6 +1,6 @@
 # The Action Jackson backend on the PC (192.168.1.195): api, postgres, redis, garage.
 # Only the api publishes a port (LAN only; the Pi's edge reaches it). Secrets come from deploy/pc/.env,
-# never from this file. Memory: no limits are set here, so the host's default (1g, no swap) applies.
+# never from this file. Every service has an explicit memory cap with no swap (mem_limit = memswap_limit).
 #   scripts/deploy.sh pc
 name: action-jackson
 
@@ -10,6 +10,8 @@ services:
       context: ../../server
       dockerfile: src/ActionJackson.Api/Dockerfile
     restart: unless-stopped
+    mem_limit: 1g
+    memswap_limit: 1g
     ports:
       - "192.168.1.195:${AJ_API_PORT:-8110}:8080"
     depends_on:
@@ -41,6 +43,8 @@ services:
   postgres:
     image: postgres:18-alpine
     restart: unless-stopped
+    mem_limit: 1g
+    memswap_limit: 1g
     environment:
       POSTGRES_USER: action_jackson
       POSTGRES_DB: action_jackson
@@ -64,6 +68,9 @@ services:
   redis:
     image: redis:8-alpine
     restart: unless-stopped
+    # maxmemory is 128mb; the rest of the cap is headroom for buffers and the process itself.
+    mem_limit: 256m
+    memswap_limit: 256m
     # The password reaches redis-server on stdin, so it is on no command line (`ps`, `docker inspect`).
     command:
       - sh
@@ -88,6 +95,8 @@ services:
   garage:
     image: dxflrs/garage:v2.5.0
     restart: unless-stopped
+    mem_limit: 1g
+    memswap_limit: 1g
     volumes:
       - ./garage.toml:/etc/garage.toml:ro
       - garage_meta:/var/lib/garage/meta

@@ -82,9 +82,11 @@ for name, svc in services.items():
             fail(f"{name}: image {image!r} is untagged or latest")
         if "wud.tag.include" not in svc.get("labels", {}):
             fail(f"{name}: missing the wud.tag.include label")
-    # Memory: the host's default 1g, no swap, applies unless a limit is set; a limit needs both fields.
-    if ("mem_limit" in svc) != ("memswap_limit" in svc):
-        fail(f"{name}: mem_limit and memswap_limit must be set together")
+    # Memory: an explicit cap with no swap (memswap_limit equal to mem_limit), so the file does not
+    # depend on the host's default.
+    mem = svc.get("mem_limit")
+    if not mem or svc.get("memswap_limit") != mem:
+        fail(f"{name}: set mem_limit and an equal memswap_limit (a cap with no swap)")
 
     ports = svc.get("ports", [])
     if name == "api":
