@@ -145,7 +145,21 @@ docker-compose.yml     — 3-service orchestration (mongo, api, frontend)
   migration in both Lan and Car. Never edit a migration that has run.
 - The SDK runs in a container (`mcr.microsoft.com/dotnet/sdk:10.0`), so the host needs only Docker.
 
-### Docker
+### Deploy (new stack, PC)
+- The new backend runs from `deploy/pc/compose.yml` (project `action-jackson`): `api` (built from `server/`), `postgres`
+  18, `redis` 8 (a cache) and `garage`. Garage, not MinIO: MinIO's community edition is discontinued. Only the API
+  publishes a port, `192.168.1.195:8110`; the rest sit on an internal network.
+- First run: `cp deploy/pc/.env.example deploy/pc/.env`, then fill every value (each comment says the `openssl` command
+  that generates it). `deploy/pc/.env` is git-ignored; never commit it.
+- `scripts/deploy.sh pc` brings the stack up (idempotent): it refuses an empty or missing `.env`, runs
+  `docker compose up -d --build --wait`, bootstraps Garage (`deploy/pc/garage-init.sh`: layout, the `aj-attachments`
+  bucket, the API's key), checks `/healthz` shows `"db":"ok"` and prints each container's health. `scripts/deploy.sh pi`
+  arrives with the edge (unit 9).
+- Data lives in the named volumes `action-jackson_pg_data` (Postgres), `action-jackson_garage_meta` and
+  `action-jackson_garage_data` (Garage). Redis keeps nothing. `docker compose down` keeps the volumes; never add `-v`.
+- `scripts/deploy-lint.sh` (part of `scripts/check.sh` and CI) checks the compose file against these conventions.
+
+### Docker (legacy stack)
 - `docker compose up --build -d` — build and start all 3 services
 - `docker compose ps` — verify health status
 - `docker compose logs -f` — follow logs

@@ -20,7 +20,7 @@ Each site has its own about page. Adding a site means: a registry entry, an Angu
 - The public sites stay loadable when the home-server PC (192.168.1.195) is off. While it is down they show an
   offline notice, and the Pi queues writes until it comes back.
 - One backend, with a database schema per site, designed up front. The aim is to avoid frequent schema migrations.
-- A stack with resume value: Angular, ASP.NET Core and PostgreSQL.
+- A stack with resume value: Angular, ASP.NET Core and PostgreSQL 18.
 - All text meets WCAG AAA contrast. Each site's look comes from the frontend-design skill, refined on Jackson's
   feedback.
 
@@ -51,7 +51,7 @@ Each site has its own about page. Adding a site means: a registry entry, an Angu
 - **Hosting:**
   - Web tier on the Pi and data tier on the PC (picked: it keeps pages up with the PC off).
   - Everything on the PC: simpler, but the site goes down whenever the PC does.
-  - Everything on the Pi: it can't comfortably run Postgres, MinIO and Redis next to its current load.
+  - Everything on the Pi: it can't comfortably run Postgres, Garage and Redis next to its current load.
 
 ## Architecture
 
@@ -64,7 +64,7 @@ Cloudflare tunnel (cloudflared on the Pi): apex · www · lan · car · dev · a
         - /api/* → YARP → PC API, adding X-Edge-Key and X-Client-IP (from cf-connecting-ip)
         - SQLite snapshot + outbox while the PC is off
         │  LAN
-   PC 192.168.1.195:8110  api (ASP.NET Core) ── postgres · redis · minio (internal network only)
+   PC 192.168.1.195:8110  api (ASP.NET Core) ── postgres · redis · garage (internal network only)
 ```
 
 ### Frontend: `apps/web/` (Angular workspace)
@@ -93,7 +93,7 @@ Cloudflare tunnel (cloudflared on the Pi): apex · www · lan · car · dev · a
 - **HybridCache** (memory L1, Redis L2) for the catalog, settings and availability.
 - **Email:** an `email_outbox` row is written in the same transaction as the domain change. A background MailKit
   sender delivers it, with retries.
-- **Attachments** stream through the API to and from MinIO, which is never published. The file type is checked
+- **Attachments** stream through the API to and from Garage, which is never published. The file type is checked
   by magic bytes.
 - **Errors:** ProblemDetails responses. Server errors are recorded with a fingerprint.
 
@@ -174,7 +174,7 @@ Cloudflare tunnel (cloudflared on the Pi): apex · www · lan · car · dev · a
 - **Appointments:** one calendar and list across lan and car, with site badges, a status workflow, reschedule,
   notes and history.
 - **Business records:** consultations, quotes (catalog plus labor lines), invoices from quotes with payments and
-  MinIO attachments.
+  Garage attachments.
 - **Per-site settings:** catalog, labor rate, business hours, blackout dates, deposit thresholds.
 - **Site visits:** cookieless page views per site: top pages, referrers, country (from the CF header), device
   class.
@@ -201,13 +201,16 @@ Cloudflare tunnel (cloudflared on the Pi): apex · www · lan · car · dev · a
 
 ## Deployment
 
-- **PC (`deploy/pc/compose.yml`):** api, postgres, redis, minio. Per the /srv conventions:
+- **PC (`deploy/pc/compose.yml`):** api, postgres, redis, garage. Per the /srv conventions:
   - `restart: unless-stopped`
   - memory caps
   - monitoring labels, and WUD `wud.tag.include` for versioned images (`wud.watch: "false"` for local builds)
   - healthchecks from tools in the image (the .NET binaries have a `--healthcheck` mode)
   - secrets in a gitignored `.env`
   - Only the API is published, on the LAN (`192.168.1.195:8110`).
+  - Object storage is Garage (an S3-compatible store), not MinIO: MinIO's community edition was archived in
+    2026-04 and its images are gone.
+  - Postgres is 18 (`postgres:18-alpine`), the same major as the tests (`scripts/test-db.sh` and CI).
 - **Pi (`deploy/pi/compose.yml`):** the edge on `:8180`. It is cross-published for `linux-arm64` with the Angular
   `dist` on .195 and rsynced over. The Pi only copies the files onto the aspnet base image.
 - **Cutover:**
