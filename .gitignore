@@ -34,3 +34,7 @@ coverage/
 bin/
 obj/
 TestResults/
+
+# PC deploy: real secrets (deploy/pc/.env.example is the committed template)
+deploy/pc/.env
+deploy/pc/secrets/
