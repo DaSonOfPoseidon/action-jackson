@@ -47,6 +47,11 @@ if [ -n "$missing" ]; then
 	echo "deploy.sh: empty or missing in $env_file:$missing" >&2
 	exit 1
 fi
+# The API refuses to start with an Edge:Key shorter than 32 characters; catch it here, by name only.
+if [ "$(env_get EDGE_KEY | wc -c)" -le 32 ]; then
+	echo "deploy.sh: EDGE_KEY in $env_file must be at least 32 characters (openssl rand -hex 32)" >&2
+	exit 1
+fi
 
 compose() {
 	if [ -n "${AJ_PC_PROJECT:-}" ]; then

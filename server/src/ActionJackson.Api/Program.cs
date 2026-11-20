@@ -1,3 +1,4 @@
+using ActionJackson.Api.Platform;
 using ActionJackson.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,6 +18,8 @@ builder.Services.AddActionJacksonData(services =>
     services.GetRequiredService<IConfiguration>().GetConnectionString("Postgres")
     ?? throw new InvalidOperationException(Program.MissingConnectionString));
 
+builder.AddApiPlatform();
+
 var app = builder.Build();
 
 // No connection string, no start. There is deliberately no default.
@@ -24,6 +27,9 @@ if (string.IsNullOrWhiteSpace(app.Configuration.GetConnectionString("Postgres"))
 {
     throw new InvalidOperationException(Program.MissingConnectionString);
 }
+
+// Edge trust, routing and the rest of the platform; an Edge:Key that is set but too short stops startup.
+app.UseApiPlatform();
 
 if (app.Configuration.GetValue("Database:MigrateOnStartup", true))
 {
