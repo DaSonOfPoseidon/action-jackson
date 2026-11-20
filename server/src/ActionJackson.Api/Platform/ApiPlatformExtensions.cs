@@ -13,10 +13,13 @@ public static class ApiPlatformExtensions
         builder.Services.AddOptions<EdgeOptions>().BindConfiguration(EdgeOptions.Section);
         builder.Services.AddPlatformProblemDetails();
         builder.Services.AddExceptionHandler<ServerErrorRecorder>();
+        builder.Services.AddOptions<RequestMetricsOptions>().BindConfiguration(RequestMetricsOptions.Section);
+        builder.Services.AddSingleton<RequestMetricsQueue>();
+        builder.Services.AddHostedService<RequestMetricsWriter>();
         return builder;
     }
 
-    // The middleware, in this order: exception handler, status code pages, edge trust, routing. Endpoints are mapped by the caller after it.
+    // The middleware, in this order: exception handler, status code pages, edge trust, request metrics, routing. Endpoints are mapped by the caller after it.
     public static WebApplication UseApiPlatform(this WebApplication app)
     {
         var edge = app.Services.GetRequiredService<IOptions<EdgeOptions>>().Value;
@@ -32,6 +35,7 @@ public static class ApiPlatformExtensions
         app.UseExceptionHandler();
         app.UseStatusCodePages();
         app.UseMiddleware<EdgeTrustMiddleware>();
+        app.UseMiddleware<RequestMetricsMiddleware>();
         app.UseRouting();
         return app;
     }
