@@ -11,10 +11,12 @@ public static class ApiPlatformExtensions
     {
         // Bound lazily, so the configuration a host finishes with is what counts.
         builder.Services.AddOptions<EdgeOptions>().BindConfiguration(EdgeOptions.Section);
+        builder.Services.AddPlatformProblemDetails();
+        builder.Services.AddExceptionHandler<ServerErrorRecorder>();
         return builder;
     }
 
-    // The middleware, in this order: edge trust, routing. Endpoints are mapped by the caller after it.
+    // The middleware, in this order: exception handler, status code pages, edge trust, routing. Endpoints are mapped by the caller after it.
     public static WebApplication UseApiPlatform(this WebApplication app)
     {
         var edge = app.Services.GetRequiredService<IOptions<EdgeOptions>>().Value;
@@ -25,6 +27,10 @@ public static class ApiPlatformExtensions
                 "Edge:Key is not set: X-Client-IP is ignored and every request is attributed to its connection address.");
         }
 
+        // Outermost, so every failure below it (including the metrics middleware's rethrow) becomes a problem
+        // document, and a 404 or 405 with no body gets one.
+        app.UseExceptionHandler();
+        app.UseStatusCodePages();
         app.UseMiddleware<EdgeTrustMiddleware>();
         app.UseRouting();
         return app;
