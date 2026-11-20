@@ -16,10 +16,11 @@ public static class ApiPlatformExtensions
         builder.Services.AddOptions<RequestMetricsOptions>().BindConfiguration(RequestMetricsOptions.Section);
         builder.Services.AddSingleton<RequestMetricsQueue>();
         builder.Services.AddHostedService<RequestMetricsWriter>();
+        builder.Services.AddPlatformRateLimiting();
         return builder;
     }
 
-    // The middleware, in this order: exception handler, status code pages, edge trust, request metrics, routing. Endpoints are mapped by the caller after it.
+    // The middleware, in this order: exception handler, status code pages, edge trust, request metrics, routing, rate limiter. Endpoints are mapped by the caller after it.
     public static WebApplication UseApiPlatform(this WebApplication app)
     {
         var edge = app.Services.GetRequiredService<IOptions<EdgeOptions>>().Value;
@@ -36,7 +37,10 @@ public static class ApiPlatformExtensions
         app.UseStatusCodePages();
         app.UseMiddleware<EdgeTrustMiddleware>();
         app.UseMiddleware<RequestMetricsMiddleware>();
+
+        // After routing, so a limiter policy named in an endpoint's metadata is visible to it.
         app.UseRouting();
+        app.UseRateLimiter();
         return app;
     }
 }
