@@ -273,6 +273,25 @@ public class EmailSenderTests(TestDatabase database) : IClassFixture<TestDatabas
     }
 
     [DbFact]
+    public async Task A_server_outage_never_marks_a_row_failed_however_many_attempts_it_has_used()
+    {
+        // The server being down is not the email's fault: a long outage or a wrong password must not
+        // permanently fail whichever row happens to be first in the queue.
+        var row = await AddAsync(attempts: 7);
+        var transport = new FakeTransport { Fail = _ => new AuthenticationException("535 authentication failed") };
+        await using var host = await StartAsync(transport, email: o => o.MaxAttempts = 8);
+
+        await WaitForAsync(async () => (await RowAsync(row.Id)).Attempts == 8);
+        await Task.Delay(300);
+
+        var after = await RowAsync(row.Id);
+        Assert.Equal(EmailStatus.Pending, after.Status);
+        Assert.Equal(8, after.Attempts);
+        Assert.StartsWith("AuthenticationException:", after.LastError);
+        Assert.True(after.NextAttemptAt > DateTimeOffset.UtcNow.AddSeconds(30));
+    }
+
+    [DbFact]
     public async Task A_connection_failure_also_stops_the_batch()
     {
         var first = await AddAsync(due: DateTimeOffset.UtcNow.AddSeconds(-30));
@@ -455,6 +474,16 @@ public class EmailSenderTests(TestDatabase database) : IClassFixture<TestDatabas
         var wrapped = new InvalidOperationException("outer", new AuthenticationException("inner"));
 
         Assert.Equal(SendFailure.Connection, EmailSenderService.Classify(wrapped));
+    }
+
+    [Fact]
+    public void A_refused_sender_is_the_servers_problem_not_the_rows()
+    {
+        // Email:From rejected (an unverified domain, say) is true of every email: it must stop the batch
+        // and fail nothing, so fixing the setting delivers the queue.
+        var refused = new SmtpCommandException(SmtpErrorCode.SenderNotAccepted, SmtpStatusCode.MailboxUnavailable, "550 sender rejected");
+
+        Assert.Equal(SendFailure.Connection, EmailSenderService.Classify(refused));
     }
 
     [Fact]

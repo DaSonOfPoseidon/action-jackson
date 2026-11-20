@@ -19,10 +19,12 @@ internal enum SendFailure
     // Try again later (a timeout, a 4xx reply, a dropped connection mid-session).
     Transient,
 
-    // Retrying cannot help (a 5xx reply: the recipient or sender is refused).
+    // Retrying cannot help (a 5xx reply to this email's recipient or content).
     Permanent,
 
-    // The connection or login failed: the server's problem, not the row's, so the whole batch stops.
+    // The connection, the login or the sender address failed: true of every email, not of this row. The
+    // whole batch stops, and the row is never marked Failed for it, however long the outage lasts: fixing
+    // the server or the setting then delivers the queue.
     Connection,
 }
 
@@ -131,7 +133,7 @@ public sealed class EmailSenderService(
 
             var kind = failure.Value.Kind;
             var attempts = row.Attempts + 1;
-            var failed = kind == SendFailure.Permanent || attempts >= settings.MaxAttempts;
+            var failed = kind == SendFailure.Permanent || (kind == SendFailure.Transient && attempts >= settings.MaxAttempts);
             var next = DateTimeOffset.UtcNow + EmailBackoff.Delay(attempts);
             await FinishAsync(
                 core,
@@ -310,6 +312,12 @@ public sealed class EmailSenderService(
             if (e is AuthenticationException or SaslException or ServiceNotConnectedException
                 or ServiceNotAuthenticatedException or SslHandshakeException or SocketException
                 or TransportConnectionException)
+            {
+                return SendFailure.Connection;
+            }
+
+            // The sender (Email:From) is refused for every email, so it is the server's problem like a login.
+            if (e is SmtpCommandException { ErrorCode: SmtpErrorCode.SenderNotAccepted })
             {
                 return SendFailure.Connection;
             }

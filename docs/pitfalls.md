@@ -37,3 +37,7 @@ A wait loop or healthcheck asks the service in a way that a start-up phase also 
 ## Reading an .env file with a hand-written parser
 
 A script reads `.env` with `sed`/`grep`, so quotes, `export`, spaces and trailing comments stay in the value, while Docker Compose strips them. The script then checks or imports a value (`"abc"`) that differs from the one the containers get (`abc`), and a quoted empty value (`""`) passes an emptiness check. Check that scripts read variables through Compose (`deploy/pc/env-lib.sh`), not their own parser. Bit: `deploy/pc/garage-init.sh` and `scripts/deploy.sh` (PR #11).
+
+## A shared failure charged to one queued item
+
+A background worker counts a retry against whichever queued item it was handling when the shared dependency failed (the SMTP login, the sender address, the database), and gives up on the item after N tries. A long outage or one wrong setting then permanently fails the oldest items, which depends only on queue position, and fixing the setting cannot bring them back. Check that a failure true of every item (connection, login, sender, configuration) stops the batch and never moves an item to its terminal failed state, and that only item-specific failures (a refused recipient, an unbuildable message) do. Bit: `server/src/ActionJackson.Api/Email/EmailSenderService.cs` (PR for unit 6, found by the review gate).
