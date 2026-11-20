@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:16-alpine
+        image: postgres:18-alpine
         env:
           POSTGRES_PASSWORD: test
         ports:
@@ -28,6 +28,12 @@ jobs:
       - run: dotnet build server/ActionJackson.slnx
       - run: dotnet format server/ActionJackson.slnx --verify-no-changes --no-restore
       - run: dotnet test server/ActionJackson.slnx --no-build
+
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: scripts/deploy-lint.sh
 
   legacy:
     runs-on: ubuntu-latest

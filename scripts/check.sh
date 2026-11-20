@@ -37,4 +37,10 @@ if [ -f server/ActionJackson.slnx ]; then
   scripts/dotnet.sh test server/ActionJackson.slnx --no-build -m:1
 fi
 
+# PC deploy files (compose, env template): static checks, no running stack needed.
+if [ -f deploy/pc/compose.yml ]; then
+  echo "== deploy lint"
+  scripts/deploy-lint.sh
+fi
+
 # A later unit adds the apps/web/ (Angular) block here, in the same "only when present" style.
