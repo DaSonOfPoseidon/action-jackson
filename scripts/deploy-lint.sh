@@ -8,6 +8,9 @@ cd "$(dirname "$0")/.."
 compose=deploy/pc/compose.yml
 example=deploy/pc/.env.example
 
+# The variables that may be empty (AJ_OPTIONAL_VARS): one list, shared with scripts/deploy.sh.
+. deploy/pc/env-lib.sh
+
 command -v python3 >/dev/null || { echo "deploy-lint: python3 is required" >&2; exit 1; }
 [ -f "$compose" ] || { echo "deploy-lint: $compose is missing" >&2; exit 1; }
 [ -f "$example" ] || { echo "deploy-lint: $example is missing" >&2; exit 1; }
@@ -26,12 +29,14 @@ done >"$tmp/env"
 
 docker compose -f "$compose" --env-file "$tmp/env" config --format json >"$tmp/config.json"
 
-python3 -I - "$compose" "$example" "$tmp/config.json" <<'PY'
+# The compose checks, in a file so the same code can run on the real file and on broken copies of it.
+cat >"$tmp/compose-lint.py" <<'PY'
 import json
 import re
 import sys
 
 compose_path, example_path, config_path = sys.argv[1:4]
+optional = set(sys.argv[4].split())
 failures = []
 
 
@@ -50,12 +55,21 @@ if used != named:
     fail(f".env.example and {compose_path} disagree: only in compose {sorted(used - named)}, "
          f"only in .env.example {sorted(named - used)}")
 
-# Every variable but the port is a secret or a required value: no default, an error when unset.
-for name in sorted(used - {"AJ_API_PORT"}):
+# Every variable is either required or optional (the list in deploy/pc/env-lib.sh). A required one is a
+# secret or a needed value: no default, an error when unset. An optional one has a default, so an empty or
+# missing value never stops compose.
+for name in sorted(used - optional):
     if not re.search(r"\$\{" + name + r":\?[^}]+\}", raw):
         fail(f"{name} must be interpolated as ${{{name}:?message}}, with no default")
     if re.search(r"\$\{" + name + r"(:-|-|\})", raw):
         fail(f"{name} is interpolated with a default or without the :? check")
+for name in sorted(used & optional):
+    if not re.search(r"\$\{" + name + r":-[^}]*\}", raw):
+        fail(f"{name} is optional and must be interpolated as ${{{name}:-default}}")
+    if re.search(r"\$\{" + name + r":\?", raw):
+        fail(f"{name} is optional but is interpolated with the :? check")
+for name in sorted(optional - named):
+    fail(f"{name} is in the optional list (deploy/pc/env-lib.sh) but not in {example_path}")
 
 expected = {"api", "postgres", "redis", "garage"}
 if set(services) != expected:
@@ -119,6 +133,29 @@ if failures:
     sys.exit(1)
 print("deploy-lint: ok")
 PY
+
+python3 -I "$tmp/compose-lint.py" "$compose" "$example" "$tmp/config.json" "$AJ_OPTIONAL_VARS"
+
+# The lint must catch the mistakes it exists for: break the real file one way at a time (a sed script) and
+# expect a failure that names the variable.
+must_fail() {
+	label=$1
+	script=$2
+	variable=$3
+	sed "$script" "$compose" >"$tmp/mutated.yml"
+	cmp -s "$compose" "$tmp/mutated.yml" && { echo "deploy-lint: the mutation for $label changed nothing" >&2; exit 1; }
+	docker compose -f "$tmp/mutated.yml" --env-file "$tmp/env" config --format json >"$tmp/mutated.json"
+	if python3 -I "$tmp/compose-lint.py" "$tmp/mutated.yml" "$example" "$tmp/mutated.json" "$AJ_OPTIONAL_VARS" >/dev/null 2>"$tmp/err"; then
+		echo "deploy-lint: the lint accepted $label" >&2
+		exit 1
+	fi
+	grep -q -- "$variable" "$tmp/err" || { echo "deploy-lint: the lint failed for $label but did not name $variable:" >&2; cat "$tmp/err" >&2; exit 1; }
+}
+must_fail "an optional variable written with :?" 's/\${SMTP_HOST:-}/${SMTP_HOST:?set SMTP_HOST}/' SMTP_HOST
+must_fail "an optional variable written without a default" 's/\${EMAIL_FROM:-}/${EMAIL_FROM}/' EMAIL_FROM
+must_fail "a required variable written with :-" 's/\${EDGE_KEY:?[^}]*}/${EDGE_KEY:-}/' EDGE_KEY
+must_fail "a required variable written bare" 's/\${REDIS_PASSWORD:?[^}]*}/${REDIS_PASSWORD}/g' REDIS_PASSWORD
+echo "deploy-lint: variable checks ok"
 
 # Env-file parsing: deploy.sh and garage-init.sh must read the .env the way Compose does (quotes
 # stripped, trailing comments dropped), or the empty-variable check and the key bootstrap would use
@@ -192,3 +229,33 @@ grep -q 'EDGE_KEY' "$tmp/err" || { echo "deploy-lint: deploy.sh did not name the
 PATH="$tmp/bin:$PATH" AJ_PC_ENV_FILE="$tmp/quoted.env" AJ_PC_PROJECT=aj-lint-test scripts/deploy.sh pc >/dev/null 2>"$tmp/err" || true
 ! grep -q 'EDGE_KEY' "$tmp/err" || { echo "deploy-lint: deploy.sh rejected a 32-character EDGE_KEY" >&2; cat "$tmp/err" >&2; exit 1; }
 echo "deploy-lint: env parsing ok"
+
+# deploy.sh's empty-value check skips exactly the optional variables. Start from a full valid env (optional
+# ones empty, the rest from quoted.env or a sentinel), then empty each variable .env.example names in turn:
+# an optional one must get past the check (to `docker up`, where the fake docker stops it), any other must
+# stop it by name.
+names=$(sed -n 's/^\([A-Z][A-Z0-9_]*\)=.*/\1/p' "$example")
+: >"$tmp/full.env"
+for each in $names; do
+	if env_is_optional "$each"; then
+		echo "$each=" >>"$tmp/full.env"
+	elif grep -q "^$each=" "$tmp/quoted.env"; then
+		grep "^$each=" "$tmp/quoted.env" >>"$tmp/full.env"
+	else
+		echo "$each=lint-sentinel-$each" >>"$tmp/full.env"
+	fi
+done
+for name in $names; do
+	grep -v "^$name=" "$tmp/full.env" >"$tmp/case.env"
+	echo "$name=" >>"$tmp/case.env"
+	: >"$tmp/calls"
+	PATH="$tmp/bin:$PATH" AJ_PC_ENV_FILE="$tmp/case.env" AJ_PC_PROJECT=aj-lint-test scripts/deploy.sh pc >/dev/null 2>"$tmp/err" || true
+	if env_is_optional "$name"; then
+		! grep -q 'empty or missing' "$tmp/err" || { echo "deploy-lint: deploy.sh refused an empty optional $name" >&2; cat "$tmp/err" >&2; exit 1; }
+		grep -q UNEXPECTED "$tmp/calls" || { echo "deploy-lint: deploy.sh did not get past its checks with $name empty" >&2; cat "$tmp/err" >&2; exit 1; }
+	else
+		grep -q "empty or missing.*$name" "$tmp/err" || { echo "deploy-lint: deploy.sh accepted an empty $name" >&2; cat "$tmp/err" >&2; exit 1; }
+		! grep -q UNEXPECTED "$tmp/calls" || { echo "deploy-lint: deploy.sh reached docker up with $name empty" >&2; exit 1; }
+	fi
+done
+echo "deploy-lint: optional variables ok"

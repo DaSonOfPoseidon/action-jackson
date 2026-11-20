@@ -26,8 +26,8 @@ root=$(cd "$(dirname "$0")/.." && pwd)
 env_file=${AJ_PC_ENV_FILE:-$root/deploy/pc/.env}
 example=$root/deploy/pc/.env.example
 
-# 1. The env file must exist and every variable .env.example names must be set (only the optional
-# port may be empty). Refuse before touching Docker; name the variable, never its value.
+# 1. The env file must exist and every variable .env.example names must be set (only the optional ones,
+# listed in deploy/pc/env-lib.sh, may be empty). Refuse before touching Docker; name the variable, never its value.
 if [ ! -f "$env_file" ]; then
 	echo "deploy.sh: $env_file is missing." >&2
 	echo "Create it: cp deploy/pc/.env.example deploy/pc/.env, then fill every value (the comments say how)." >&2
@@ -38,7 +38,7 @@ fi
 env_load "$env_file" || { echo "deploy.sh: cannot read $env_file" >&2; exit 1; }
 missing=
 for name in $(sed -n 's/^\([A-Z][A-Z0-9_]*\)=.*/\1/p' "$example"); do
-	[ "$name" = AJ_API_PORT ] && continue
+	env_is_optional "$name" && continue
 	if [ -z "$(env_get "$name")" ]; then
 		missing="$missing $name"
 	fi
