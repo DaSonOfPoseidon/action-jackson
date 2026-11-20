@@ -139,6 +139,9 @@ docker-compose.yml     — 3-service orchestration (mongo, api, frontend)
 - `scripts/test-db.sh up` — start the throwaway Postgres (`aj-testdb`) that the data tests use; `scripts/test-db.sh down`
   removes it. `scripts/check.sh` starts it, and `scripts/dotnet.sh` joins its network and sets `TEST_DATABASE_URL`. Without
   it the database tests are skipped locally. In CI (`CI=true`) a missing database fails them.
+- `Edge__Key` (`EDGE_KEY` in `deploy/pc/.env`) is a secret of at least 32 characters, shared with the edge. The API trusts
+  `X-Client-IP` only on a request carrying it in `X-Edge-Key`. Unset, nothing forwarded is trusted; set but shorter than 32,
+  startup fails. It has no default: generate it with `openssl rand -hex 32`, and never commit it.
 - `scripts/dotnet.sh ef migrations add <Name> --context <X>DbContext -o Migrations/<X> --project server/src/ActionJackson.Data
   --startup-project server/src/ActionJackson.Data` — add a migration (`dotnet-ef` is a local tool, `.config/dotnet-tools.json`).
   Each context has its own migrations folder: Core, Lan, Car, Main and Dev. A change to the business model needs a
