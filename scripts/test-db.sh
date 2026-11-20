@@ -16,7 +16,9 @@ up)
 			--network aj-test --memory 512m --memory-swap 512m \
 			-e POSTGRES_PASSWORD=test postgres:16-alpine >/dev/null
 	fi
-	until docker exec aj-testdb pg_isready -U postgres >/dev/null 2>&1; do sleep 1; done
+	# Ask over TCP: the image's temporary init server listens only on its socket, so a socket check
+	# can pass before the real server accepts connections from other containers.
+	until docker exec aj-testdb pg_isready -h 127.0.0.1 -U postgres >/dev/null 2>&1; do sleep 1; done
 	echo "TEST_DATABASE_URL=Host=aj-testdb;Username=postgres;Password=test"
 	;;
 down)
