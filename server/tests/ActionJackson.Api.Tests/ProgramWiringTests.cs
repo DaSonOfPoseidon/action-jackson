@@ -2,6 +2,9 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 namespace ActionJackson.Api.Tests;
 
@@ -66,6 +69,19 @@ public class ProgramWiringTests
         var body = await response.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal("degraded", body.GetProperty("status").GetString());
         Assert.False(body.TryGetProperty("traceId", out _));
+    }
+
+    [Fact]
+    public void The_app_starts_with_no_smtp_settings_and_the_email_outbox_is_wired()
+    {
+        using var factory = Factory();
+        using var client = factory.CreateClient();
+
+        Assert.NotNull(factory.Services.GetService(typeof(ActionJackson.Api.Email.EmailOutboxWriter)));
+        Assert.Contains(
+            factory.Services.GetServices<IHostedService>(),
+            service => service is ActionJackson.Api.Email.EmailSenderService);
+        Assert.False(factory.Services.GetRequiredService<IOptions<ActionJackson.Api.Email.SmtpOptions>>().Value.Enabled);
     }
 
     private static string Flatten(Exception e)

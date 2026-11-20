@@ -1,3 +1,4 @@
+using ActionJackson.Api.Email;
 using Microsoft.Extensions.Options;
 
 namespace ActionJackson.Api.Platform;
@@ -18,6 +19,7 @@ public static class ApiPlatformExtensions
         builder.Services.AddHostedService<RequestMetricsWriter>();
         builder.Services.AddPlatformRateLimiting();
         builder.Services.AddPlatformCache(builder.Configuration);
+        builder.Services.AddEmail();
         return builder;
     }
 
