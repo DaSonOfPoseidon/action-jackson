@@ -17,6 +17,7 @@ public static class ApiPlatformExtensions
         builder.Services.AddSingleton<RequestMetricsQueue>();
         builder.Services.AddHostedService<RequestMetricsWriter>();
         builder.Services.AddPlatformRateLimiting();
+        builder.Services.AddPlatformCache(builder.Configuration);
         return builder;
     }
 
