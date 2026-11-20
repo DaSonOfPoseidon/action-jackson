@@ -27,9 +27,48 @@ public class HybridCacheTests
         // Nothing listens on port 1.
         await using var provider = Build("127.0.0.1:1,password=not-a-real-secret");
         var cache = provider.GetRequiredService<HybridCache>();
-        var calls = 0;
         var clock = Stopwatch.StartNew();
 
+        var first = await cache.GetOrCreateAsync("k1", _ => ValueTask.FromResult("value-1"));
+        var other = await cache.GetOrCreateAsync("k2", _ => ValueTask.FromResult("value-2"));
+
+        Assert.Equal("value-1", first);
+        Assert.Equal("value-2", other);
+        Assert.True(clock.Elapsed < TimeSpan.FromSeconds(5), $"took {clock.Elapsed}");
+    }
+
+    [Fact]
+    public async Task An_unreachable_redis_leaves_l1_serving_once_the_startup_tag_read_has_failed()
+    {
+        await using var provider = Build("127.0.0.1:1,password=not-a-real-secret");
+        var cache = provider.GetRequiredService<HybridCache>();
+
+        // With an L2, HybridCache reads the tag-invalidation time ("*") from Redis in the background, and when that
+        // read fails it assumes everything created before the failure is invalid. So for the first seconds after
+        // start an entry can be re-fetched even from L1. Wait until a fresh key is served from L1 on its second read.
+        var deadline = Stopwatch.StartNew();
+        var ready = false;
+        for (var i = 0; !ready && deadline.Elapsed < TimeSpan.FromSeconds(30); i++)
+        {
+            var key = $"warm-{i}";
+            var reran = false;
+            await cache.GetOrCreateAsync(key, _ => ValueTask.FromResult("w"));
+            await cache.GetOrCreateAsync(key, _ =>
+            {
+                reran = true;
+                return ValueTask.FromResult("w");
+            });
+            ready = !reran;
+            if (!ready)
+            {
+                await Task.Delay(50);
+            }
+        }
+
+        Assert.True(ready, "L1 never served a read while Redis was down");
+
+        // From here on the property is deterministic: a miss costs the factory once, then L1 answers.
+        var calls = 0;
         var first = await cache.GetOrCreateAsync("k1", _ =>
         {
             calls++;
@@ -40,14 +79,10 @@ public class HybridCacheTests
             calls++;
             return ValueTask.FromResult("value-1-again");
         });
-        var other = await cache.GetOrCreateAsync("k2", _ => ValueTask.FromResult("value-2"));
 
         Assert.Equal("value-1", first);
-        // L1 still works: the second read is a hit, so the factory ran once.
         Assert.Equal("value-1", second);
         Assert.Equal(1, calls);
-        Assert.Equal("value-2", other);
-        Assert.True(clock.Elapsed < TimeSpan.FromSeconds(5), $"took {clock.Elapsed}");
     }
 
     [Fact]

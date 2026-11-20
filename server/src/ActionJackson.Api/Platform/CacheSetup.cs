@@ -10,8 +10,12 @@ public static class CacheSetup
 
     // HybridCache: an in-memory L1, and Redis as the L2 when ConnectionStrings:Redis is set. Redis is only a
     // cache, never a dependency: /healthz does not check it, and HybridCache treats a failing L2 as a miss
-    // (tests/.../HybridCacheTests.cs proves it against an unreachable address). With no connection string
+    // (tests/.../HybridCacheTests.cs checks it against an unreachable address). With no connection string
     // the cache runs on L1 alone. Nothing calls the cache yet.
+    // One HybridCache rule to know: it reads a tag-invalidation time from L2 in the background, and when that
+    // read fails it treats entries created before the failure as invalid. So in the first seconds after start
+    // with Redis down, an L1 entry can be re-fetched. Once that read has failed, L1 serves normally and a miss
+    // costs about a millisecond. The tests wait for that point instead of assuming it.
     public static IServiceCollection AddPlatformCache(this IServiceCollection services, IConfiguration configuration)
     {
         var connectionString = configuration.GetConnectionString("Redis");
