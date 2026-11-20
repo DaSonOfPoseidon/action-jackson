@@ -1,0 +1,128 @@
+# The Action Jackson backend on the PC (192.168.1.195): api, postgres, redis, garage.
+# Only the api publishes a port (LAN only; the Pi's edge reaches it). Secrets come from deploy/pc/.env,
+# never from this file. Every service has an explicit memory cap with no swap (mem_limit = memswap_limit).
+#   scripts/deploy.sh pc
+name: action-jackson
+
+services:
+  api:
+    build:
+      context: ../../server
+      dockerfile: src/ActionJackson.Api/Dockerfile
+    restart: unless-stopped
+    mem_limit: 1g
+    memswap_limit: 1g
+    ports:
+      - "192.168.1.195:${AJ_API_PORT:-8110}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ConnectionStrings__Postgres: "Host=postgres;Database=action_jackson;Username=action_jackson;Password=${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in deploy/pc/.env}"
+      ConnectionStrings__Redis: "redis:6379,password=${REDIS_PASSWORD:?set REDIS_PASSWORD in deploy/pc/.env}"
+      S3__ServiceUrl: http://garage:3900
+      S3__Region: garage
+      S3__Bucket: aj-attachments
+      S3__ForcePathStyle: "true"
+      S3__AccessKeyId: ${S3_ACCESS_KEY_ID:?set S3_ACCESS_KEY_ID in deploy/pc/.env}
+      S3__SecretAccessKey: ${S3_SECRET_ACCESS_KEY:?set S3_SECRET_ACCESS_KEY in deploy/pc/.env}
+    # The aspnet image has no curl: the app checks its own /healthz. Migrations run at startup, hence
+    # the start period. With the database down /healthz answers 503, so the container turns unhealthy
+    # and monitoring alerts; that is intended.
+    healthcheck:
+      test: ["CMD", "dotnet", "/app/ActionJackson.Api.dll", "--healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    labels:
+      wud.watch: "false"
+      monitoring.http.path: "/healthz"
+    networks: [backend, default]
+
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    mem_limit: 1g
+    memswap_limit: 1g
+    environment:
+      POSTGRES_USER: action_jackson
+      POSTGRES_DB: action_jackson
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in deploy/pc/.env}
+    # The 18 image keeps PGDATA in a versioned subdirectory of /var/lib/postgresql (its declared volume).
+    volumes:
+      - pg_data:/var/lib/postgresql
+    # Over TCP, never the unix socket: the image's temporary init server answers on the socket before
+    # the real server is up (docs/pitfalls.md).
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U action_jackson -d action_jackson"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    labels:
+      wud.tag.include: '^\d+-alpine$$'
+    networks: [backend]
+
+  # A cache only: nothing persists, and it evicts the least recently used keys at 128mb.
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+    # maxmemory is 128mb; the rest of the cap is headroom for buffers and the process itself.
+    mem_limit: 256m
+    memswap_limit: 256m
+    # The password reaches redis-server on stdin, so it is on no command line (`ps`, `docker inspect`).
+    command:
+      - sh
+      - -c
+      - |
+        exec redis-server - --save "" --appendonly no --maxmemory 128mb --maxmemory-policy allkeys-lru <<EOF
+        requirepass $$REDIS_PASSWORD
+        EOF
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?set REDIS_PASSWORD in deploy/pc/.env}
+    # An authenticated PING over TCP: it fails (NOAUTH, LOADING, refused) until redis serves for real.
+    healthcheck:
+      test: ["CMD-SHELL", 'REDISCLI_AUTH="$$REDIS_PASSWORD" redis-cli -h 127.0.0.1 ping | grep -q PONG']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    labels:
+      wud.tag.include: '^\d+-alpine$$'
+    networks: [backend]
+
+  garage:
+    image: dxflrs/garage:v2.5.0
+    restart: unless-stopped
+    mem_limit: 1g
+    memswap_limit: 1g
+    volumes:
+      - ./garage.toml:/etc/garage.toml:ro
+      - garage_meta:/var/lib/garage/meta
+      - garage_data:/var/lib/garage/data
+    environment:
+      GARAGE_RPC_SECRET: ${GARAGE_RPC_SECRET:?set GARAGE_RPC_SECRET in deploy/pc/.env}
+      GARAGE_ADMIN_TOKEN: ${GARAGE_ADMIN_TOKEN:?set GARAGE_ADMIN_TOKEN in deploy/pc/.env}
+      GARAGE_METRICS_TOKEN: ${GARAGE_METRICS_TOKEN:?set GARAGE_METRICS_TOKEN in deploy/pc/.env}
+    # The image is FROM scratch (only /garage), so the probe is the binary: `status` asks the running
+    # daemon over RPC and fails while it is down.
+    healthcheck:
+      test: ["CMD", "/garage", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    labels:
+      wud.tag.include: '^v\d+\.\d+\.\d+$$'
+    networks: [backend]
+
+# internal: no route out of the host, so these three are reachable only from the api.
+networks:
+  backend:
+    internal: true
+
+volumes:
+  pg_data:
+  garage_meta:
+  garage_data:

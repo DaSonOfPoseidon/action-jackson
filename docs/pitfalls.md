@@ -33,3 +33,7 @@ Converting a whole-home quote makes a $0 invoice, and the description reads "und
 ## A readiness probe that passes before the real service is up
 
 A wait loop or healthcheck asks the service in a way that a start-up phase also answers, so it reports ready too early and the next step fails. The postgres image runs a temporary init server that listens only on its unix socket, so `pg_isready` over the socket passes before the real server accepts TCP connections. Check that the probe uses the same path the clients use (TCP, the published port, a real query or request), and that nothing else can answer it earlier. Compose healthchecks and CI service `--health-cmd` options are the usual places. Bit: `scripts/test-db.sh:19` and the CI postgres service in `.github/workflows/ci.yml` (PR #8).
+
+## Reading an .env file with a hand-written parser
+
+A script reads `.env` with `sed`/`grep`, so quotes, `export`, spaces and trailing comments stay in the value, while Docker Compose strips them. The script then checks or imports a value (`"abc"`) that differs from the one the containers get (`abc`), and a quoted empty value (`""`) passes an emptiness check. Check that scripts read variables through Compose (`deploy/pc/env-lib.sh`), not their own parser. Bit: `deploy/pc/garage-init.sh` and `scripts/deploy.sh` (PR #11).
