@@ -152,6 +152,7 @@ chmod +x "$tmp/bin/docker"
 cat >"$tmp/quoted.env" <<'ENV'
 POSTGRES_PASSWORD="pg pass"
 REDIS_PASSWORD='redis'
+EDGE_KEY="0123456789abcdef0123456789abcdef"
 GARAGE_RPC_SECRET=raw
 GARAGE_ADMIN_TOKEN=admin # trailing comment
 GARAGE_METRICS_TOKEN=metrics
@@ -176,4 +177,18 @@ if PATH="$tmp/bin:$PATH" AJ_PC_ENV_FILE="$tmp/empty.env" AJ_PC_PROJECT=aj-lint-t
 fi
 grep -q 'POSTGRES_PASSWORD' "$tmp/err" || { echo "deploy-lint: deploy.sh did not name the empty POSTGRES_PASSWORD" >&2; cat "$tmp/err" >&2; exit 1; }
 ! grep -q UNEXPECTED "$tmp/calls" || { echo "deploy-lint: deploy.sh reached docker up with an empty password" >&2; exit 1; }
+
+# deploy.sh also stops on an EDGE_KEY under 32 characters (the API would refuse to start with it), and
+# accepts exactly 32.
+sed 's/^EDGE_KEY=.*/EDGE_KEY="0123456789abcdef0123456789abcde"/' "$tmp/quoted.env" >"$tmp/short.env"
+: >"$tmp/calls"
+if PATH="$tmp/bin:$PATH" AJ_PC_ENV_FILE="$tmp/short.env" AJ_PC_PROJECT=aj-lint-test scripts/deploy.sh pc >/dev/null 2>"$tmp/err"; then
+	echo "deploy-lint: deploy.sh accepted a 31-character EDGE_KEY" >&2
+	exit 1
+fi
+grep -q 'EDGE_KEY' "$tmp/err" || { echo "deploy-lint: deploy.sh did not name the short EDGE_KEY" >&2; cat "$tmp/err" >&2; exit 1; }
+! grep -q UNEXPECTED "$tmp/calls" || { echo "deploy-lint: deploy.sh reached docker up with a short EDGE_KEY" >&2; exit 1; }
+: >"$tmp/calls"
+PATH="$tmp/bin:$PATH" AJ_PC_ENV_FILE="$tmp/quoted.env" AJ_PC_PROJECT=aj-lint-test scripts/deploy.sh pc >/dev/null 2>"$tmp/err" || true
+! grep -q 'EDGE_KEY' "$tmp/err" || { echo "deploy-lint: deploy.sh rejected a 32-character EDGE_KEY" >&2; cat "$tmp/err" >&2; exit 1; }
 echo "deploy-lint: env parsing ok"

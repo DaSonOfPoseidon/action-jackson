@@ -20,6 +20,8 @@ services:
     environment:
       ConnectionStrings__Postgres: "Host=postgres;Database=action_jackson;Username=action_jackson;Password=${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in deploy/pc/.env}"
       ConnectionStrings__Redis: "redis:6379,password=${REDIS_PASSWORD:?set REDIS_PASSWORD in deploy/pc/.env}"
+      # Shared with the edge (unit 9): X-Client-IP is trusted only on a request carrying this key.
+      Edge__Key: ${EDGE_KEY:?set EDGE_KEY in deploy/pc/.env}
       S3__ServiceUrl: http://garage:3900
       S3__Region: garage
       S3__Bucket: aj-attachments
