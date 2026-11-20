@@ -26,11 +26,6 @@ root=$(cd "$(dirname "$0")/.." && pwd)
 env_file=${AJ_PC_ENV_FILE:-$root/deploy/pc/.env}
 example=$root/deploy/pc/.env.example
 
-# The value of a variable in the env file, taken literally (the file is data, never sourced).
-get() {
-	sed -n "s/^$1=//p" "$env_file" | tail -n 1
-}
-
 # 1. The env file must exist and every variable .env.example names must be set (only the optional
 # port may be empty). Refuse before touching Docker; name the variable, never its value.
 if [ ! -f "$env_file" ]; then
@@ -38,10 +33,13 @@ if [ ! -f "$env_file" ]; then
 	echo "Create it: cp deploy/pc/.env.example deploy/pc/.env, then fill every value (the comments say how)." >&2
 	exit 1
 fi
+# Values are read as Compose reads them, so a quoted empty value ("") counts as empty.
+. "$root/deploy/pc/env-lib.sh"
+env_load "$env_file" || { echo "deploy.sh: cannot read $env_file" >&2; exit 1; }
 missing=
 for name in $(sed -n 's/^\([A-Z][A-Z0-9_]*\)=.*/\1/p' "$example"); do
 	[ "$name" = AJ_API_PORT ] && continue
-	if [ -z "$(get "$name")" ]; then
+	if [ -z "$(env_get "$name")" ]; then
 		missing="$missing $name"
 	fi
 done
@@ -76,8 +74,8 @@ compose up -d --build --wait
 # 3. Layout, bucket and key in Garage.
 "$root/deploy/pc/garage-init.sh"
 
-# 4. The API must see its database. The port follows compose's own precedence: shell, then env file.
-port=${AJ_API_PORT:-$(get AJ_API_PORT)}
+# 4. The API must see its database. env_get follows compose's own precedence: shell, then env file.
+port=$(env_get AJ_API_PORT)
 port=${port:-8110}
 url=http://192.168.1.195:$port/healthz
 tries=0

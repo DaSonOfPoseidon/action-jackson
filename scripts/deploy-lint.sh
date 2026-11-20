@@ -119,3 +119,61 @@ if failures:
     sys.exit(1)
 print("deploy-lint: ok")
 PY
+
+# Env-file parsing: deploy.sh and garage-init.sh must read the .env the way Compose does (quotes
+# stripped, trailing comments dropped), or the empty-variable check and the key bootstrap would use
+# a different value from the one the containers get. A fake `docker` stands in for the stack: it
+# fails the run if `up` is reached and answers the garage subcommands, logging what key import got.
+real_docker=$(command -v docker)
+mkdir -p "$tmp/bin"
+cat >"$tmp/bin/docker" <<SHIM
+#!/bin/sh
+for a in "\$@"; do
+	[ "\$a" = up ] && { echo "UNEXPECTED: docker up reached" >>"$tmp/calls"; exit 99; }
+done
+case " \$* " in
+*" exec "*)
+	while [ "\$1" != /garage ]; do shift; done
+	shift
+	case "\$1 \$2" in
+	"layout show") echo "Current cluster layout version: 1" ;;
+	"key info") exit 1 ;;
+	"key import")
+		# Logged one argument per line, so a value with spaces stays visible.
+		printf 'key-import:%s\n' "\$@" >>"$tmp/calls" ;;
+	*) ;;
+	esac
+	exit 0 ;;
+esac
+exec "$real_docker" "\$@"
+SHIM
+chmod +x "$tmp/bin/docker"
+
+cat >"$tmp/quoted.env" <<'ENV'
+POSTGRES_PASSWORD="pg pass"
+REDIS_PASSWORD='redis'
+GARAGE_RPC_SECRET=raw
+GARAGE_ADMIN_TOKEN=admin # trailing comment
+GARAGE_METRICS_TOKEN=metrics
+S3_ACCESS_KEY_ID="GKquoted"
+S3_SECRET_ACCESS_KEY='quoted-secret'
+AJ_API_PORT="18110"
+ENV
+
+# garage-init.sh imports the unquoted values.
+: >"$tmp/calls"
+PATH="$tmp/bin:$PATH" AJ_PC_ENV_FILE="$tmp/quoted.env" AJ_PC_PROJECT=aj-lint-test deploy/pc/garage-init.sh >/dev/null
+for expected in key-import:GKquoted key-import:quoted-secret; do
+	grep -qx -- "$expected" "$tmp/calls" || { echo "deploy-lint: garage-init.sh did not pass the unquoted value ($expected); calls:" >&2; cat "$tmp/calls" >&2; exit 1; }
+done
+
+# deploy.sh treats a quoted-empty value as empty and stops before Docker starts anything.
+sed 's/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=""/' "$tmp/quoted.env" >"$tmp/empty.env"
+: >"$tmp/calls"
+if PATH="$tmp/bin:$PATH" AJ_PC_ENV_FILE="$tmp/empty.env" AJ_PC_PROJECT=aj-lint-test scripts/deploy.sh pc >/dev/null 2>"$tmp/err"; then
+	echo "deploy-lint: deploy.sh accepted POSTGRES_PASSWORD=\"\"" >&2
+	exit 1
+fi
+grep -q 'POSTGRES_PASSWORD' "$tmp/err" || { echo "deploy-lint: deploy.sh did not name the empty POSTGRES_PASSWORD" >&2; cat "$tmp/err" >&2; exit 1; }
+! grep -q UNEXPECTED "$tmp/calls" || { echo "deploy-lint: deploy.sh reached docker up with an empty password" >&2; exit 1; }
+echo "deploy-lint: env parsing ok"

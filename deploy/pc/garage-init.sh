@@ -35,14 +35,12 @@ garage_quiet() {
 	fi
 }
 
-# The value of a variable in the env file, taken literally (the file is data, never sourced).
-get() {
-	sed -n "s/^$1=//p" "$env_file" | tail -n 1
-}
-
 [ -f "$env_file" ] || { echo "garage-init: $env_file is missing" >&2; exit 1; }
-key_id=$(get S3_ACCESS_KEY_ID)
-secret=$(get S3_SECRET_ACCESS_KEY)
+# The values as Compose reads them (quotes stripped), so the imported key is the one the API is given.
+. "$root/deploy/pc/env-lib.sh"
+env_load "$env_file" || { echo "garage-init: cannot read $env_file" >&2; exit 1; }
+key_id=$(env_get S3_ACCESS_KEY_ID)
+secret=$(env_get S3_SECRET_ACCESS_KEY)
 [ -n "$key_id" ] || { echo "garage-init: S3_ACCESS_KEY_ID is empty in $env_file" >&2; exit 1; }
 [ -n "$secret" ] || { echo "garage-init: S3_SECRET_ACCESS_KEY is empty in $env_file" >&2; exit 1; }
 
