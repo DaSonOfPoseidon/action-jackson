@@ -32,6 +32,8 @@ if [ -f server/ActionJackson.slnx ]; then
   # -m:1 keeps the SDK container under the host's 1 GiB container cap (/srv/compose/mem-guard).
   scripts/dotnet.sh build server/ActionJackson.slnx
   scripts/dotnet.sh format server/ActionJackson.slnx --verify-no-changes --no-restore
+  # The data tests need a Postgres: start the throwaway one (scripts/dotnet.sh then joins its network).
+  scripts/test-db.sh up >/dev/null
   scripts/dotnet.sh test server/ActionJackson.slnx --no-build -m:1
 fi
 

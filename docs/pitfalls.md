@@ -29,3 +29,7 @@ The form says "check your inbox for a confirmation", but no customer email is se
 ## Derived amounts that default to zero
 
 Converting a whole-home quote makes a $0 invoice, and the description reads "undefined Package Installation", because the source fields don't exist for that type. Check every branch of a conversion with each source variant. Bit: `models/Invoice.js:131-156`.
+
+## A readiness probe that passes before the real service is up
+
+A wait loop or healthcheck asks the service in a way that a start-up phase also answers, so it reports ready too early and the next step fails. The postgres image runs a temporary init server that listens only on its unix socket, so `pg_isready` over the socket passes before the real server accepts TCP connections. Check that the probe uses the same path the clients use (TCP, the published port, a real query or request), and that nothing else can answer it earlier. Compose healthchecks and CI service `--health-cmd` options are the usual places. Bit: `scripts/test-db.sh:19` and the CI postgres service in `.github/workflows/ci.yml` (PR #8).
