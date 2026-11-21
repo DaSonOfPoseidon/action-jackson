@@ -141,6 +141,28 @@ public class EmailOptionsTests
         Assert.True(result.Failed);
     }
 
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(90)]
+    public void A_claim_lease_not_longer_than_the_send_budget_fails(int seconds)
+    {
+        // A lease that can run out while the first row is still sending lets a second sender take the
+        // row and send it too.
+        var result = Check(new SmtpOptions(), new EmailOptions { ClaimLease = TimeSpan.FromSeconds(seconds) });
+
+        Assert.True(result.Failed);
+        Assert.Contains("Email:ClaimLease", result.FailureMessage);
+    }
+
+    [Fact]
+    public void A_claim_lease_longer_than_the_send_budget_passes()
+    {
+        var result = Check(new SmtpOptions(), new EmailOptions { ClaimLease = EmailSenderService.SendBudget + TimeSpan.FromSeconds(1) });
+
+        Assert.True(result.Succeeded);
+    }
+
     [Fact]
     public async Task The_host_starts_with_no_smtp_settings()
     {

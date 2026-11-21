@@ -54,6 +54,7 @@ public sealed class EmailOptions
     public int MaxAttempts { get; set; } = 8;
 
     // How long a claimed row is hidden from other senders. A send that never records its result (a
-    // crash) is retried after this.
+    // crash) is retried after this. It must be longer than one send can take (90 seconds), or a second
+    // sender could send the same row too.
     public TimeSpan ClaimLease { get; set; } = TimeSpan.FromMinutes(5);
 }
