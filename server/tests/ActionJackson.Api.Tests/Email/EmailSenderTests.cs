@@ -245,7 +245,7 @@ public class EmailSenderTests(TestDatabase database) : IClassFixture<TestDatabas
     }
 
     [DbFact]
-    public async Task An_authentication_failure_uses_one_attempt_and_releases_the_rest_of_the_batch()
+    public async Task An_authentication_failure_uses_no_attempt_and_releases_the_rest_of_the_batch()
     {
         var first = await AddAsync(due: DateTimeOffset.UtcNow.AddSeconds(-30));
         var second = await AddAsync(due: DateTimeOffset.UtcNow.AddSeconds(-20));
@@ -253,7 +253,7 @@ public class EmailSenderTests(TestDatabase database) : IClassFixture<TestDatabas
         var transport = new FakeTransport { Fail = _ => new AuthenticationException("535 authentication failed") };
         await using var host = await StartAsync(transport, email: o => o.BatchSize = 3);
 
-        await WaitForAsync(async () => (await RowAsync(first.Id)).Attempts == 1);
+        await WaitForAsync(async () => (await RowAsync(first.Id)).LastError is not null);
         await Task.Delay(400);
 
         Assert.Equal(1, transport.Calls);
@@ -261,6 +261,7 @@ public class EmailSenderTests(TestDatabase database) : IClassFixture<TestDatabas
         var two = await RowAsync(second.Id);
         var three = await RowAsync(third.Id);
         Assert.Equal(EmailStatus.Pending, one.Status);
+        Assert.Equal(0, one.Attempts);
         Assert.Equal(0, two.Attempts);
         Assert.Equal(0, three.Attempts);
         Assert.Equal(EmailStatus.Pending, two.Status);
@@ -273,7 +274,7 @@ public class EmailSenderTests(TestDatabase database) : IClassFixture<TestDatabas
     }
 
     [DbFact]
-    public async Task A_server_outage_never_marks_a_row_failed_however_many_attempts_it_has_used()
+    public async Task A_server_outage_neither_fails_a_row_nor_uses_one_of_its_attempts()
     {
         // The server being down is not the email's fault: a long outage or a wrong password must not
         // permanently fail whichever row happens to be first in the queue.
@@ -281,12 +282,14 @@ public class EmailSenderTests(TestDatabase database) : IClassFixture<TestDatabas
         var transport = new FakeTransport { Fail = _ => new AuthenticationException("535 authentication failed") };
         await using var host = await StartAsync(transport, email: o => o.MaxAttempts = 8);
 
-        await WaitForAsync(async () => (await RowAsync(row.Id)).Attempts == 8);
+        await WaitForAsync(async () => (await RowAsync(row.Id)).LastError is not null);
         await Task.Delay(300);
 
+        // The row keeps the 7 attempts it had: an outage is not an attempt at this email, so once the
+        // setting is fixed an ordinary 4xx still leaves it a try.
         var after = await RowAsync(row.Id);
         Assert.Equal(EmailStatus.Pending, after.Status);
-        Assert.Equal(8, after.Attempts);
+        Assert.Equal(7, after.Attempts);
         Assert.StartsWith("AuthenticationException:", after.LastError);
         Assert.True(after.NextAttemptAt > DateTimeOffset.UtcNow.AddSeconds(30));
     }
@@ -302,10 +305,11 @@ public class EmailSenderTests(TestDatabase database) : IClassFixture<TestDatabas
         };
         await using var host = await StartAsync(transport);
 
-        await WaitForAsync(async () => (await RowAsync(first.Id)).Attempts == 1);
+        await WaitForAsync(async () => (await RowAsync(first.Id)).LastError is not null);
         await Task.Delay(300);
 
         Assert.Equal(1, transport.Calls);
+        Assert.Equal(0, (await RowAsync(first.Id)).Attempts);
         Assert.Equal(0, (await RowAsync(second.Id)).Attempts);
     }
 
@@ -368,7 +372,7 @@ public class EmailSenderTests(TestDatabase database) : IClassFixture<TestDatabas
         };
         await using var host = await StartAsync(transport);
 
-        await WaitForAsync(async () => (await RowAsync(row.Id)).Attempts == 1);
+        await WaitForAsync(async () => (await RowAsync(row.Id)).LastError is not null);
 
         var after = await RowAsync(row.Id);
         Assert.NotNull(after.LastError);

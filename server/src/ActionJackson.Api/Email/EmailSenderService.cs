@@ -23,8 +23,8 @@ internal enum SendFailure
     Permanent,
 
     // The connection, the login or the sender address failed: true of every email, not of this row. The
-    // whole batch stops, and the row is never marked Failed for it, however long the outage lasts: fixing
-    // the server or the setting then delivers the queue.
+    // whole batch stops, and the row is never marked Failed for it and never charged an attempt, however
+    // long the outage lasts: fixing the server or the setting then delivers the queue.
     Connection,
 }
 
@@ -132,9 +132,13 @@ public sealed class EmailSenderService(
             }
 
             var kind = failure.Value.Kind;
-            var attempts = row.Attempts + 1;
+
+            // A connection failure is not an attempt at this email: it is true of every email, so it is
+            // never charged to the row (however long the outage, the row keeps the tries it had), and the
+            // row waits one base backoff, not a growing one.
+            var attempts = kind == SendFailure.Connection ? row.Attempts : row.Attempts + 1;
             var failed = kind == SendFailure.Permanent || (kind == SendFailure.Transient && attempts >= settings.MaxAttempts);
-            var next = DateTimeOffset.UtcNow + EmailBackoff.Delay(attempts);
+            var next = DateTimeOffset.UtcNow + EmailBackoff.Delay(kind == SendFailure.Connection ? 1 : attempts);
             await FinishAsync(
                 core,
                 row.Id,
@@ -144,7 +148,7 @@ public sealed class EmailSenderService(
                 DescribeError(failure.Value.Error, smtpOptions.Value.Password),
                 null);
             logger.LogWarning(
-                "Email {EmailId} ({Template}) was not sent: {ErrorType}. Attempt {Attempts} of {MaxAttempts}; now {Status}.",
+                "Email {EmailId} ({Template}) was not sent: {ErrorType}. Attempts used {Attempts} of {MaxAttempts}; now {Status}.",
                 row.Id,
                 row.Template,
                 failure.Value.Error.GetType().Name,
