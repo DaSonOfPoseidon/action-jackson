@@ -145,7 +145,8 @@ public class EmailOptionsTests
     [InlineData(0)]
     [InlineData(1)]
     [InlineData(90)]
-    public void A_claim_lease_not_longer_than_the_send_budget_fails(int seconds)
+    [InlineData(100)]
+    public void A_claim_lease_not_longer_than_the_send_timeout_fails(int seconds)
     {
         // A lease that can run out while the first row is still sending lets a second sender take the
         // row and send it too.
@@ -156,9 +157,28 @@ public class EmailOptionsTests
     }
 
     [Fact]
-    public void A_claim_lease_longer_than_the_send_budget_passes()
+    public void A_claim_lease_is_compared_with_the_configured_send_timeout()
     {
-        var result = Check(new SmtpOptions(), new EmailOptions { ClaimLease = EmailSenderService.SendBudget + TimeSpan.FromSeconds(1) });
+        var shorter = Check(new SmtpOptions(), new EmailOptions { SendTimeout = TimeSpan.FromMinutes(10), ClaimLease = TimeSpan.FromMinutes(5) });
+        var longer = Check(new SmtpOptions(), new EmailOptions { SendTimeout = TimeSpan.FromSeconds(10), ClaimLease = TimeSpan.FromSeconds(21) });
+
+        Assert.True(shorter.Failed);
+        Assert.True(longer.Succeeded);
+    }
+
+    [Fact]
+    public void A_send_timeout_of_zero_fails()
+    {
+        var result = Check(new SmtpOptions(), new EmailOptions { SendTimeout = TimeSpan.Zero });
+
+        Assert.True(result.Failed);
+        Assert.Contains("Email:SendTimeout", result.FailureMessage);
+    }
+
+    [Fact]
+    public void A_claim_lease_longer_than_the_send_timeout_passes()
+    {
+        var result = Check(new SmtpOptions(), new EmailOptions { ClaimLease = new EmailOptions().SendTimeout + EmailSenderService.ResultWriteTimeout + TimeSpan.FromSeconds(1) });
 
         Assert.True(result.Succeeded);
     }

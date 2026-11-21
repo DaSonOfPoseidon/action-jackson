@@ -46,13 +46,9 @@ public sealed class EmailSenderService(
     IOptions<EmailOptions> emailOptions,
     ILogger<EmailSenderService> logger) : BackgroundService
 {
-    // The most one row can take: connect, login and send, each cut off after the transport's timeout. A
-    // batch stops sending when its claims could run out within this budget.
-    internal static readonly TimeSpan SendBudget = TimeSpan.FromSeconds(90);
-
     private const int MaxLastError = 2000;
 
-    private static readonly TimeSpan ResultWriteTimeout = TimeSpan.FromSeconds(10);
+    internal static readonly TimeSpan ResultWriteTimeout = TimeSpan.FromSeconds(10);
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -116,7 +112,7 @@ public sealed class EmailSenderService(
 
             // The claims of the rows still waiting run out after the lease. Do not send past it: give them
             // back, and the next poll claims them afresh.
-            if (i > 0 && !HasTimeToSend(clock.Elapsed, settings.ClaimLease))
+            if (i > 0 && !HasTimeToSend(clock.Elapsed, settings.ClaimLease, settings.SendTimeout))
             {
                 await ReleaseAsync(core, rows.Skip(i), DateTimeOffset.UtcNow);
                 logger.LogInformation("The email sender gave back {Count} claimed rows before their claim ran out.", rows.Count - i);
@@ -187,7 +183,11 @@ public sealed class EmailSenderService(
 
         try
         {
-            await transport.SendAsync(message, cancellationToken);
+            // The deadline covers the whole send (connect, login, every command), which the transport's
+            // per-operation timeout does not, so the claim lease always outlasts a send that is going on.
+            using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            deadline.CancelAfter(settings.SendTimeout);
+            await transport.SendAsync(message, deadline.Token);
             return null;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -304,7 +304,7 @@ public sealed class EmailSenderService(
     }
 
     // Whether a batch that started `elapsed` ago can still send one more row before its claims run out.
-    internal static bool HasTimeToSend(TimeSpan elapsed, TimeSpan lease) => elapsed + SendBudget < lease;
+    internal static bool HasTimeToSend(TimeSpan elapsed, TimeSpan lease, TimeSpan sendTimeout) => elapsed + sendTimeout + ResultWriteTimeout < lease;
 
     // Looks through the whole exception chain, because MailKit and the socket layer wrap each other.
     internal static SendFailure Classify(Exception error)

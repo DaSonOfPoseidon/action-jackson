@@ -414,6 +414,23 @@ public class EmailSenderTests(TestDatabase database) : IClassFixture<TestDatabas
         Assert.True(after.NextAttemptAt > DateTimeOffset.UtcNow.AddMinutes(4));
     }
 
+    [DbFact]
+    public async Task A_send_that_runs_past_the_send_timeout_is_cut_off_and_retried_later()
+    {
+        // Nothing else bounds a send that keeps answering each command just in time: the deadline does,
+        // so the claim lease can never run out under a send that is still going.
+        var row = await AddAsync();
+        var transport = new FakeTransport { Block = true };
+        await using var host = await StartAsync(transport, email: o => o.SendTimeout = TimeSpan.FromMilliseconds(200));
+
+        await WaitForAsync(async () => (await RowAsync(row.Id)).Attempts == 1);
+
+        var after = await RowAsync(row.Id);
+        Assert.Equal(EmailStatus.Pending, after.Status);
+        Assert.Contains("Cancel", after.LastError);
+        Assert.True(after.NextAttemptAt > DateTimeOffset.UtcNow.AddSeconds(30));
+    }
+
     [Fact]
     public void Backoff_doubles_from_a_minute_and_caps_at_six_hours()
     {
@@ -441,11 +458,12 @@ public class EmailSenderTests(TestDatabase database) : IClassFixture<TestDatabas
     public void A_batch_stops_before_a_claim_lease_could_run_out()
     {
         var lease = TimeSpan.FromMinutes(5);
+        var timeout = TimeSpan.FromSeconds(90);
 
-        Assert.True(EmailSenderService.HasTimeToSend(TimeSpan.Zero, lease));
-        Assert.True(EmailSenderService.HasTimeToSend(TimeSpan.FromMinutes(3), lease));
-        Assert.False(EmailSenderService.HasTimeToSend(TimeSpan.FromMinutes(4.5), lease));
-        Assert.False(EmailSenderService.HasTimeToSend(TimeSpan.FromMinutes(6), lease));
+        Assert.True(EmailSenderService.HasTimeToSend(TimeSpan.Zero, lease, timeout));
+        Assert.True(EmailSenderService.HasTimeToSend(TimeSpan.FromMinutes(3), lease, timeout));
+        Assert.False(EmailSenderService.HasTimeToSend(TimeSpan.FromMinutes(4.5), lease, timeout));
+        Assert.False(EmailSenderService.HasTimeToSend(TimeSpan.FromMinutes(6), lease, timeout));
     }
 
     [Theory]

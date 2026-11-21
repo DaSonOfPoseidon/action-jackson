@@ -54,7 +54,13 @@ public sealed class EmailOptions
     public int MaxAttempts { get; set; } = 8;
 
     // How long a claimed row is hidden from other senders. A send that never records its result (a
-    // crash) is retried after this. It must be longer than one send can take (90 seconds), or a second
-    // sender could send the same row too.
+    // crash) is retried after this. It must be longer than SendTimeout plus
+    // 10 seconds for writing the result.
     public TimeSpan ClaimLease { get; set; } = TimeSpan.FromMinutes(5);
+
+    // The longest one send may take, connecting and logging in included. The transport's own timeout cuts
+    // off each network operation, not the whole send, so the sender enforces this deadline itself. A send
+    // that runs past it is cut off and retried later. ClaimLease must be longer (see there), or a second sender could
+    // claim the row while this one still sends it.
+    public TimeSpan SendTimeout { get; set; } = TimeSpan.FromSeconds(90);
 }

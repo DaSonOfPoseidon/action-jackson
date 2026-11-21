@@ -73,11 +73,17 @@ internal sealed class EmailOptionsValidator(IOptions<SmtpOptions> smtp) : IValid
             failures.Add("Email:MaxAttempts must be at least 1.");
         }
 
-        // The first row of a batch is sent whatever the clock says, so the lease must outlast one send:
-        // a shorter one lets a second sender claim the row while this one is still sending it.
-        if (options.ClaimLease <= EmailSenderService.SendBudget)
+        if (options.SendTimeout <= TimeSpan.Zero)
         {
-            failures.Add($"Email:ClaimLease must be longer than {EmailSenderService.SendBudget.TotalSeconds:0} seconds, the longest one send can take.");
+            failures.Add("Email:SendTimeout must be greater than zero.");
+        }
+
+        // The first row of a batch is sent whatever the clock says. A send is cut off at SendTimeout and
+        // its result written within ResultWriteTimeout, so the lease must outlast both: a shorter one
+        // lets a second sender claim the row while this one still handles it.
+        if (options.ClaimLease <= options.SendTimeout + EmailSenderService.ResultWriteTimeout)
+        {
+            failures.Add("Email:ClaimLease must be longer than Email:SendTimeout plus 10 seconds (the time to record the result).");
         }
 
         return failures.Count == 0 ? ValidateOptionsResult.Success : ValidateOptionsResult.Fail(failures);
