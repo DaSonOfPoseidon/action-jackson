@@ -53,13 +53,11 @@ internal sealed class MailKitTransport(IOptions<SmtpOptions> options) : IEmailTr
                 await created.AuthenticateAsync(settings.Username, settings.Password ?? string.Empty, cancellationToken);
             }
         }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-            created.Dispose();
-            throw;
-        }
         catch (Exception e)
         {
+            // A cancellation lands here too, as the same connection failure: the caller's deadline ran
+            // out while connecting or logging in, which is the server's doing. The sender tells a host
+            // shutdown from it by its own token.
             created.Dispose();
             throw new TransportConnectionException(
                 $"Could not connect to the SMTP server: {e.GetType().Name}: {e.Message}", e);

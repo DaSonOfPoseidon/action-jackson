@@ -190,9 +190,10 @@ public sealed class EmailSenderService(
             await transport.SendAsync(message, deadline.Token);
             return null;
         }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        catch (Exception) when (cancellationToken.IsCancellationRequested)
         {
-            // Shutting down: the row keeps its claim, and is retried after the lease.
+            // Shutting down, however the transport reported the cancellation (a bare one, or a failed
+            // connect that wraps it): the row keeps its claim, and is retried after the lease.
             throw;
         }
         catch (Exception e)

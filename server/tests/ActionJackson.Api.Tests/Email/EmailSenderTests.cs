@@ -431,6 +431,41 @@ public class EmailSenderTests(TestDatabase database) : IClassFixture<TestDatabas
         Assert.True(after.NextAttemptAt > DateTimeOffset.UtcNow.AddSeconds(30));
     }
 
+    [DbFact]
+    public async Task A_shutdown_while_connecting_does_not_use_an_attempt_either()
+    {
+        // The transport reports a cancelled connect as a connection failure; at shutdown that must still
+        // leave the row claimed and untouched, not record it.
+        var row = await AddAsync();
+        var transport = new FakeTransport { Block = true, WrapCancellation = true };
+        var host = await StartAsync(transport, email: o => o.ClaimLease = TimeSpan.FromMinutes(5));
+        await WaitForAsync(() => Task.FromResult(transport.Calls == 1));
+
+        await host.DisposeAsync();
+
+        var after = await RowAsync(row.Id);
+        Assert.Equal(EmailStatus.Pending, after.Status);
+        Assert.Equal(0, after.Attempts);
+        Assert.Null(after.LastError);
+    }
+
+    [DbFact]
+    public async Task A_deadline_that_expires_while_connecting_is_a_connection_failure_that_uses_no_attempt()
+    {
+        var first = await AddAsync(due: DateTimeOffset.UtcNow.AddSeconds(-30));
+        var second = await AddAsync(due: DateTimeOffset.UtcNow.AddSeconds(-20));
+        var transport = new FakeTransport { Block = true, WrapCancellation = true };
+        await using var host = await StartAsync(transport, email: o => o.SendTimeout = TimeSpan.FromMilliseconds(200));
+
+        await WaitForAsync(async () => (await RowAsync(first.Id)).LastError is not null);
+        await Task.Delay(300);
+
+        Assert.Equal(1, transport.Calls);
+        Assert.Equal(0, (await RowAsync(first.Id)).Attempts);
+        Assert.Equal(0, (await RowAsync(second.Id)).Attempts);
+        Assert.Equal(EmailStatus.Pending, (await RowAsync(first.Id)).Status);
+    }
+
     [Fact]
     public void Backoff_doubles_from_a_minute_and_caps_at_six_hours()
     {
@@ -547,12 +582,22 @@ public class EmailSenderTests(TestDatabase database) : IClassFixture<TestDatabas
         // Waits for the cancellation, like a send that hangs when the host shuts down.
         public bool Block { get; init; }
 
+        // With Block: reports the cancellation the way MailKitTransport does while connecting.
+        public bool WrapCancellation { get; init; }
+
         public async Task SendAsync(MimeMessage message, CancellationToken cancellationToken)
         {
             Interlocked.Increment(ref calls);
             if (Block)
             {
-                await Task.Delay(Timeout.Infinite, cancellationToken);
+                try
+                {
+                    await Task.Delay(Timeout.Infinite, cancellationToken);
+                }
+                catch (OperationCanceledException e) when (WrapCancellation)
+                {
+                    throw new TransportConnectionException("Could not connect to the SMTP server", e);
+                }
             }
 
             if (Delay > TimeSpan.Zero)
