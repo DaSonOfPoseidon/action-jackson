@@ -28,6 +28,14 @@ services:
       S3__ForcePathStyle: "true"
       S3__AccessKeyId: ${S3_ACCESS_KEY_ID:?set S3_ACCESS_KEY_ID in deploy/pc/.env}
       S3__SecretAccessKey: ${S3_SECRET_ACCESS_KEY:?set S3_SECRET_ACCESS_KEY in deploy/pc/.env}
+      # Email is optional (issue #15): with Smtp__Host empty the sender stays idle and queued email waits.
+      Smtp__Host: ${SMTP_HOST:-}
+      Smtp__Port: ${SMTP_PORT:-587}
+      Smtp__Security: ${SMTP_SECURITY:-StartTls}
+      Smtp__Username: ${SMTP_USERNAME:-}
+      Smtp__Password: ${SMTP_PASSWORD:-}
+      Email__From: ${EMAIL_FROM:-}
+      Email__AdminAddress: ${EMAIL_ADMIN_ADDRESS:-}
     # The aspnet image has no curl: the app checks its own /healthz. Migrations run at startup, hence
     # the start period. With the database down /healthz answers 503, so the container turns unhealthy
     # and monitoring alerts; that is intended.

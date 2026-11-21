@@ -152,8 +152,12 @@ docker-compose.yml     — 3-service orchestration (mongo, api, frontend)
 - The new backend runs from `deploy/pc/compose.yml` (project `action-jackson`): `api` (built from `server/`), `postgres`
   18, `redis` 8 (a cache) and `garage`. Garage, not MinIO: MinIO's community edition is discontinued. Only the API
   publishes a port, `192.168.1.195:8110`; the rest sit on an internal network.
-- First run: `cp deploy/pc/.env.example deploy/pc/.env`, then fill every value (each comment says the `openssl` command
-  that generates it). `deploy/pc/.env` is git-ignored; never commit it.
+- First run: `cp deploy/pc/.env.example deploy/pc/.env`, then fill every value except the optional ones (each comment
+  says the `openssl` command that generates it). `deploy/pc/.env` is git-ignored; never commit it.
+- Email is optional (issue #15): `SMTP_*` and `EMAIL_*` may stay empty. With `SMTP_HOST` blank the API's sender stays idle
+  and every queued email waits as `Pending` in `core.email_outbox`; set `SMTP_HOST` (plus `EMAIL_FROM`, and `SMTP_USERNAME`
+  with `SMTP_PASSWORD` if the server needs a login) and redeploy to deliver the queue. The names that may be empty are listed
+  once, in `deploy/pc/env-lib.sh`, which `scripts/deploy.sh` and `scripts/deploy-lint.sh` both read.
 - `scripts/deploy.sh pc` brings the stack up (idempotent): it refuses an empty or missing `.env`, runs
   `docker compose up -d --build --wait`, bootstraps Garage (`deploy/pc/garage-init.sh`: layout, the `aj-attachments`
   bucket, the API's key), checks `/healthz` shows `"db":"ok"` and prints each container's health. `scripts/deploy.sh pi`
