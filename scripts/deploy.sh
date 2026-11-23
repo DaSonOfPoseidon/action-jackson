@@ -1,7 +1,7 @@
 #!/bin/sh
 # Brings a deployment up. Idempotent: run it again after a pull to rebuild what changed.
 #   scripts/deploy.sh pc     api, postgres, redis, garage on this machine (deploy/pc/compose.yml)
-#   scripts/deploy.sh pi     the edge on the Raspberry Pi (added in unit 9)
+#   scripts/deploy.sh pi     the edge on the Raspberry Pi (deploy/pi/compose.yml), run from this machine (scripts/deploy-pi.sh)
 # Test overrides for pc: AJ_PC_ENV_FILE (default deploy/pc/.env) and AJ_PC_PROJECT (a compose project
 # name, so a trial run never touches the real action-jackson project).
 set -eu
@@ -15,10 +15,7 @@ usage() {
 
 case "$1" in
 pc) ;;
-pi)
-	echo "deploy.sh pi: added in unit 9" >&2
-	exit 2
-	;;
+pi) exec "$(dirname "$0")/deploy-pi.sh" ;;
 *) usage ;;
 esac
 

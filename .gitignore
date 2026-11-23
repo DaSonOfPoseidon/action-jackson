@@ -38,3 +38,8 @@ TestResults/
 # PC deploy: real secrets (deploy/pc/.env.example is the committed template)
 deploy/pc/.env
 deploy/pc/secrets/
+
+# build output of scripts/deploy.sh pi (the staged edge: published app, sites, Dockerfile)
+/build/
+# Pi deploy: the real .env scripts/deploy.sh pi writes on the Pi (deploy/pi/.env.example is the template)
+deploy/pi/.env

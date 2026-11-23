@@ -57,3 +57,7 @@ A handler adds days around a request date to build a query window (`date.AddDays
 ## A receipt checked under some locks but not the one that orders its requests
 
 Two requests with one idempotency key but different emails take different email locks, so the second is decided on the first one's uncommitted rows (a taken slot: 409) instead of finding its receipt (replay or 422). Check that the key has a lock of its own, taken in the one agreed order (email, key, day) so no two requests wait on each other in opposite orders, and that the receipt is looked up again after it. Bit: `server/src/ActionJackson.Api/Business/AppointmentBooking.cs` (unit 8, found by Codex).
+
+## A cache validator or key folded from several parts into one number
+
+An ETag, cache key or lookup key is built by combining fields with xor or addition (`mtime ^ length`). Different inputs then give the same value: a 1000-byte file at 1700000000 and a 980-byte file at 1700000060 both give the same tag, so a changed file answers a conditional request with a 304 and the browser keeps the old copy. Check that every validator or key keeps its parts separate (`<mtime ticks>-<length>`, a tuple, a delimited string) and that a test feeds it a pair that collides under the naive combination. Bit: `server/src/ActionJackson.Edge/Sites/SiteFiles.cs` (PR #25, found by Codex).
