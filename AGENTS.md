@@ -147,9 +147,12 @@ docker-compose.yml     — 3-service orchestration (mongo, api, frontend)
   Each context has its own migrations folder: Core, Lan, Car, Main and Dev. A change to the business model needs a
   migration in both Lan and Car. Never edit a migration that has run.
 - The SDK runs in a container (`mcr.microsoft.com/dotnet/sdk:10.0`), so the host needs only Docker.
+- `contracts/` holds files shared by the API and the Angular app. `contracts/lan-options.json` has the lan forms' option
+  lists and limits: `ActionJackson.Core` embeds it (`SiteOptions`) and the Angular app imports the same file. Edit it
+  there, never in a second copy.
 
 ### Deploy (new stack, PC)
-- The new backend runs from `deploy/pc/compose.yml` (project `action-jackson`): `api` (built from `server/`), `postgres`
+- The new backend runs from `deploy/pc/compose.yml` (project `action-jackson`): `api` (built from `server/`, with the repo root as the build context), `postgres`
   18, `redis` 8 (a cache) and `garage`. Garage, not MinIO: MinIO's community edition is discontinued. Only the API
   publishes a port, `192.168.1.195:8110`; the rest sit on an internal network.
 - First run: `cp deploy/pc/.env.example deploy/pc/.env`, then fill every value except the optional ones (each comment
@@ -164,6 +167,9 @@ docker-compose.yml     — 3-service orchestration (mongo, api, frontend)
   arrives with the edge (unit 9).
 - Data lives in the named volumes `action-jackson_pg_data` (Postgres), `action-jackson_garage_meta` and
   `action-jackson_garage_data` (Garage). Redis keeps nothing. `docker compose down` keeps the volumes; never add `-v`.
+- The API image is built from the repo root (`context: ../..` in `deploy/pc/compose.yml`, Dockerfile
+  `server/src/ActionJackson.Api/Dockerfile`), because Core embeds `contracts/`. The root `.dockerignore` serves that build and
+  the legacy API's (`docker-compose.yml`, `build: .`); `frontend/` builds from its own folder.
 - `scripts/deploy-lint.sh` (part of `scripts/check.sh` and CI) checks the compose file against these conventions.
 
 ### Docker (legacy stack)
