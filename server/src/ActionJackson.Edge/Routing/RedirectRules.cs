@@ -57,8 +57,10 @@ internal sealed class RedirectRules(SiteRegistry registry, string scheme)
         path.StartsWith(prefix, StringComparison.Ordinal)
         && (path.Length == prefix.Length || path[prefix.Length] == '/');
 
+    // /api is matched without regard to case, as the router does; /healthz is matched exactly.
     internal static bool IsApiOrHealth(string path) =>
-        Matches(path, "/api") || path == "/healthz";
+        (path.StartsWith("/api", StringComparison.OrdinalIgnoreCase) && (path.Length == 4 || path[4] == '/'))
+        || path == "/healthz";
 
     // The target site's host in the same family as the request's: .localhost for a .localhost request, the
     // production domain otherwise. Picked by suffix, never by position. The registry guarantees both exist.
