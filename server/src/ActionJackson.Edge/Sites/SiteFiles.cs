@@ -109,10 +109,15 @@ internal sealed partial class SiteFilesMiddleware(
         }
 
         context.Response.Headers.CacheControl = CacheControlFor(file.Name);
-        var etag = new EntityTagHeaderValue($"\"{file.LastModified.ToUnixTimeSeconds() ^ file.Length:x}\"");
+        var etag = new EntityTagHeaderValue(ETagFor(file.LastModified, file.Length));
         await Results.File(file.CreateReadStream(), contentType, lastModified: file.LastModified, entityTag: etag, enableRangeProcessing: true)
             .ExecuteAsync(context);
     }
+
+    // The two parts stay apart ("<mtime ticks>-<length>"): folding them into one number (xor, sum) lets two
+    // different files share a tag, and a changed file would then answer a conditional request with a 304.
+    internal static string ETagFor(DateTimeOffset lastModified, long length) =>
+        $"\"{lastModified.UtcTicks:x}-{length:x}\"";
 
     // A path that could leave the site folder or mean something else on disk gets a 404 without any lookup: an
     // encoded slash or backslash that survived decoding, a backslash, a NUL or other control character, or a ".."

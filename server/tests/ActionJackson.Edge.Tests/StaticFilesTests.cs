@@ -1,3 +1,4 @@
+using ActionJackson.Edge.Sites;
 using System.Net;
 
 namespace ActionJackson.Edge.Tests;
@@ -243,6 +244,18 @@ public class StaticFilesTests
         var second = await host.Client.SendAsync(request);
 
         Assert.Equal(HttpStatusCode.NotModified, second.StatusCode);
+    }
+
+    [Fact]
+    public void Two_files_that_xor_to_the_same_number_get_different_etags()
+    {
+        // 1700000000 ^ 1000 and 1700000060 ^ 980 are equal, so an xor-built tag could not tell these two apart.
+        var first = SiteFilesMiddleware.ETagFor(DateTimeOffset.FromUnixTimeSeconds(1700000000), 1000);
+        var second = SiteFilesMiddleware.ETagFor(DateTimeOffset.FromUnixTimeSeconds(1700000060), 980);
+
+        Assert.Equal(1700000000L ^ 1000, 1700000060L ^ 980);
+        Assert.NotEqual(first, second);
+        Assert.Equal(first, SiteFilesMiddleware.ETagFor(DateTimeOffset.FromUnixTimeSeconds(1700000000), 1000));
     }
 
     [Fact]
