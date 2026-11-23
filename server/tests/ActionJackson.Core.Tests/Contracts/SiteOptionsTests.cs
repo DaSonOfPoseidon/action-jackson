@@ -120,6 +120,27 @@ public class SiteOptionsTests
         Assert.Throws<InvalidOperationException>(() => SiteOptions.Parse(repeated));
     }
 
+    [Theory]
+    [InlineData("\"daysAhead\": 90", "\"daysAhead\": 0")]
+    [InlineData("\"notesLength\": 500", "\"notesLength\": 0")]
+    [InlineData("\"min\": 60, \"max\": 720", "\"min\": 60, \"max\": 59")]
+    [InlineData("\"min\": 60, \"max\": 720", "\"min\": 0, \"max\": 720")]
+    public void Booking_limits_that_cannot_work_are_refused(string from, string to)
+    {
+        var json = SiteOptions.ReadEmbedded(Site.Lan).Replace(from, to, StringComparison.Ordinal);
+
+        Assert.NotEqual(SiteOptions.ReadEmbedded(Site.Lan), json);
+        Assert.Throws<InvalidOperationException>(() => SiteOptions.Parse(json));
+    }
+
+    [Fact]
+    public void A_file_without_the_booking_section_is_refused()
+    {
+        var json = SiteOptions.ReadEmbedded(Site.Lan).Replace("\"booking\": {\n    \"kinds\"", "\"bookingGone\": {\n    \"kinds\"", StringComparison.Ordinal);
+
+        Assert.ThrowsAny<Exception>(() => SiteOptions.Parse(json));
+    }
+
     private static string[] Values(IReadOnlyList<Option> list) => [.. list.Select(option => option.Value)];
 
     private static IEnumerable<IReadOnlyList<Option>> All(SiteOptions options)
@@ -136,5 +157,6 @@ public class SiteOptionsTests
         yield return options.Quote.NetworkingBrand;
         yield return options.Quote.SecurityBrand;
         yield return options.Quote.SurveyPreference;
+        yield return options.Booking.Kinds;
     }
 }

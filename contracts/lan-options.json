@@ -77,11 +77,23 @@
       { "value": "day-of", "label": "Day of the install" }
     ]
   },
+  "booking": {
+    "kinds": [
+      { "value": "survey", "label": "Site Survey" },
+      { "value": "drops-only-install", "label": "Drops-Only Install" },
+      { "value": "whole-home-install", "label": "Whole-Home Install" }
+    ]
+  },
   "limits": {
     "runsPerType": { "min": 0, "max": 50 },
     "apMounts": { "min": 0, "max": 20 },
     "ethernetRelocations": { "min": 0, "max": 20 },
     "stories": { "min": 1, "max": 4 },
-    "wholeHomeTextLength": 2000
+    "wholeHomeTextLength": 2000,
+    "booking": {
+      "durationMinutes": { "min": 60, "max": 720 },
+      "daysAhead": 90,
+      "notesLength": 500
+    }
   }
 }

@@ -27,17 +27,24 @@ public sealed record QuoteOptions(
     IReadOnlyList<Option> SecurityBrand,
     IReadOnlyList<Option> SurveyPreference);
 
+public sealed record BookingOptions(IReadOnlyList<Option> Kinds);
+
+// The limits of the booking form: the drops-only install's length, how far ahead a date may be (Chicago
+// dates, counted from today) and the longest note.
+public sealed record BookingLimits(IntRange DurationMinutes, int DaysAhead, int NotesLength);
+
 public sealed record OptionLimits(
     IntRange RunsPerType,
     IntRange ApMounts,
     IntRange EthernetRelocations,
     IntRange Stories,
-    int WholeHomeTextLength);
+    int WholeHomeTextLength,
+    BookingLimits Booking);
 
 // Every option list of one site's forms and the limits on their numbers. They live once, in
 // contracts/<site>-options.json, which is embedded in this assembly and later imported by Angular, so the
 // API and the forms cannot disagree about a value.
-public sealed record SiteOptions(ConsultationOptions Consultation, QuoteOptions Quote, OptionLimits Limits)
+public sealed record SiteOptions(ConsultationOptions Consultation, QuoteOptions Quote, BookingOptions Booking, OptionLimits Limits)
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -70,9 +77,9 @@ public sealed record SiteOptions(ConsultationOptions Consultation, QuoteOptions 
     {
         var options = JsonSerializer.Deserialize<SiteOptions>(json, JsonOptions)
             ?? throw new InvalidOperationException("The options file is empty");
-        if (options.Consultation is null || options.Quote is null || options.Limits is null)
+        if (options.Consultation is null || options.Quote is null || options.Booking is null || options.Limits is null)
         {
-            throw new InvalidOperationException("The options file needs consultation, quote and limits");
+            throw new InvalidOperationException("The options file needs consultation, quote, booking and limits");
         }
 
         foreach (var (name, list) in options.Lists())
@@ -99,9 +106,16 @@ public sealed record SiteOptions(ConsultationOptions Consultation, QuoteOptions 
 
         var limits = options.Limits;
         if (limits.RunsPerType is null || limits.ApMounts is null || limits.EthernetRelocations is null
-            || limits.Stories is null || limits.WholeHomeTextLength < 1)
+            || limits.Stories is null || limits.WholeHomeTextLength < 1 || limits.Booking is null)
         {
             throw new InvalidOperationException("The options file has incomplete limits");
+        }
+
+        var booking = limits.Booking;
+        if (booking.DurationMinutes is not { Min: >= 1 } duration || duration.Max < duration.Min
+            || booking.DaysAhead < 1 || booking.NotesLength < 1)
+        {
+            throw new InvalidOperationException("The options file has incomplete booking limits");
         }
 
         return options;
@@ -121,6 +135,7 @@ public sealed record SiteOptions(ConsultationOptions Consultation, QuoteOptions 
         yield return ("quote.networkingBrand", Quote.NetworkingBrand);
         yield return ("quote.securityBrand", Quote.SecurityBrand);
         yield return ("quote.surveyPreference", Quote.SurveyPreference);
+        yield return ("booking.kinds", Booking.Kinds);
     }
 }
 

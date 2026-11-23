@@ -10,6 +10,16 @@ namespace ActionJackson.Api.Business;
 
 internal sealed record ConsultationCreated(string RequestNumber);
 
+// The 201 of a booking: the quote number is the reference, the instants carry the Chicago offset. No id and no
+// customer data.
+internal sealed record AppointmentBooked(string Reference, string Kind, DateTimeOffset StartsAt, DateTimeOffset EndsAt);
+
+// The open start times of each date of the range, as local "HH:mm" in the business time zone. A closed date
+// has an empty list. Nothing about who holds the other times.
+internal sealed record AvailabilityResponse(string TimeZone, IReadOnlyList<AvailabilityDay> Days);
+
+internal sealed record AvailabilityDay(string Date, IReadOnlyList<string> Starts);
+
 internal sealed record QuoteCreated(string QuoteNumber, string Kind, decimal Subtotal, decimal Total, decimal Deposit);
 
 internal sealed record CalculatedLineResponse(string Code, string Description, int Quantity, decimal UnitPrice, decimal LineTotal);
@@ -128,6 +138,9 @@ internal sealed record QuoteDetails(
     WholeHomeDetails? WholeHome,
     string SourceIp,
     string UserAgent);
+
+// The jsonb details of an appointment: what the customer gave that has no column of its own.
+internal sealed record AppointmentDetails(string? Phone);
 
 internal static class DetailsJson
 {

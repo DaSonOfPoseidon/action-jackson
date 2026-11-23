@@ -134,7 +134,7 @@ public class EmailTemplatesTests
         Assert.Contains("Quote Number: #20260002", email.TextBody);
         Assert.Contains("Phone: 555-0100", email.TextBody);
         Assert.Contains("Notes: Dog in the yard", email.TextBody);
-        Assert.Contains("We'll contact you 24 hours before the appointment to confirm.", email.TextBody);
+        Assert.Contains("We'll contact you before the appointment to confirm.", email.TextBody);
         Assert.Contains("If you need to reschedule, please contact us as soon as possible and reference your quote number #20260002.", email.TextBody);
         Assert.Contains("Thank you for choosing Action Jackson Installs!", email.TextBody);
     }
@@ -164,14 +164,14 @@ public class EmailTemplatesTests
     public void Booking_admin_renders_the_legacy_fields_and_fallbacks()
     {
         var email = EmailTemplates.Render(new BookingAdminModel(
-            Site.Car, "20260002", "Pat Lee", "pat@example.com", null, At, null, "Foundation", true, "203.0.113.9"));
+            Site.Car, "20260002", "Pat Lee", "pat@example.com", null, At, null, "Site Survey (2 hours)", "203.0.113.9"));
 
         Assert.Equal("booking-admin", email.Template);
         Assert.Equal("[car] \U0001F4C5 New Appointment for Quote #20260002", email.Subject);
         Assert.Contains("Customer: Pat Lee", email.TextBody);
         Assert.Contains("Phone: Not provided", email.TextBody);
         Assert.Contains("Notes: None", email.TextBody);
-        Assert.Contains("Package: Foundation + Survey", email.TextBody);
+        Assert.Contains("Appointment: Site Survey (2 hours)", email.TextBody);
         Assert.Contains("IP: 203.0.113.9", email.TextBody);
         Assert.Contains("Date: 3/1/2026", email.TextBody);
         Assert.Contains("Time: 9:04 AM CST", email.TextBody);
@@ -202,7 +202,7 @@ public class EmailTemplatesTests
             EmailTemplates.Render(new ConsultationAckModel(Site.Lan, evil, evil)),
             EmailTemplates.Render(new QuoteAdminModel(Site.Lan, evil, evil, evil, evil, evil, [new(evil, evil)], 1m, 1m, [new(evil, evil)], evil, At)),
             EmailTemplates.Render(new BookingConfirmationModel(Site.Lan, evil, evil, At, evil, evil)),
-            EmailTemplates.Render(new BookingAdminModel(Site.Lan, evil, evil, evil, evil, At, evil, evil, true, evil)),
+            EmailTemplates.Render(new BookingAdminModel(Site.Lan, evil, evil, evil, evil, At, evil, evil, evil)),
         };
 
         foreach (var email in rendered)

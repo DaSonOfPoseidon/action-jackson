@@ -5,7 +5,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ActionJackson.Data.Seed;
 
-// Fills a fresh database with what the business needs to start: the lan catalog and the labor rate.
+// Fills a fresh database with what the business needs to start: the lan catalog, the lan opening hours and
+// the labor rate.
 // It only ever inserts. A row that exists is left alone, so an admin's edits survive every restart.
 public static class DatabaseSeed
 {
@@ -22,7 +23,37 @@ public static class DatabaseSeed
         CancellationToken cancellationToken = default)
     {
         await SeedCatalogAsync(lan, catalog, cancellationToken);
+        await SeedAvailabilityAsync(lan, cancellationToken);
         await SeedSettingsAsync(core, catalog, cancellationToken);
+    }
+
+    // The lan opening hours, only into an empty table: every day from 08:00 to 18:00, a start every hour,
+    // which is what the legacy API allowed (its last start was 18:00, on any weekday). Rules an admin changed
+    // or removed one by one are never put back. Removing every rule is not a way to close the business:
+    // the empty table is seeded again at the next start, so closed days are blackout dates. Car gets its own
+    // rules with its booking unit. No blackout dates are seeded.
+    private static async Task SeedAvailabilityAsync(LanDbContext lan, CancellationToken cancellationToken)
+    {
+        await using var transaction = await lan.Database.BeginTransactionAsync(cancellationToken);
+        await lan.Database.ExecuteSqlAsync($"SELECT pg_advisory_xact_lock({AdvisoryLockKey})", cancellationToken);
+
+        if (!await lan.AvailabilityRules.AnyAsync(cancellationToken))
+        {
+            for (short day = 0; day <= 6; day++)
+            {
+                lan.AvailabilityRules.Add(new AvailabilityRule
+                {
+                    DayOfWeek = day,
+                    Opens = new TimeOnly(8, 0),
+                    Closes = new TimeOnly(18, 0),
+                    SlotMinutes = 60,
+                });
+            }
+
+            await lan.SaveChangesAsync(cancellationToken);
+        }
+
+        await transaction.CommitAsync(cancellationToken);
     }
 
     // Each catalog item is inserted only if its code is missing. The bill of materials is added only

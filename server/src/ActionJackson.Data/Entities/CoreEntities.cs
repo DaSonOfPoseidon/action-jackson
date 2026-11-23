@@ -127,6 +127,10 @@ public class EdgeReceipt
     public Site Site { get; set; }
     public required string Endpoint { get; set; }
 
+    // The SHA-256 hex of the endpoint and the raw request body: a replay is answered only when it matches, so
+    // a key reused for a different request is refused instead of getting the first request's answer.
+    public required string RequestHash { get; set; }
+
     // smallint
     public short ResponseStatus { get; set; }
     public string ResponseBody { get; set; } = "{}";

@@ -359,7 +359,7 @@ internal sealed class PublicForms(
 
     // Held until the transaction ends. Two requests for the same site and email take turns, so the
     // second sees the first one's rows.
-    private static Task LockEmailAsync(BusinessDbContext db, Site site, string email, CancellationToken cancellationToken)
+    internal static Task LockEmailAsync(BusinessDbContext db, Site site, string email, CancellationToken cancellationToken)
     {
         var key = $"{site.Schema()}:{email}";
         return db.Database.ExecuteSqlAsync($"SELECT pg_advisory_xact_lock(hashtextextended({key}, 0))", cancellationToken);
@@ -367,17 +367,17 @@ internal sealed class PublicForms(
 
     // The mail library is stricter than the validator about a few addresses: refuse them as a 400 now
     // rather than fail the queueing after the work is done.
-    private static void CheckRecipient(ValidationErrors errors, string? email)
+    internal static void CheckRecipient(ValidationErrors errors, string? email, string path = "customer.email")
     {
         if (email is not null
-            && !errors.Keys.Contains("customer.email")
+            && !errors.Keys.Contains(path)
             && !EmailOutboxWriter.TryParseRecipient(CustomerRules.NormalizeEmail(email), out _))
         {
-            errors.Add("customer.email", "Enter a valid email address.");
+            errors.Add(path, "Enter a valid email address.");
         }
     }
 
-    private static IResult Invalid(ValidationErrors errors) => Results.ValidationProblem(errors.ToDictionary());
+    internal static IResult Invalid(ValidationErrors errors) => Results.ValidationProblem(errors.ToDictionary());
 
     private static IResult TooSoon() =>
         Results.Problem(
@@ -397,10 +397,10 @@ internal sealed class PublicForms(
     }
 
     // Trimmed text, or null when there is none.
-    private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    internal static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
     // The User-Agent header: no control characters, at most 200 characters, never half a surrogate pair.
-    private static string UserAgentOf(HttpContext http)
+    internal static string UserAgentOf(HttpContext http)
     {
         var clean = new string([.. http.Request.Headers.UserAgent.ToString().Where(c => !char.IsControl(c))]).Trim();
         if (clean.Length == 0)

@@ -210,7 +210,7 @@ public static partial class CustomerRules
         }
     }
 
-    private static void ValidateEmail(ValidationErrors errors, string path, string? value)
+    internal static void ValidateEmail(ValidationErrors errors, string path, string? value)
     {
         var email = value?.Trim();
         if (string.IsNullOrEmpty(email) || email.Length > MaxEmailLength || !IsPlainAddress(email))
@@ -254,7 +254,7 @@ public static partial class CustomerRules
     }
 
     // Optional. Blank means none. Otherwise 7 to 20 of: digits, space, parentheses, plus, hyphen.
-    private static void ValidatePhone(ValidationErrors errors, string path, string? value)
+    internal static void ValidatePhone(ValidationErrors errors, string path, string? value)
     {
         var phone = value?.Trim();
         if (!string.IsNullOrEmpty(phone) && !PhoneShape().IsMatch(phone))

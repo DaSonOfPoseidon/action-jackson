@@ -67,17 +67,24 @@ internal sealed class FormsHost : IDisposable
     public Task<HttpResponseMessage> Get(string path, string? client = null) =>
         Client.SendAsync(Build(HttpMethod.Get, path, client));
 
-    public Task<HttpResponseMessage> Post(string path, JsonNode? body, string? client = null, string? userAgent = null) =>
-        PostText(path, body is null ? "null" : body.ToJsonString(), client, userAgent);
+    public Task<HttpResponseMessage> Post(
+        string path,
+        JsonNode? body,
+        string? client = null,
+        string? userAgent = null,
+        Action<HttpRequestMessage>? configure = null) =>
+        PostText(path, body is null ? "null" : body.ToJsonString(), client, userAgent, configure: configure);
 
     public Task<HttpResponseMessage> PostText(
         string path,
         string text,
         string? client = null,
         string? userAgent = null,
-        string contentType = "application/json")
+        string contentType = "application/json",
+        Action<HttpRequestMessage>? configure = null)
     {
         var request = Build(HttpMethod.Post, path, client);
+        configure?.Invoke(request);
         request.Content = new StringContent(text, Encoding.UTF8);
         request.Content.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse(contentType);
         if (userAgent is not null)
@@ -125,6 +132,8 @@ internal sealed class ManualTime(DateTimeOffset start) : TimeProvider
     public override DateTimeOffset GetUtcNow() => now;
 
     public void Advance(TimeSpan by) => now += by;
+
+    public void Set(DateTimeOffset value) => now = value;
 }
 
 // Hands out the numbers a test queued first, then random ones.
