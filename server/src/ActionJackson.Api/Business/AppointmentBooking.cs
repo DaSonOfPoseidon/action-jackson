@@ -20,10 +20,11 @@ namespace ActionJackson.Api.Business;
 //
 // A booking is one transaction across the site's schema and core (the email outbox and the receipt). It
 // takes two advisory locks, always in this order: the email's (the same key as the quote and consultation
-// forms) and then the Chicago start date's. Everything is decided after both are held, so two requests for
-// the same email or the same day take turns and the second sees the first one's rows. A drops-only install
-// that runs past midnight also overlaps the next date's instants, which no day lock covers; the database's
-// exclusion constraint is the last line there, and its error is answered like the check's.
+// forms) and then the Chicago start date's. The receipt, the quote, the one-per-quote and 24-hour rules are
+// decided under the email lock, and whether the time is open under both, so two requests for the same email
+// or the same day take turns and the second sees the first one's rows. A drops-only install that runs past
+// midnight also overlaps the next date's instants, which no day lock covers; the database's exclusion
+// constraint is the last line there, and its error is answered like the check's.
 internal sealed class AppointmentBooking(
     IServiceProvider services,
     CoreDbContext core,

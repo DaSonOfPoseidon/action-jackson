@@ -27,10 +27,11 @@ public static class DatabaseSeed
         await SeedSettingsAsync(core, catalog, cancellationToken);
     }
 
-    // The lan opening hours, only when lan has no rule at all (an admin who changed or removed rules is
-    // never overridden by a restart): every day from 08:00 to 18:00, a start every hour, which is what the
-    // legacy API allowed (its last start was 18:00, on any weekday). Car gets its own with its booking unit.
-    // No blackout dates: there are none until an admin adds them.
+    // The lan opening hours, only into an empty table: every day from 08:00 to 18:00, a start every hour,
+    // which is what the legacy API allowed (its last start was 18:00, on any weekday). Rules an admin changed
+    // or removed one by one are never put back. Removing every rule is not a way to close the business:
+    // the empty table is seeded again at the next start, so closed days are blackout dates. Car gets its own
+    // rules with its booking unit. No blackout dates are seeded.
     private static async Task SeedAvailabilityAsync(LanDbContext lan, CancellationToken cancellationToken)
     {
         await using var transaction = await lan.Database.BeginTransactionAsync(cancellationToken);

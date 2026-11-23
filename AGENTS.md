@@ -151,6 +151,8 @@ docker-compose.yml     — 3-service orchestration (mongo, api, frontend)
   (`HH:mm`), and stores instants. The optional `Idempotency-Key` header (a UUID) makes a retried booking return the first
   answer (`Idempotent-Replayed: true`, a 422 when the key was used for a different request); it is stored in
   `core.edge_receipts`.
+- The lan opening rules are seeded only into an empty `lan.availability_rules`, so deleting every rule brings the default
+  hours back at the next start: close days with `lan.blackout_dates`.
 - `contracts/` holds files shared by the API and the Angular app. `contracts/lan-options.json` has the lan forms' option
   lists and limits: `ActionJackson.Core` embeds it (`SiteOptions`) and the Angular app imports the same file. Edit it
   there, never in a second copy.
