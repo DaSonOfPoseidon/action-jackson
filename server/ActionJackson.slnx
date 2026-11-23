@@ -6,6 +6,7 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/ActionJackson.Api.Tests/ActionJackson.Api.Tests.csproj" />
+    <Project Path="tests/ActionJackson.Core.Tests/ActionJackson.Core.Tests.csproj" />
     <Project Path="tests/ActionJackson.Data.Tests/ActionJackson.Data.Tests.csproj" />
   </Folder>
 </Solution>

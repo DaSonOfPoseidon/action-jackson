@@ -61,14 +61,19 @@ public class EmailTemplatesTests
     }
 
     [Fact]
-    public void Consultation_ack_promises_only_what_legacy_copy_promised()
+    public void Consultation_ack_promises_only_what_the_business_does()
     {
         var email = EmailTemplates.Render(new ConsultationAckModel(Site.Car, "20260001", "Pat Lee"));
 
         Assert.Equal("consultation-ack", email.Template);
         Assert.Equal("We received your consultation request #20260001 - Action Jackson Installs", email.Subject);
         Assert.Contains("We received your request #20260001 and will contact you.", email.TextBody);
-        Assert.Contains("send a booking link within 24 hours", email.TextBody);
+        Assert.Contains("We'll review your request and contact you to schedule your consultation.", email.TextBody);
+        Assert.Contains("review your request and contact you to schedule your consultation.", email.HtmlBody);
+
+        // Nothing sends a booking link, and the ack names no time limit.
+        Assert.DoesNotContain("booking link", email.TextBody);
+        Assert.DoesNotContain("24 hours", email.TextBody);
         Assert.Contains("Hello Pat,", email.TextBody);
         Assert.Contains("We received your request #20260001 and will contact you.", email.HtmlBody);
         Assert.DoesNotContain("203.0.113.9", email.TextBody);

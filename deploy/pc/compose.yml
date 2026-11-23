@@ -7,8 +7,9 @@ name: action-jackson
 services:
   api:
     build:
-      context: ../../server
-      dockerfile: src/ActionJackson.Api/Dockerfile
+      # The repo root, not server/: the API embeds contracts/.
+      context: ../..
+      dockerfile: server/src/ActionJackson.Api/Dockerfile
     restart: unless-stopped
     mem_limit: 1g
     memswap_limit: 1g

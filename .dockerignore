@@ -1,0 +1,12 @@
+# The build context of the API image (deploy/pc/compose.yml) and of the legacy API image (docker-compose.yml)
+# is the repo root. Only what no build needs is left out.
+.git
+**/node_modules
+**/bin
+**/obj
+frontend/.next
+apps/web/.angular
+apps/web/dist
+.env
+**/.env
+*.tar.gz

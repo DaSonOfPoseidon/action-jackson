@@ -5,8 +5,8 @@ using Microsoft.AspNetCore.RateLimiting;
 namespace ActionJackson.Api.Platform;
 
 // The named rate-limit policies, at the numbers the Express API used (fixed windows, one bucket per client
-// IP). No endpoint uses one yet; later units attach them with RequireRateLimiting(name). There is no global
-// limiter and nothing on /healthz. The limiters live in memory: there is one API instance. The login and
+// IP). Each endpoint attaches its policy with RequireRateLimiting(name). There is no global limiter and
+// nothing on /healthz. The limiters live in memory: there is one API instance. The login and
 // refresh limits belong with identity and are added there.
 public static class RateLimitPolicies
 {

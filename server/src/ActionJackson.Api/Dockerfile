@@ -1,15 +1,18 @@
-# The API image. The build context is server/:
-#   docker build -f src/ActionJackson.Api/Dockerfile server/
+# The API image. The build context is the repo root, because the Core project embeds contracts/
+# (the option lists the Angular forms import too):
+#   docker build -f server/src/ActionJackson.Api/Dockerfile .
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
-WORKDIR /src
+# The layout of the repo is kept, so Core's ../../../contracts include finds /repo/contracts.
+WORKDIR /repo/server
 # Restore first, from the project files alone, so a source-only change reuses the package layer.
-COPY global.json Directory.Build.props ./
-COPY src/ActionJackson.Api/ActionJackson.Api.csproj src/ActionJackson.Api/
-COPY src/ActionJackson.Data/ActionJackson.Data.csproj src/ActionJackson.Data/
-COPY src/ActionJackson.Core/ActionJackson.Core.csproj src/ActionJackson.Core/
+COPY server/global.json server/Directory.Build.props ./
+COPY server/src/ActionJackson.Api/ActionJackson.Api.csproj src/ActionJackson.Api/
+COPY server/src/ActionJackson.Data/ActionJackson.Data.csproj src/ActionJackson.Data/
+COPY server/src/ActionJackson.Core/ActionJackson.Core.csproj src/ActionJackson.Core/
 RUN dotnet restore src/ActionJackson.Api/ActionJackson.Api.csproj
-COPY src ./src
+COPY server/src ./src
+COPY contracts /repo/contracts
 RUN dotnet publish src/ActionJackson.Api/ActionJackson.Api.csproj -c Release -o /app --no-restore
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
