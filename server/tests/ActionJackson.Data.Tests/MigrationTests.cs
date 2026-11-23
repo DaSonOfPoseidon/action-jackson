@@ -33,7 +33,8 @@ public class MigrationTests(EmptyTestDatabase database) : IClassFixture<EmptyTes
         foreach (var schema in Schemas)
         {
             var rows = await Rows.ScalarAsync<long>(database, $"SELECT count(*) FROM {schema}.__ef_migrations");
-            Assert.Equal(1, rows);
+            // core has had a second migration since the schemas were first made.
+            Assert.Equal(schema == "core" ? 2 : 1, rows);
         }
     }
 

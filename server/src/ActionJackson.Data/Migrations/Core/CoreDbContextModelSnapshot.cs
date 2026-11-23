@@ -254,6 +254,11 @@ namespace ActionJackson.Data.Migrations.Core
                         .HasColumnType("text")
                         .HasColumnName("endpoint");
 
+                    b.Property<string>("RequestHash")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("request_hash");
+
                     b.Property<string>("ResponseBody")
                         .IsRequired()
                         .HasColumnType("jsonb")
