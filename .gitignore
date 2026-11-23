@@ -43,3 +43,12 @@ deploy/pc/secrets/
 /build/
 # Pi deploy: the real .env scripts/deploy.sh pi writes on the Pi (deploy/pi/.env.example is the template)
 deploy/pi/.env
+
+# Angular workspace (apps/web), built in a container by scripts/node.sh
+apps/web/node_modules/
+apps/web/dist/
+apps/web/.angular/
+apps/web/out-tsc/
+apps/web/test-results/
+apps/web/playwright-report/
+build/e2e/
