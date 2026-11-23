@@ -61,7 +61,11 @@ Cloudflare tunnel (cloudflared on the Pi): apex · www · lan · car · dev · a
    Pi :8180  edge (ASP.NET Core)
         - picks the site from the Host header (contracts/sites.json), serves its prerendered files
         - www → apex 301; legacy apex /services/*, /get-started → lan. 301; /admin → admin. 301
-        - /api/* → YARP → PC API, adding X-Edge-Key and X-Client-IP (from cf-connecting-ip)
+        - /api/* → YARP → PC API, adding X-Edge-Key and X-Client-IP; any inbound X-Edge-Key, X-Client-IP,
+          X-Forwarded-* and Forwarded are dropped. With the API unreachable it answers 503 (problem+json,
+          Retry-After: 30), so the forms can show their offline notice
+        - two listeners: the LAN port (:8180 on the Pi) takes the connection's address as the client IP;
+          the tunnel port (127.0.0.1:8181, cloudflared's) takes cf-connecting-ip when it is one valid address
         - SQLite snapshot + outbox while the PC is off
         │  LAN
    PC 192.168.1.195:8110  api (ASP.NET Core) ── postgres · redis · garage (internal network only)

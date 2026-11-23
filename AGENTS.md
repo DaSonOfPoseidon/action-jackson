@@ -112,6 +112,10 @@ frontend/              — Next.js 14 application:
   __tests__/           — Vitest + React Testing Library tests
 tests/                 — Backend Jest + Supertest tests (10 files)
 docker-compose.yml     — 3-service orchestration (mongo, api, frontend)
+server/                — ASP.NET Core (new stack): src/ActionJackson.{Api,Core,Data,Edge}, tests/
+  src/ActionJackson.Edge — the Pi's web tier: host routing, redirects, site files, the /api proxy
+contracts/             — files shared by the API, the edge and the Angular apps (lan-options.json, sites.json)
+deploy/                — pc/ (api, postgres, redis, garage), pi/ (the edge)
 .env                   — Environment configuration (not checked in)
 ```
 
@@ -157,7 +161,9 @@ docker-compose.yml     — 3-service orchestration (mongo, api, frontend)
   hours back at the next start: close days with `lan.blackout_dates`.
 - `contracts/` holds files shared by the API and the Angular app. `contracts/lan-options.json` has the lan forms' option
   lists and limits: `ActionJackson.Core` embeds it (`SiteOptions`) and the Angular app imports the same file. Edit it
-  there, never in a second copy.
+  there, never in a second copy. `contracts/sites.json` is the registry of sites: each site's key, its hosts (production and
+  `.localhost`), whether it is a single-page app, the `www` host redirects and the legacy path redirects. `ActionJackson.Edge`
+  embeds it and refuses to start on a bad one; the Angular apps import the same file.
 
 ### Deploy (new stack, PC)
 - The new backend runs from `deploy/pc/compose.yml` (project `action-jackson`): `api` (built from `server/`, with the repo root as the build context), `postgres`
@@ -172,13 +178,33 @@ docker-compose.yml     — 3-service orchestration (mongo, api, frontend)
 - `scripts/deploy.sh pc` brings the stack up (idempotent): it refuses an empty or missing `.env`, runs
   `docker compose up -d --build --wait`, bootstraps Garage (`deploy/pc/garage-init.sh`: layout, the `aj-attachments`
   bucket, the API's key), checks `/healthz` shows `"db":"ok"` and prints each container's health. `scripts/deploy.sh pi`
-  arrives with the edge (unit 9).
+  deploys the edge (below).
 - Data lives in the named volumes `action-jackson_pg_data` (Postgres), `action-jackson_garage_meta` and
   `action-jackson_garage_data` (Garage). Redis keeps nothing. `docker compose down` keeps the volumes; never add `-v`.
 - The API image is built from the repo root (`context: ../..` in `deploy/pc/compose.yml`, Dockerfile
   `server/src/ActionJackson.Api/Dockerfile`), because Core embeds `contracts/`. The root `.dockerignore` serves that build and
   the legacy API's (`docker-compose.yml`, `build: .`); `frontend/` builds from its own folder.
-- `scripts/deploy-lint.sh` (part of `scripts/check.sh` and CI) checks the compose file against these conventions.
+- `scripts/deploy-lint.sh` (part of `scripts/check.sh` and CI) checks both compose files (`deploy/pc`, `deploy/pi`) against
+  these conventions, with mutation tests, and runs `scripts/deploy.sh pi` against fake `ssh`, `rsync`, `curl` and publish.
+
+### Deploy (edge, Pi)
+- The edge (`server/src/ActionJackson.Edge`) is the web tier: it picks the site from the `Host` header (`contracts/sites.json`),
+  serves that site's prerendered files from `Edge:WebRoot`, answers the `www` and legacy-path redirects with a 301 that keeps
+  the path and query, and proxies `/api/*` to the API with its own `X-Edge-Key` and `X-Client-IP`. `/healthz` is the edge's own
+  answer and never calls the API. With the API unreachable `/api/*` answers `503` (problem+json, `Retry-After: 30`).
+  It needs `Edge__Key` (at least 32 characters, no default) and `Edge__ApiUrl` (no default); either missing stops startup.
+- `scripts/deploy.sh pi` runs on the PC (.195) and is idempotent. It reads `EDGE_KEY` from `deploy/pc/.env`, so the Pi and
+  the API cannot drift, publishes the edge for `linux-arm64` into `build/pi/` (git-ignored), stages one folder per site key of
+  `sites.json` (from `apps/web/dist/<key>` when that exists, otherwise `deploy/pi/placeholder/`), rsyncs the stage to
+  `/srv/action-jackson-edge` on the Pi (`AJ_PI_HOST` and `AJ_PI_DIR` override the ssh target and folder; the folder name must end
+  in `action-jackson-edge`), writes the Pi's `.env` over ssh's stdin (the key is never in an argument, a log or the stage), runs
+  `docker compose up -d --build --wait` there and checks `/healthz`, the lan host, the `www` redirect and a proxied
+  `GET /api/lan/quotes/pricing` from .195. The Pi never builds .NET: `deploy/pi/Dockerfile` only copies.
+- The compose project is `action-jackson-edge` (the legacy stack on the Pi is `action-jackson`: never touch it). The edge has two
+  listeners, told apart by the connection's local port, never by a header: `HTTP_PORT` (8080, published on the LAN as
+  `192.168.1.69:8180`) is untrusted and its client IP is the connection's address; `TUNNEL_PORT` (8081, published only as
+  `127.0.0.1:8181`) is cloudflared's, and there one valid bare `CF-Connecting-IP` is the client IP. At the cutover the tunnel's
+  hostnames point at `http://localhost:8181`; until then the edge is LAN-only.
 
 ### Docker (legacy stack)
 - `docker compose up --build -d` — build and start all 3 services

@@ -10,3 +10,5 @@ apps/web/dist
 .env
 **/.env
 *.tar.gz
+# the edge's staged deploy folder (scripts/deploy.sh pi); the Pi builds from it, not from here
+build

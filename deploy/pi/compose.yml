@@ -1,0 +1,34 @@
+# The Action Jackson edge on the Raspberry Pi (192.168.1.69): host routing, redirects, the prerendered sites and
+# the /api proxy to the PC. The project is action-jackson-edge, never action-jackson (the legacy stack's name on
+# the Pi). The key comes from deploy/pi/.env, which scripts/deploy.sh pi writes from deploy/pc/.env; this file
+# never holds it.
+#   scripts/deploy.sh pi
+name: action-jackson-edge
+
+services:
+  edge:
+    # The staged folder on the Pi (Dockerfile, app/, sites/).
+    build: .
+    restart: unless-stopped
+    mem_limit: 256m
+    memswap_limit: 256m
+    ports:
+      # The LAN listener: untrusted, the client IP is the connection's remote address. Stays LAN-only until the cutover.
+      - "192.168.1.69:${AJ_EDGE_PORT:-8180}:8080"
+      # The tunnel listener: cloudflared's. Published to localhost only, so only cloudflared can reach it, and
+      # only on this port is CF-Connecting-IP believed.
+      - "127.0.0.1:${AJ_TUNNEL_PORT:-8181}:8081"
+    environment:
+      Edge__Key: ${EDGE_KEY:?set EDGE_KEY in deploy/pi/.env}
+      Edge__ApiUrl: ${AJ_API_URL:-http://192.168.1.195:8110}
+    # The aspnet image has no curl: the app checks its own /healthz (the edge's own answer, never the API's).
+    healthcheck:
+      test: ["CMD", "dotnet", "/app/ActionJackson.Edge.dll", "--healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    labels:
+      wud.watch: "false"
+      monitoring.http.path: "/healthz"
+      monitoring.http.port: "8180"

@@ -1,4 +1,5 @@
-# Sourced by scripts/deploy.sh and deploy/pc/garage-init.sh (POSIX sh); not run on its own.
+# Sourced by scripts/deploy.sh (pc and pi), scripts/deploy-lint.sh and deploy/pc/garage-init.sh (POSIX sh); not run
+# on its own.
 #
 # env_load <env file> reads the file the way Docker Compose does (quotes stripped, trailing comments
 # dropped, the shell's own environment first), so a value checked or imported by a script is the one
@@ -10,9 +11,12 @@
 # The SMTP_* and EMAIL_* variables are optional because email delivery is (issue #15).
 AJ_OPTIONAL_VARS="AJ_API_PORT SMTP_HOST SMTP_PORT SMTP_SECURITY SMTP_USERNAME SMTP_PASSWORD EMAIL_FROM EMAIL_ADMIN_ADDRESS"
 
-# env_is_optional NAME succeeds when NAME may be empty.
+# The same for deploy/pi/.env.example (the edge on the Pi). EDGE_KEY is its only required variable.
+AJ_PI_OPTIONAL_VARS="AJ_API_URL AJ_EDGE_PORT AJ_TUNNEL_PORT"
+
+# env_is_optional NAME [LIST] succeeds when NAME may be empty: it is in LIST (default AJ_OPTIONAL_VARS).
 env_is_optional() {
-	case " $AJ_OPTIONAL_VARS " in
+	case " ${2-$AJ_OPTIONAL_VARS} " in
 	*" $1 "*) return 0 ;;
 	esac
 	return 1
