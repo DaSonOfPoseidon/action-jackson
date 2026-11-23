@@ -74,3 +74,16 @@ public sealed record CalculateInput(
     ServicesInput? Services,
     string? Centralization,
     bool? HasExistingPanel);
+
+// A booking request: a quote's number and email, what to book and when. The date and time are local
+// (Chicago) text, "2026-11-24" and "09:00".
+public sealed record BookingInput(
+    string? QuoteNumber,
+    string? Email,
+    string? Kind,
+    string? Date,
+    string? Time,
+    int? DurationMinutes,
+    string? Phone,
+    string? Notes,
+    string? Honeypot);

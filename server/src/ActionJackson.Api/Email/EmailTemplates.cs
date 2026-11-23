@@ -60,8 +60,7 @@ public sealed record BookingAdminModel(
     string? Phone,
     DateTimeOffset StartsAt,
     string? Notes,
-    string Package,
-    bool IncludeSurvey,
+    string Appointment,
     string ClientIp);
 
 // The five emails the API sends. Pure functions: no I/O, no template engine. Callers never pass a free
@@ -78,10 +77,6 @@ public static class EmailTemplates
     public const string Brand = "Action Jackson Installs";
 
     internal const int MaxSubject = 200;
-
-    // The business's time zone. The runtime has no ICU (InvariantGlobalization), but time zones come
-    // from tzdata, which the aspnet image has.
-    private static readonly TimeZoneInfo Chicago = TimeZoneInfo.FindSystemTimeZoneById("America/Chicago");
 
     // The invariant culture's English names and AM/PM are the en-US ones. new CultureInfo("en-US") would
     // throw here: invariant globalization allows no other culture.
@@ -169,7 +164,7 @@ public static class EmailTemplates
             ("Time", TimeOf(local)),
             ("Phone", m.Phone));
         body.Multiline(("Notes", m.Notes));
-        body.Paragraph("We'll contact you 24 hours before the appointment to confirm.");
+        body.Paragraph("We'll contact you before the appointment to confirm.");
         body.Paragraph($"If you need to reschedule, please contact us as soon as possible and reference your quote number #{m.QuoteNumber}.");
         body.Paragraph($"Thank you for choosing {brand}!");
 
@@ -190,7 +185,7 @@ public static class EmailTemplates
             ("Time", TimeOf(local)));
         body.Multiline(("Notes", string.IsNullOrWhiteSpace(m.Notes) ? "None" : m.Notes));
         body.Fields(
-            ("Package", m.Package + (m.IncludeSurvey ? " + Survey" : string.Empty)),
+            ("Appointment", m.Appointment),
             ("IP", m.ClientIp));
 
         return Finish(AdminSubject(m.Site, $"\U0001F4C5 New Appointment for Quote #{m.QuoteNumber}"), body, BookingAdmin);
@@ -260,10 +255,10 @@ public static class EmailTemplates
         return words.Length > 0 ? words[0] : "there";
     }
 
-    private static DateTimeOffset ToChicago(DateTimeOffset moment) => TimeZoneInfo.ConvertTime(moment, Chicago);
+    private static DateTimeOffset ToChicago(DateTimeOffset moment) => BusinessTime.ToLocal(moment);
 
     private static string TimeOf(DateTimeOffset local) =>
-        local.ToString("h:mm tt", Format) + (Chicago.IsDaylightSavingTime(local) ? " CDT" : " CST");
+        local.ToString("h:mm tt", Format) + (BusinessTime.Zone.IsDaylightSavingTime(local) ? " CDT" : " CST");
 
     // Builds the text and HTML bodies together from the same content, so they cannot drift apart.
     // Text keeps values raw (single-line ones with line breaks flattened, so a value cannot start a fake
