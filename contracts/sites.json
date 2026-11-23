@@ -1,0 +1,18 @@
+{
+  "fallback": "main",
+  "sites": [
+    { "key": "main", "hosts": ["actionjacksoninstalls.com", "localhost"] },
+    { "key": "lan", "hosts": ["lan.actionjacksoninstalls.com", "lan.localhost"] },
+    { "key": "car", "hosts": ["car.actionjacksoninstalls.com", "car.localhost"] },
+    { "key": "dev", "hosts": ["dev.actionjacksoninstalls.com", "dev.localhost"] },
+    { "key": "admin", "hosts": ["admin.actionjacksoninstalls.com", "admin.localhost"], "spa": true }
+  ],
+  "hostRedirects": [
+    { "from": "www.actionjacksoninstalls.com", "to": "actionjacksoninstalls.com" },
+    { "from": "www.localhost", "to": "localhost" }
+  ],
+  "pathRedirects": [
+    { "site": "main", "prefixes": ["/services", "/get-started"], "to": "lan" },
+    { "site": "main", "prefixes": ["/admin"], "to": "admin" }
+  ]
+}

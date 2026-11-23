@@ -3,10 +3,12 @@
     <Project Path="src/ActionJackson.Api/ActionJackson.Api.csproj" />
     <Project Path="src/ActionJackson.Core/ActionJackson.Core.csproj" />
     <Project Path="src/ActionJackson.Data/ActionJackson.Data.csproj" />
+    <Project Path="src/ActionJackson.Edge/ActionJackson.Edge.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/ActionJackson.Api.Tests/ActionJackson.Api.Tests.csproj" />
     <Project Path="tests/ActionJackson.Core.Tests/ActionJackson.Core.Tests.csproj" />
     <Project Path="tests/ActionJackson.Data.Tests/ActionJackson.Data.Tests.csproj" />
+    <Project Path="tests/ActionJackson.Edge.Tests/ActionJackson.Edge.Tests.csproj" />
   </Folder>
 </Solution>
