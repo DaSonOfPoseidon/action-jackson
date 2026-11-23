@@ -120,7 +120,7 @@ public static class EmailTemplates
         body.Title("We received your request");
         body.Paragraph($"Hello {FirstName(m.Name)},");
         body.Paragraph($"We received your request #{m.RequestNumber} and will contact you.");
-        body.Paragraph("We'll review your submission and send a booking link within 24 hours.");
+        body.Paragraph("We'll review your request and contact you to schedule your consultation.");
         body.Paragraph($"If you have questions in the meantime, contact us and mention request #{m.RequestNumber}.");
         body.Paragraph($"Thank you for choosing {brand}!");
 

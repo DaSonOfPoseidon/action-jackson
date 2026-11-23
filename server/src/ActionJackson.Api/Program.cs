@@ -1,4 +1,6 @@
+using ActionJackson.Api.Business;
 using ActionJackson.Api.Platform;
+using ActionJackson.Core;
 using ActionJackson.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,6 +21,7 @@ builder.Services.AddActionJacksonData(services =>
     ?? throw new InvalidOperationException(Program.MissingConnectionString));
 
 builder.AddApiPlatform();
+builder.Services.AddPublicForms();
 
 var app = builder.Build();
 
@@ -62,6 +65,10 @@ app.MapGet("/healthz", async (CoreDbContext db, CancellationToken requestAborted
         return Results.Json(new { status = "degraded", db = "down" }, statusCode: StatusCodes.Status503ServiceUnavailable);
     }
 });
+
+// The public forms of the lan site: /api/lan/consultations and /api/lan/quotes/*. /api/car/* stays a 404
+// until the car site arrives.
+app.MapPublicForms(Site.Lan);
 
 app.Run();
 return 0;
