@@ -38,20 +38,26 @@ public sealed class BookingRules(
     DateTimeOffset now,
     int daysAhead)
 {
-    private readonly DateOnly today = BusinessTime.LocalDate(now);
-
-    // Why a start is or is not open. The checks run in the order of the enum's reading: date range, then the
-    // schedule, then the bookings.
-    public SlotCheck Check(DateOnly date, TimeOnly time, string kind, TimeSpan duration)
+    // Whether a Chicago date is inside the booking window (today up to daysAhead days ahead): Past, TooFarAhead
+    // or Open. It reads only the clock, so a caller can refuse a date before it loads anything around it.
+    public static SlotCheck CheckWindow(DateOnly date, DateTimeOffset now, int daysAhead)
     {
+        var today = BusinessTime.LocalDate(now);
         if (date < today)
         {
             return SlotCheck.Past;
         }
 
-        if (date > today.AddDays(daysAhead))
+        return date > today.AddDays(daysAhead) ? SlotCheck.TooFarAhead : SlotCheck.Open;
+    }
+
+    // Why a start is or is not open. The checks run in the order of the enum's reading: date range, then the
+    // schedule, then the bookings.
+    public SlotCheck Check(DateOnly date, TimeOnly time, string kind, TimeSpan duration)
+    {
+        if (CheckWindow(date, now, daysAhead) is var window and not SlotCheck.Open)
         {
-            return SlotCheck.TooFarAhead;
+            return window;
         }
 
         if (blackouts.Contains(date))
@@ -81,7 +87,7 @@ public sealed class BookingRules(
     // closed, past or too-distant date.
     public IReadOnlyList<TimeOnly> OpenStarts(DateOnly date, string kind, TimeSpan duration)
     {
-        if (date < today || date > today.AddDays(daysAhead) || blackouts.Contains(date))
+        if (CheckWindow(date, now, daysAhead) != SlotCheck.Open || blackouts.Contains(date))
         {
             return [];
         }

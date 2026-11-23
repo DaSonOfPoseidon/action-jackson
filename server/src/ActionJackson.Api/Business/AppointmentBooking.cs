@@ -19,10 +19,11 @@ namespace ActionJackson.Api.Business;
 // is written.
 //
 // A booking is one transaction across the site's schema and core (the email outbox and the receipt). It
-// takes two advisory locks, always in this order: the email's (the same key as the quote and consultation
-// forms) and then the Chicago start date's. The receipt, the quote, the one-per-quote and 24-hour rules are
-// decided under the email lock, and whether the time is open under both, so two requests for the same email
-// or the same day take turns and the second sees the first one's rows. A drops-only install that runs past
+// takes up to three advisory locks, always in this order: the email's (the same key as the quote and
+// consultation forms), the Idempotency-Key's when there is one, and the Chicago start date's. The receipt is
+// decided under the email and key locks, the quote, the one-per-quote and 24-hour rules under the email lock,
+// and whether the time is open under all of them, so two requests for the same email, key or day take turns
+// and the second sees the first one's rows. A drops-only install that runs past
 // midnight also overlaps the next date's instants, which no day lock covers; the database's exclusion
 // constraint is the last line there, and its error is answered like the check's.
 internal sealed class AppointmentBooking(
@@ -257,8 +258,15 @@ internal sealed class AppointmentBooking(
         core.ChangeTracker.Clear();
 
         await PublicForms.LockEmailAsync(db, site, request.Email, cancellationToken);
+        if (key is not null)
+        {
+            // Requests that share a key but not an email take different email locks, so the key has a lock
+            // of its own, second in the order (email, key, day): the second request waits for the first to
+            // commit and then finds its receipt, instead of being decided on the rows the first one wrote.
+            await LockKeyAsync(db, site, key, cancellationToken);
+        }
 
-        // The retry that waited for the lock finds the winner's receipt here.
+        // The retry that waited for the locks finds the winner's receipt here.
         if (key is not null && await Idempotency.FindAsync(core, key, cancellationToken) is { } stored)
         {
             return Idempotency.Answer(stored, site, endpoint, hash, response);
@@ -319,6 +327,16 @@ internal sealed class AppointmentBooking(
             return Results.Problem(
                 statusCode: StatusCodes.Status429TooManyRequests,
                 detail: "You already booked an appointment in the last 24 hours.");
+        }
+
+        // The date is checked against the window before anything is built around it: the query window of
+        // LoadRulesAsync adds days on both sides, which a date at the end of the calendar cannot take.
+        switch (BookingRules.CheckWindow(request.Date, now, options.Limits.Booking.DaysAhead))
+        {
+            case SlotCheck.Past:
+                return Invalid("date", "Choose a date and time that are still ahead.");
+            case SlotCheck.TooFarAhead:
+                return Invalid("date", $"Appointments can be booked up to {options.Limits.Booking.DaysAhead} days ahead.");
         }
 
         await LockDayAsync(db, site, request.Date, cancellationToken);
@@ -438,6 +456,13 @@ internal sealed class AppointmentBooking(
             .Select(a => new BookedSlot(a.StartsAt, a.EndsAt, a.Kind))
             .ToListAsync(cancellationToken);
         return new BookingRules(openings, blackouts.ToHashSet(), held, now, daysAhead);
+    }
+
+    // Held until the transaction ends: two requests with one idempotency key take turns.
+    private static Task LockKeyAsync(BusinessDbContext db, Site site, string key, CancellationToken cancellationToken)
+    {
+        var lockKey = $"{site.Schema()}:key:{key}";
+        return db.Database.ExecuteSqlAsync($"SELECT pg_advisory_xact_lock(hashtextextended({lockKey}, 0))", cancellationToken);
     }
 
     // Held until the transaction ends: two bookings for one Chicago date take turns.

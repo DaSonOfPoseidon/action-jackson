@@ -181,6 +181,24 @@ public class BookingEndpointTests(TestDatabase database) : IClassFixture<TestDat
         Assert.True((await ErrorsOf(ninetyOne)).TryGetProperty("date", out _));
     }
 
+    // The ends of the calendar are answered like any other date outside the window (a 400 on date), not a 500
+    // from the arithmetic that builds the query window around the date.
+    [DbTheory]
+    [InlineData("0001-01-01")]
+    [InlineData("0001-01-02")]
+    [InlineData("9999-12-30")]
+    [InlineData("9999-12-31")]
+    public async Task A_date_at_the_ends_of_the_calendar_is_a_400_on_date(string date)
+    {
+        var quote = await Bookings.NewQuote(database);
+        var body = Bookings.Body(quote, new DateOnly(2026, 11, 24));
+        body["date"] = date;
+
+        using var response = await host.Post(Bookings.Path, body);
+
+        Assert.True((await ErrorsOf(response)).TryGetProperty("date", out _));
+    }
+
     [DbFact]
     public async Task A_blackout_date_is_a_400()
     {

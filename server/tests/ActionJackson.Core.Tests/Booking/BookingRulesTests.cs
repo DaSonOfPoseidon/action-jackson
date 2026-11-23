@@ -148,6 +148,17 @@ public class BookingRulesTests
     }
 
     [Fact]
+    public void The_window_check_needs_only_the_clock_and_accepts_the_ends_of_the_calendar()
+    {
+        Assert.Equal(SlotCheck.Open, BookingRules.CheckWindow(Today, Now, 90));
+        Assert.Equal(SlotCheck.Open, BookingRules.CheckWindow(Today.AddDays(90), Now, 90));
+        Assert.Equal(SlotCheck.Past, BookingRules.CheckWindow(Today.AddDays(-1), Now, 90));
+        Assert.Equal(SlotCheck.TooFarAhead, BookingRules.CheckWindow(Today.AddDays(91), Now, 90));
+        Assert.Equal(SlotCheck.Past, BookingRules.CheckWindow(DateOnly.MinValue, Now, 90));
+        Assert.Equal(SlotCheck.TooFarAhead, BookingRules.CheckWindow(DateOnly.MaxValue, Now, 90));
+    }
+
+    [Fact]
     public void Today_is_the_chicago_date_even_when_it_is_already_tomorrow_in_utc()
     {
         // 21:00 in Chicago on the 23rd is 03:00 UTC on the 24th.

@@ -312,6 +312,33 @@ public class IdempotencyTests(TestDatabase database) : IClassFixture<TestDatabas
         }
     }
 
+    // Different emails take different email locks, so only a lock on the key makes the second request see the
+    // first one's receipt: without it the loser reaches the day lock, finds the slot taken and answers 409
+    // for a request whose key was already used.
+    [DbFact]
+    public async Task Parallel_requests_that_share_a_key_and_a_slot_but_not_an_email_make_one_booking_and_a_422()
+    {
+        for (var round = 0; round < 6; round++)
+        {
+            var first = await Bookings.NewQuote(database);
+            var second = await Bookings.NewQuote(database);
+            var key = NewKey();
+            var date = Bookings.NextDay(database);
+
+            var responses = await Task.WhenAll(
+                Keyed(Bookings.Body(first, date, "09:00"), key),
+                Keyed(Bookings.Body(second, date, "09:00"), key));
+
+            var statuses = responses.Select(r => (int)r.StatusCode).Order().ToList();
+            Assert.Equal([201, 422], statuses);
+            Assert.Equal(1, await Appointments(first) + await Appointments(second));
+            foreach (var response in responses)
+            {
+                response.Dispose();
+            }
+        }
+    }
+
     [DbFact]
     public async Task Parallel_requests_that_share_a_key_but_differ_make_one_booking_and_a_422()
     {
