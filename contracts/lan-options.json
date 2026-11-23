@@ -1,0 +1,87 @@
+{
+  "consultation": {
+    "squareFootage": [
+      { "value": "Under 1,500", "label": "Under 1,500 sq ft" },
+      { "value": "1,500-2,500", "label": "1,500 - 2,500 sq ft" },
+      { "value": "2,500-3,500", "label": "2,500 - 3,500 sq ft" },
+      { "value": "3,500-5,000", "label": "3,500 - 5,000 sq ft" },
+      { "value": "Over 5,000", "label": "Over 5,000 sq ft" }
+    ],
+    "currentIssues": [
+      { "value": "Weak WiFi", "label": "Weak WiFi" },
+      { "value": "Dead zones", "label": "Dead zones" },
+      { "value": "Slow speeds", "label": "Slow speeds" },
+      { "value": "Too many devices", "label": "Too many devices" },
+      { "value": "No wired connections", "label": "No wired connections" },
+      { "value": "Subscription cameras", "label": "Subscription cameras" },
+      { "value": "ISP router only", "label": "ISP router only" },
+      { "value": "Smart home issues", "label": "Smart home issues" }
+    ],
+    "interestedServices": [
+      { "value": "networking", "label": "Networking" },
+      { "value": "smart-home", "label": "Smart Home" },
+      { "value": "cameras", "label": "Cameras" },
+      { "value": "structured-wiring", "label": "Structured Wiring" }
+    ],
+    "interestedPackage": [
+      { "value": "standalone", "label": "Standalone Services (ethernet drops, camera installs, AP mounting — à la carte)" },
+      { "value": "unsure", "label": "Not sure yet" },
+      { "value": "foundation", "label": "Foundation Network ($799–$1,499)" },
+      { "value": "backbone", "label": "Smart Home Backbone ($1,500–$3,500)" },
+      { "value": "security", "label": "Security ($999–$1,999)" },
+      { "value": "performance", "label": "Performance + Protection ($2,500–$6,000)" }
+    ]
+  },
+  "quote": {
+    "kinds": [
+      { "value": "drops-only", "label": "Drops Only" },
+      { "value": "whole-home", "label": "Whole-Home" }
+    ],
+    "runTypes": [
+      { "value": "cat6", "label": "Cat6" },
+      { "value": "cat6a", "label": "Cat6a" },
+      { "value": "coax", "label": "Coax" },
+      { "value": "fiber", "label": "Fiber" }
+    ],
+    "centralization": [
+      { "value": "media-panel", "label": "Media Panel" },
+      { "value": "patch-panel", "label": "Patch Panel" },
+      { "value": "loose-termination", "label": "Loose Termination" }
+    ],
+    "homeAge": [
+      { "value": "Pre-1960", "label": "Pre-1960" },
+      { "value": "1960-1980", "label": "1960-1980" },
+      { "value": "1980-2000", "label": "1980-2000" },
+      { "value": "2000-2020", "label": "2000-2020" },
+      { "value": "2020+", "label": "2020+" }
+    ],
+    "atticAccess": [
+      { "value": "Walk-in attic", "label": "Walk-in attic" },
+      { "value": "Crawl space", "label": "Crawl space" },
+      { "value": "Scuttle hole", "label": "Scuttle hole" },
+      { "value": "No attic access", "label": "No attic access" }
+    ],
+    "networkingBrand": [
+      { "value": "Omada", "label": "Omada" },
+      { "value": "UniFi", "label": "UniFi" },
+      { "value": "Ruckus", "label": "Ruckus" },
+      { "value": "No Preference", "label": "No Preference" }
+    ],
+    "securityBrand": [
+      { "value": "UniFi", "label": "UniFi" },
+      { "value": "Reolink", "label": "Reolink" },
+      { "value": "No Preference", "label": "No Preference" }
+    ],
+    "surveyPreference": [
+      { "value": "before-install", "label": "Before the install" },
+      { "value": "day-of", "label": "Day of the install" }
+    ]
+  },
+  "limits": {
+    "runsPerType": { "min": 0, "max": 50 },
+    "apMounts": { "min": 0, "max": 20 },
+    "ethernetRelocations": { "min": 0, "max": 20 },
+    "stories": { "min": 1, "max": 4 },
+    "wholeHomeTextLength": 2000
+  }
+}
