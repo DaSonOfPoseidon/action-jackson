@@ -147,6 +147,10 @@ docker-compose.yml     — 3-service orchestration (mongo, api, frontend)
   Each context has its own migrations folder: Core, Lan, Car, Main and Dev. A change to the business model needs a
   migration in both Lan and Car. Never edit a migration that has run.
 - The SDK runs in a container (`mcr.microsoft.com/dotnet/sdk:10.0`), so the host needs only Docker.
+- Booking times are in `America/Chicago`: `POST /api/lan/appointments` takes a local `date` (`YYYY-MM-DD`) and `time`
+  (`HH:mm`), and stores instants. The optional `Idempotency-Key` header (a UUID) makes a retried booking return the first
+  answer (`Idempotent-Replayed: true`, a 422 when the key was used for a different request); it is stored in
+  `core.edge_receipts`.
 - `contracts/` holds files shared by the API and the Angular app. `contracts/lan-options.json` has the lan forms' option
   lists and limits: `ActionJackson.Core` embeds it (`SiteOptions`) and the Angular app imports the same file. Edit it
   there, never in a second copy.

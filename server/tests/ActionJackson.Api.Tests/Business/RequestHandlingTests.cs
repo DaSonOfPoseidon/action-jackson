@@ -173,12 +173,14 @@ public class RequestHandlingTests(TestDatabase database) : IClassFixture<TestDat
         Assert.Equal(RateLimitPolicies.QuoteCreate, PolicyOf(endpoints, "/api/lan/quotes"));
         Assert.Equal(RateLimitPolicies.QuoteCalculate, PolicyOf(endpoints, "/api/lan/quotes/calculate"));
         Assert.Equal(RateLimitPolicies.CatalogRead, PolicyOf(endpoints, "/api/lan/quotes/pricing"));
+        Assert.Equal(RateLimitPolicies.Booking, PolicyOf(endpoints, "/api/lan/appointments"));
+        Assert.Equal(RateLimitPolicies.CatalogRead, PolicyOf(endpoints, "/api/lan/availability"));
     }
 
     [DbFact]
     public async Task Only_the_lan_routes_are_mapped()
     {
-        foreach (var path in new[] { "/api/car/consultations", "/api/car/quotes/pricing", "/api/main/consultations", "/api/consultations", "/api/lan" })
+        foreach (var path in new[] { "/api/car/consultations", "/api/car/availability", "/api/car/quotes/pricing", "/api/main/consultations", "/api/consultations", "/api/lan" })
         {
             using var response = await host.Get(path);
 

@@ -4,8 +4,9 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace ActionJackson.Api.Business;
 
-// The public endpoints of a business site, under /api/{site}. The site is captured here, by the group, and
-// every handler gets it from this closure: a request can never name another one.
+// The public endpoints of a business site, under /api/{site}: the forms, the availability list and the
+// booking. The site is captured here, by the group, and every handler gets it from this closure: a request
+// can never name another one.
 public static class BusinessEndpoints
 {
     public static IServiceCollection AddPublicForms(this IServiceCollection services)
@@ -14,6 +15,7 @@ public static class BusinessEndpoints
         services.TryAddSingleton(TimeProvider.System);
         services.TryAddSingleton<IDocumentNumbers, RandomDocumentNumbers>();
         services.AddScoped<PublicForms>();
+        services.AddScoped<AppointmentBooking>();
         return services;
     }
 
@@ -45,6 +47,18 @@ public static class BusinessEndpoints
                 (PublicForms forms, HttpContext http, CancellationToken cancellationToken) =>
                     forms.CreateConsultationAsync(site, http, cancellationToken))
             .RequireRateLimiting(RateLimitPolicies.ConsultationCreate);
+
+        group.MapGet(
+                "/availability",
+                (AppointmentBooking booking, HttpRequest request, CancellationToken cancellationToken) =>
+                    booking.AvailabilityAsync(site, request, cancellationToken))
+            .RequireRateLimiting(RateLimitPolicies.CatalogRead);
+
+        group.MapPost(
+                "/appointments",
+                (AppointmentBooking booking, HttpContext http, CancellationToken cancellationToken) =>
+                    booking.CreateAsync(site, http, cancellationToken))
+            .RequireRateLimiting(RateLimitPolicies.Booking);
 
         return app;
     }

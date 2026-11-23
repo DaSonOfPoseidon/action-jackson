@@ -21,16 +21,26 @@ internal static partial class JsonBody
     public static async Task<(T? Value, IResult? Failure)> ReadAsync<T>(HttpRequest request, CancellationToken cancellationToken)
         where T : class
     {
+        var (body, failure) = await ReadBytesAsync(request, cancellationToken);
+        return failure is not null ? (null, failure) : Parse<T>(body);
+    }
+
+    // The raw body, at most 32 KB, for an endpoint that also needs the exact bytes (to hash them). Parse
+    // reads the same bytes as JSON.
+    public static async Task<(ReadOnlyMemory<byte> Body, IResult? Failure)> ReadBytesAsync(
+        HttpRequest request,
+        CancellationToken cancellationToken)
+    {
         if (!request.HasJsonContentType())
         {
-            return (null, Results.Problem(
+            return (default, Results.Problem(
                 statusCode: StatusCodes.Status415UnsupportedMediaType,
                 detail: "Send the request as application/json."));
         }
 
         if (request.ContentLength > MaxBytes)
         {
-            return (null, TooLarge());
+            return (default, TooLarge());
         }
 
         // One byte more than the limit is enough to know it is exceeded, whatever the length header said
@@ -48,12 +58,12 @@ internal static partial class JsonBody
             length += read;
         }
 
-        if (length > MaxBytes)
-        {
-            return (null, TooLarge());
-        }
+        return length > MaxBytes ? (default, TooLarge()) : (buffer.AsMemory(0, length), null);
+    }
 
-        var body = buffer.AsMemory(0, length);
+    public static (T? Value, IResult? Failure) Parse<T>(ReadOnlyMemory<byte> body)
+        where T : class
+    {
         try
         {
             // Syntax first: after this, any JsonException is about a value of a known member, and its path

@@ -115,8 +115,8 @@ Cloudflare tunnel (cloudflared on the Pi): apex · www · lan · car · dev · a
 - **Flexible fields:** each customer-facing table has a validated jsonb `details` column for site-specific fields,
   so new fields don't need a migration. For car these are vehicle year/make/model and remote start type; for lan,
   property details.
-- **No double bookings:** a Postgres exclusion constraint (`btree_gist`) on each schema's appointment time range,
-  covering active statuses.
+- **No double bookings:** a Postgres exclusion constraint on each schema's appointment time range (a plain range
+  `&&`, which needs no `btree_gist`), covering active statuses.
 - **Invoice numbers:** `INV-YYYY-NNNN`, from a per-schema sequence.
 - **`dev` and `main`:** `contact_messages`. Portfolio data, resume and blog posts stay as files in the repo.
 - **Status values:** one PascalCase string enum per entity, shared by the API and the admin.
@@ -141,11 +141,17 @@ Cloudflare tunnel (cloudflared on the Pi): apex · www · lan · car · dev · a
   - The admin gets an email, and so does the customer (an acknowledgment: new, because the UI already promised
     one).
 - **Booking:**
-  - Start times on the hour, from 08:00 to 18:00.
+  - Time zone: `America/Chicago`. Requests carry a local date and time (`2026-11-24`, `09:00`), appointments
+    store instants, and every "which day" rule (today, the 90 days, a whole-home day) uses the Chicago date. A
+    local time that does not exist or happens twice (a daylight-saving change) is refused.
+  - Start times on the hour, from 08:00 to 18:00: the lan opening rules, seeded for every weekday and edited by
+    the admin.
   - Duration: survey 120 min; drops-only 60–720 min, rounded up to the hour, default 120; whole-home blocks the
     day, and any booking that day blocks a whole-home booking.
   - Dates: none in the past, at most 90 days ahead.
   - One booking per email per 24 h, and one appointment per quote.
+  - A retried booking is safe: an optional `Idempotency-Key` header (a UUID) makes a repeat of the same request
+    return the first answer (`Idempotent-Replayed: true`) instead of booking twice.
   - A quote number is required, and the email must match the quote's.
   - Rate limit: 5 per 15 min.
   - The customer gets a confirmation email and the admin gets a notice.
