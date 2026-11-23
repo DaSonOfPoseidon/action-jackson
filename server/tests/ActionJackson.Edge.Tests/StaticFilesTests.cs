@@ -94,6 +94,34 @@ public class StaticFilesTests
         Assert.Equal("no-cache", response.Headers.CacheControl?.ToString());
     }
 
+    [Theory]
+    [InlineData("/missing.js")]
+    [InlineData("/x/y.css")]
+    [InlineData("/quotes/123.json")]
+    [InlineData("/.env")]
+    public async Task A_spa_site_gives_a_404_for_a_missing_path_with_an_extension(string path)
+    {
+        using var root = Sites().File("admin", "404.html", "admin not found");
+        await using var host = await EdgeHost.StartAsync(root);
+
+        var response = await host.GetAsync(path, "admin.actionjacksoninstalls.com");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal("admin not found", await response.Content.ReadAsStringAsync());
+        Assert.Equal("no-cache", response.Headers.CacheControl?.ToString());
+    }
+
+    [Fact]
+    public async Task A_spa_site_with_no_404_page_gives_a_plain_404_for_a_missing_asset()
+    {
+        await using var host = await EdgeHost.StartAsync(Sites());
+
+        var response = await host.GetAsync("/missing.js", "admin.actionjacksoninstalls.com");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal("text/plain", response.Content.Headers.ContentType?.MediaType);
+    }
+
     [Fact]
     public async Task A_site_that_is_not_a_spa_never_falls_back_to_its_index()
     {
@@ -128,26 +156,40 @@ public class StaticFilesTests
     }
 
     [Theory]
-    [InlineData("/app-ABCDEFGH.js", "public, max-age=31536000, immutable")]
-    [InlineData("/chunk.0a1b2c3d4e5f.css", "public, max-age=31536000, immutable")]
-    [InlineData("/media/font-1a2b3c4d.woff2", "public, max-age=31536000, immutable")]
-    [InlineData("/img/photo-1a2b3c4d.jpeg", "public, max-age=31536000, immutable")]
+    [InlineData("/main-AB12CD34.js", "public, max-age=31536000, immutable")]
+    [InlineData("/chunk-0A1B2C3D.css", "public, max-age=31536000, immutable")]
+    [InlineData("/media/font-1A2B3C4D.woff2", "public, max-age=31536000, immutable")]
+    [InlineData("/img/photo-ABCDEFG1.jpeg", "public, max-age=31536000, immutable")]
     [InlineData("/favicon.ico", "public, max-age=3600")]
     [InlineData("/app.js", "public, max-age=3600")]
-    [InlineData("/app-ABC.js", "public, max-age=3600")]
+    [InlineData("/app-AB1.js", "public, max-age=3600")]
+    [InlineData("/hero-illustration.svg", "public, max-age=3600")]
+    [InlineData("/main-container.css", "public, max-age=3600")]
+    [InlineData("/logo-BRANDING.png", "public, max-age=3600")]
+    [InlineData("/app-ABCDEFGH.js", "public, max-age=3600")]
+    [InlineData("/app-AB12CD345.js", "public, max-age=3600")]
+    [InlineData("/app.AB12CD34.js", "public, max-age=3600")]
+    [InlineData("/app-ab12cd34.js", "public, max-age=3600")]
     [InlineData("/robots.txt", "public, max-age=3600")]
     [InlineData("/index.html", "no-cache")]
     [InlineData("/about/index.html", "no-cache")]
     public async Task Cache_control_follows_the_file_name(string path, string expected)
     {
         using var root = Sites()
-            .File("main", "app-ABCDEFGH.js", "js")
-            .File("main", "chunk.0a1b2c3d4e5f.css", "css")
-            .File("main", "media/font-1a2b3c4d.woff2", "font")
-            .File("main", "img/photo-1a2b3c4d.jpeg", "jpeg")
+            .File("main", "main-AB12CD34.js", "js")
+            .File("main", "chunk-0A1B2C3D.css", "css")
+            .File("main", "media/font-1A2B3C4D.woff2", "font")
+            .File("main", "img/photo-ABCDEFG1.jpeg", "jpeg")
             .File("main", "favicon.ico", "ico")
             .File("main", "app.js", "js")
-            .File("main", "app-ABC.js", "js")
+            .File("main", "app-AB1.js", "js")
+            .File("main", "hero-illustration.svg", "<svg/>")
+            .File("main", "main-container.css", "css")
+            .File("main", "logo-BRANDING.png", "png")
+            .File("main", "app-ABCDEFGH.js", "js")
+            .File("main", "app-AB12CD345.js", "js")
+            .File("main", "app.AB12CD34.js", "js")
+            .File("main", "app-ab12cd34.js", "js")
             .File("main", "robots.txt", "robots")
             .File("main", "about/index.html", "about");
         await using var host = await EdgeHost.StartAsync(root);

@@ -50,7 +50,7 @@ internal sealed class SiteFiles(EdgeSettings settings) : IDisposable
 }
 
 // Serves a site's prerendered files (invariant 6: no API at request time).
-//   file itself, then <path>/index.html, then (a spa site) its index.html with 200, otherwise the site's 404.html
+//   file itself, then <path>/index.html, then (a spa site, extensionless path) its index.html with 200, otherwise the site's 404.html
 //   with status 404 (a plain-text 404 when there is none). Only GET and HEAD; other methods get 405.
 // Anything routing already matched (the /api endpoint) passes straight through.
 internal sealed partial class SiteFilesMiddleware(
@@ -94,7 +94,9 @@ internal sealed partial class SiteFilesMiddleware(
             file = provider.GetFileInfo(path.TrimEnd('/') + "/index.html");
         }
 
-        if (!file.Exists && site.Spa)
+        // The spa fallback is for app routes (/quotes/123) only: a path whose last segment has an extension is a
+        // missing asset, which must be a 404 and never the index page with a 200.
+        if (!file.Exists && site.Spa && !path[(path.LastIndexOf('/') + 1)..].Contains('.'))
         {
             file = provider.GetFileInfo("/index.html");
         }
@@ -140,8 +142,10 @@ internal sealed partial class SiteFilesMiddleware(
         return !path.Split('/').Contains("..");
     }
 
-    // .html (the indexes and the 404 page) is always revalidated; a name with a content hash is immutable;
-    // everything else is cached for an hour.
+    // .html (the indexes and the 404 page) is always revalidated; a name ending in "-" and an 8-character content
+    // hash (Angular's esbuild output: [A-Z0-9], at least one digit) is immutable; everything else is cached for an
+    // hour. A hash with no digit (about 7%) gets the hour, which is safe. Ordinary names such as hero-illustration.svg
+    // never match.
     internal static string CacheControlFor(string name)
     {
         if (name.EndsWith(".html", StringComparison.OrdinalIgnoreCase))
@@ -180,6 +184,6 @@ internal sealed partial class SiteFilesMiddleware(
         }
     }
 
-    [GeneratedRegex(@"[.-][A-Za-z0-9]{8,}\.(js|css|woff2?|png|jpe?g|svg|webp|avif)$")]
+    [GeneratedRegex(@"-(?=[A-Z0-9]{0,7}\d)[A-Z0-9]{8}\.(js|css|woff2?|png|jpe?g|svg|webp|avif)$")]
     private static partial Regex HashedName();
 }
