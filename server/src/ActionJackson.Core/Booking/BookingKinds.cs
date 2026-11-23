@@ -41,4 +41,8 @@ public static class BookingKinds
 
     // A whole-home install takes the whole day: nothing else starts that Chicago date.
     public static bool BlocksTheDay(string kind) => kind == WholeHomeInstall;
+
+    // A whole-home install starts only when its day opens (the earliest Opens of the weekday's rules), so
+    // it has the whole day to run. Every other kind may start on any step of the day.
+    public static bool StartsAtOpening(string kind) => kind == WholeHomeInstall;
 }

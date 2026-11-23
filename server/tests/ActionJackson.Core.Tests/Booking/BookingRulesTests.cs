@@ -231,14 +231,73 @@ public class BookingRulesTests
     }
 
     [Theory]
-    [InlineData("08:00")]
-    [InlineData("12:00")]
-    [InlineData("18:00")]
-    public void A_whole_home_install_conflicts_with_any_booking_that_starts_that_chicago_date(string time)
+    [InlineData(8)]
+    [InlineData(12)]
+    [InlineData(18)]
+    public void A_whole_home_install_conflicts_with_any_booking_that_starts_that_chicago_date(int bookedHour)
     {
-        var rules = Rules(booked: [Booked(Tuesday, 8, 2)]);
+        var rules = Rules(booked: [Booked(Tuesday, bookedHour, 1)]);
 
-        Assert.Equal(SlotCheck.Conflict, Check(rules, Tuesday, time, BookingKinds.WholeHomeInstall));
+        Assert.Equal(SlotCheck.Conflict, Check(rules, Tuesday, "08:00", BookingKinds.WholeHomeInstall));
+    }
+
+    [Fact]
+    public void A_whole_home_install_starts_only_at_the_opening_time()
+    {
+        var rules = Rules();
+
+        Assert.Equal(SlotCheck.Open, Check(rules, Tuesday, "08:00", BookingKinds.WholeHomeInstall));
+        Assert.Equal(SlotCheck.Closed, Check(rules, Tuesday, "09:00", BookingKinds.WholeHomeInstall));
+        Assert.Equal(SlotCheck.Closed, Check(rules, Tuesday, "12:00", BookingKinds.WholeHomeInstall));
+        Assert.Equal(SlotCheck.Closed, Check(rules, Tuesday, "18:00", BookingKinds.WholeHomeInstall));
+        Assert.Equal(SlotCheck.Closed, Check(rules, Tuesday, "07:00", BookingKinds.WholeHomeInstall));
+        Assert.Equal([new TimeOnly(8, 0)], rules.OpenStarts(Tuesday, BookingKinds.WholeHomeInstall, BookingKinds.DurationOf(BookingKinds.WholeHomeInstall, null)));
+    }
+
+    [Fact]
+    public void On_a_day_that_opens_at_another_hour_that_hour_is_the_only_whole_home_start()
+    {
+        var rules = Rules(
+        [
+            new OpeningRule((int)DayOfWeek.Tuesday, new TimeOnly(10, 0), new TimeOnly(16, 0), 60),
+            new OpeningRule((int)DayOfWeek.Wednesday, new TimeOnly(8, 0), new TimeOnly(18, 0), 60),
+        ]);
+        var duration = BookingKinds.DurationOf(BookingKinds.WholeHomeInstall, null);
+
+        Assert.Equal([new TimeOnly(10, 0)], rules.OpenStarts(Tuesday, BookingKinds.WholeHomeInstall, duration));
+        Assert.Equal(SlotCheck.Closed, Check(rules, Tuesday, "08:00", BookingKinds.WholeHomeInstall));
+        Assert.Equal(SlotCheck.Open, Check(rules, Tuesday, "10:00", BookingKinds.WholeHomeInstall));
+        Assert.Equal(SlotCheck.Closed, Check(rules, Tuesday, "11:00", BookingKinds.WholeHomeInstall));
+        Assert.Equal([new TimeOnly(8, 0)], rules.OpenStarts(Tuesday.AddDays(1), BookingKinds.WholeHomeInstall, duration));
+    }
+
+    [Fact]
+    public void With_two_rules_on_a_weekday_the_earliest_opening_is_the_whole_home_start()
+    {
+        var rules = Rules(
+        [
+            new OpeningRule((int)DayOfWeek.Tuesday, new TimeOnly(13, 0), new TimeOnly(15, 0), 60),
+            new OpeningRule((int)DayOfWeek.Tuesday, new TimeOnly(9, 0), new TimeOnly(10, 0), 60),
+        ]);
+
+        Assert.Equal(
+            [new TimeOnly(9, 0)],
+            rules.OpenStarts(Tuesday, BookingKinds.WholeHomeInstall, BookingKinds.DurationOf(BookingKinds.WholeHomeInstall, null)));
+    }
+
+    [Fact]
+    public void A_whole_home_start_that_is_not_free_or_not_ahead_is_not_listed()
+    {
+        var duration = BookingKinds.DurationOf(BookingKinds.WholeHomeInstall, null);
+
+        // Someone holds 08:00 that day.
+        var taken = Rules(booked: [Booked(Tuesday, 8, 1)]);
+        // 08:00 today has passed.
+        var passed = Rules(now: new DateTimeOffset(2026, 11, 23, 16, 0, 0, TimeSpan.Zero));
+
+        Assert.Empty(taken.OpenStarts(Tuesday, BookingKinds.WholeHomeInstall, duration));
+        Assert.Empty(passed.OpenStarts(Today, BookingKinds.WholeHomeInstall, duration));
+        Assert.Equal([new TimeOnly(8, 0)], passed.OpenStarts(Tuesday, BookingKinds.WholeHomeInstall, duration));
     }
 
     [Theory]

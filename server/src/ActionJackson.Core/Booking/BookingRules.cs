@@ -17,7 +17,8 @@ public enum SlotCheck
     // The date is more than DaysAhead days after today.
     TooFarAhead,
 
-    // No rule of that weekday has this time on its step, within its hours, at a definite local time.
+    // No rule of that weekday has this time on its step, within its hours, at a definite local time; or the
+    // kind starts only when the day opens (a whole-home install) and this is not that time.
     Closed,
 
     Blackout,
@@ -59,6 +60,11 @@ public sealed class BookingRules(
         }
 
         if (!OnTheGrid(date, time) || !BusinessTime.TryToInstant(date, time, out var start))
+        {
+            return SlotCheck.Closed;
+        }
+
+        if (BookingKinds.StartsAtOpening(kind) && time != Opening(date))
         {
             return SlotCheck.Closed;
         }
@@ -108,6 +114,14 @@ public sealed class BookingRules(
     }
 
     private bool OnTheGrid(DateOnly date, TimeOnly time) => Grid(date).Contains(time);
+
+    // When the date opens: the earliest Opens of its weekday's rules, or null for a closed weekday.
+    private TimeOnly? Opening(DateOnly date)
+    {
+        var day = (int)date.DayOfWeek;
+        var opens = rules.Where(rule => rule.DayOfWeek == day && rule.SlotMinutes > 0).Select(rule => rule.Opens).ToList();
+        return opens.Count == 0 ? null : opens.Min();
+    }
 
     // The starts of the weekday's rules, ordered, without repeats. A time that does not exist or is
     // ambiguous that day is left out.

@@ -147,7 +147,8 @@ Cloudflare tunnel (cloudflared on the Pi): apex · www · lan · car · dev · a
   - Start times on the hour, from 08:00 to 18:00: the lan opening rules, seeded for every weekday and edited by
     the admin.
   - Duration: survey 120 min; drops-only 60–720 min, rounded up to the hour, default 120; whole-home blocks the
-    day, and any booking that day blocks a whole-home booking.
+    day, and any booking that day blocks a whole-home booking. A whole-home install starts only when its day opens
+    (08:00 with the seeded rules); any other start is refused.
   - Dates: none in the past, at most 90 days ahead.
   - One booking per email per 24 h, and one appointment per quote.
   - A retried booking is safe: an optional `Idempotency-Key` header (a UUID) makes a repeat of the same request

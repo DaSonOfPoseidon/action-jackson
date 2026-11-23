@@ -299,15 +299,58 @@ public class BookingEndpointTests(TestDatabase database) : IClassFixture<TestDat
     }
 
     [DbFact]
-    public async Task A_whole_home_install_on_a_day_with_a_booking_is_a_409_even_from_18_00()
+    public async Task A_whole_home_install_on_a_day_with_a_booking_is_a_409_even_when_the_booking_is_late()
     {
         var date = Bookings.NextDay(database);
-        await Bookings.Existing(database, date, 8, 2);
+        await Bookings.Existing(database, date, 18, 1);
         var quote = await Bookings.NewQuote(database, QuoteKinds.WholeHome);
 
-        using var response = await host.Post(Bookings.Path, Bookings.Body(quote, date, "18:00", BookingKinds.WholeHomeInstall));
+        using var response = await host.Post(Bookings.Path, Bookings.Body(quote, date, "08:00", BookingKinds.WholeHomeInstall));
 
         await FormsHost.AssertProblem(response, HttpStatusCode.Conflict);
+    }
+
+    [DbTheory]
+    [InlineData("09:00")]
+    [InlineData("12:00")]
+    [InlineData("18:00")]
+    [InlineData("07:00")]
+    public async Task A_whole_home_install_that_does_not_start_at_opening_time_is_a_400_on_time(string time)
+    {
+        var quote = await Bookings.NewQuote(database, QuoteKinds.WholeHome);
+
+        using var response = await host.Post(Bookings.Path, Bookings.Body(quote, Bookings.NextDay(database), time, BookingKinds.WholeHomeInstall));
+
+        Assert.True((await ErrorsOf(response)).TryGetProperty("time", out _));
+        await using var lan = database.Lan();
+        Assert.False(await lan.Appointments.AnyAsync(a => a.QuoteId == quote.QuoteId));
+    }
+
+    [DbFact]
+    public async Task A_whole_home_install_starts_at_the_opening_time_the_days_rule_gives()
+    {
+        await using var owned = await OwnDatabase.Create();
+        var own = owned.Database;
+        await using (var lan = own.Lan())
+        {
+            await lan.AvailabilityRules.ExecuteDeleteAsync();
+            for (short day = 0; day <= 6; day++)
+            {
+                lan.AvailabilityRules.Add(new AvailabilityRule { DayOfWeek = day, Opens = new TimeOnly(10, 0), Closes = new TimeOnly(16, 0), SlotMinutes = 60 });
+            }
+
+            await lan.SaveChangesAsync();
+        }
+
+        using var ownHost = new FormsHost(own);
+        var early = await Bookings.NewQuote(own, QuoteKinds.WholeHome);
+        var opening = await Bookings.NewQuote(own, QuoteKinds.WholeHome);
+
+        using var eight = await ownHost.Post(Bookings.Path, Bookings.Body(early, Bookings.First, "08:00", BookingKinds.WholeHomeInstall));
+        using var ten = await ownHost.Post(Bookings.Path, Bookings.Body(opening, Bookings.First, "10:00", BookingKinds.WholeHomeInstall));
+
+        Assert.True((await ErrorsOf(eight)).TryGetProperty("time", out _));
+        Assert.Equal(HttpStatusCode.Created, ten.StatusCode);
     }
 
     [DbFact]
@@ -326,18 +369,17 @@ public class BookingEndpointTests(TestDatabase database) : IClassFixture<TestDat
     }
 
     [DbFact]
-    public async Task A_whole_home_day_is_the_chicago_date_so_an_18_00_start_does_not_block_the_next_day()
+    public async Task A_whole_home_day_is_the_chicago_date_so_an_18_00_start_does_not_block_the_next_morning()
     {
         var date = Bookings.NextDay(database, 2);
-        var evening = await Bookings.NewQuote(database, QuoteKinds.WholeHome);
+        // A whole-home install an admin put at 18:00 (the API itself starts them at opening time).
+        await Bookings.Existing(database, date, 18, 12, BookingKinds.WholeHomeInstall);
         var nextMorning = await Bookings.NewQuote(database);
         var sameDay = await Bookings.NewQuote(database);
 
-        using var whole = await host.Post(Bookings.Path, Bookings.Body(evening, date, "18:00", BookingKinds.WholeHomeInstall));
         using var next = await host.Post(Bookings.Path, Bookings.Body(nextMorning, date.AddDays(1), "08:00"));
         using var same = await host.Post(Bookings.Path, Bookings.Body(sameDay, date, "09:00"));
 
-        Assert.Equal(HttpStatusCode.Created, whole.StatusCode);
         Assert.Equal(HttpStatusCode.Created, next.StatusCode);
         await FormsHost.AssertProblem(same, HttpStatusCode.Conflict);
     }

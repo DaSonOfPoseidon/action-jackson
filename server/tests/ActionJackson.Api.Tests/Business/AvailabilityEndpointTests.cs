@@ -140,7 +140,40 @@ public class AvailabilityEndpointTests(TestDatabase database) : IClassFixture<Te
 
         var starts = StartsByDate(await Days(Url(Bookings.Text(date), Bookings.Text(date), "whole-home-install")));
 
-        Assert.Equal(EveryHour, starts[Bookings.Text(date)]);
+        Assert.Equal(["08:00"], starts[Bookings.Text(date)]);
+    }
+
+    [DbFact]
+    public async Task A_whole_home_install_lists_only_the_opening_time_of_each_free_day()
+    {
+        var date = Bookings.NextDay(database, 2);
+        await Bookings.Existing(database, date, 15, 1);
+
+        var days = StartsByDate(await Days(Url(Bookings.Text(date), Bookings.Text(date.AddDays(1)), "whole-home-install")));
+
+        Assert.Empty(days[Bookings.Text(date)]);
+        Assert.Equal(["08:00"], days[Bookings.Text(date.AddDays(1))]);
+    }
+
+    [DbFact]
+    public async Task A_whole_home_install_lists_the_hour_a_day_opens_at()
+    {
+        await using var owned = await OwnDatabase.Create();
+        var own = owned.Database;
+        await using (var lan = own.Lan())
+        {
+            // Tuesday opens at 10:00, Wednesday keeps 08:00.
+            var tuesday = await lan.AvailabilityRules.SingleAsync(rule => rule.DayOfWeek == 2);
+            tuesday.Opens = new TimeOnly(10, 0);
+            await lan.SaveChangesAsync();
+        }
+
+        using var ownHost = new FormsHost(own);
+        using var response = await ownHost.Get(Url("2026-11-24", "2026-11-25", "whole-home-install"));
+        var days = StartsByDate(await FormsHost.Json(response));
+
+        Assert.Equal(["10:00"], days["2026-11-24"]);
+        Assert.Equal(["08:00"], days["2026-11-25"]);
     }
 
     [DbFact]
