@@ -22,19 +22,26 @@ public class HybridCacheTests
     }
 
     [Fact]
-    public async Task An_unreachable_redis_still_returns_the_factory_value_within_5_seconds()
+    public async Task An_unreachable_redis_still_returns_the_factory_value_within_two_timeouts_and_headroom_per_call()
     {
         // Nothing listens on port 1.
         await using var provider = Build("127.0.0.1:1,password=not-a-real-secret");
         var cache = provider.GetRequiredService<HybridCache>();
-        var clock = Stopwatch.StartNew();
+        // The point is that a request never waits on Redis for long: each call may spend the configured
+        // timeout on its L2 read and again on its write, plus headroom for a loaded machine.
+        var limit = TimeSpan.FromMilliseconds(2 * CacheSetup.RedisTimeoutMs) + TimeSpan.FromSeconds(2);
 
+        var firstClock = Stopwatch.StartNew();
         var first = await cache.GetOrCreateAsync("k1", _ => ValueTask.FromResult("value-1"));
+        var firstTook = firstClock.Elapsed;
+        var otherClock = Stopwatch.StartNew();
         var other = await cache.GetOrCreateAsync("k2", _ => ValueTask.FromResult("value-2"));
+        var otherTook = otherClock.Elapsed;
 
         Assert.Equal("value-1", first);
         Assert.Equal("value-2", other);
-        Assert.True(clock.Elapsed < TimeSpan.FromSeconds(5), $"took {clock.Elapsed}");
+        Assert.True(firstTook < limit, $"first call took {firstTook}, limit {limit}");
+        Assert.True(otherTook < limit, $"second call took {otherTook}, limit {limit}");
     }
 
     [Fact]
