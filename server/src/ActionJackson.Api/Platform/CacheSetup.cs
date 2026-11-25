@@ -6,7 +6,7 @@ namespace ActionJackson.Api.Platform;
 public static class CacheSetup
 {
     // Short waits: Redis is a cache, so when it is slow or down a request must not wait on it.
-    private const int RedisTimeoutMs = 2000;
+    internal const int RedisTimeoutMs = 2000;
 
     // HybridCache: an in-memory L1, and Redis as the L2 when ConnectionStrings:Redis is set. Redis is only a
     // cache, never a dependency: /healthz does not check it, and HybridCache treats a failing L2 as a miss
