@@ -28,9 +28,9 @@ export const SITES: readonly SiteExpectation[] = [
     key: 'lan',
     host: 'lan.localhost',
     production: 'lan.actionjacksoninstalls.com',
-    h1: 'Action Jackson Installs · Home Networking',
+    h1: 'Upgrade Your Home Network.',
     title: 'Home · Action Jackson Home Networking',
-    text: 'This site is being rebuilt.',
+    text: 'Smart networking and automation for builder-grade homes.',
     framed: true,
   },
   {

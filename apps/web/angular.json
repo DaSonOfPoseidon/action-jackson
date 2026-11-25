@@ -85,7 +85,8 @@
             "styles": [
               "projects/shared/src/styles/base.css",
               "projects/shared/src/styles/fonts.css",
-              "projects/shared/src/styles/fonts-mono.css"
+              "projects/shared/src/styles/fonts-mono.css",
+              "projects/lan/src/styles.css"
             ],
             "security": {
               "autoCsp": false
@@ -98,7 +99,7 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "350kB",
+                  "maximumWarning": "400kB",
                   "maximumError": "500kB"
                 },
                 {

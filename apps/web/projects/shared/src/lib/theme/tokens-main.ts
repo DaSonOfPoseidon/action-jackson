@@ -18,6 +18,11 @@ export const MAIN_TOKENS: SiteTokens = {
     lanAccent: '#22c55e',
     carAccent: '#fb923c',
     devAccent: '#d8b4fe',
+    surfaceRaised: '#181825',
+    accentDeep: '#22c55e',
+    accentPurple: '#d8b4fe',
+    accentOrange: '#fb923c',
+    accentCyan: '#22d3ee',
   },
   pairs: STANDARD_PAIRS,
 };

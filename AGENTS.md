@@ -191,6 +191,13 @@ deploy/                — pc/ (api, postgres, redis, garage), pi/ (the edge)
   random key and the API down, and runs Playwright (Chromium, image `playwright:v<version>-noble`) against it by Host name,
   with axe `wcag2aaa`. It removes its containers and network on exit. CI's `web` job runs the same specs against a plain
   `dotnet` edge (`EDGE_ORIGIN` is where the edge listens).
+- The lan app is the ported business site (`/`, `/about`, `/services/{networking,smart-home,cameras,wiring}`, a placeholder
+  `/get-started`), in the original site's look. Its frame (`lan-frame.ts`: header bar, footer) is built from the shared skip
+  link, site switcher and offline banner; its look is `projects/lan/src/styles.css`, with colours from the tokens (every pair in
+  `tokens-lan.ts` is AAA). Menus and FAQs are `<details>`, so they work without script. Page copy is typed constants under
+  `projects/lan/src/app/data/` (prices are copy, never computed). Structured data (JSON-LD) is written into `<head>` by
+  `useJsonLd` (`<` for every `<`). `e2e/contrast-audit.ts` reads the real pixels behind every piece of text (axe cannot
+  judge text on gradients), so any new background behind text is checked by `e2e/lan.spec.ts`.
 
 ### Deploy (new stack, PC)
 - The new backend runs from `deploy/pc/compose.yml` (project `action-jackson`): `api` (built from `server/`, with the repo root as the build context), `postgres`

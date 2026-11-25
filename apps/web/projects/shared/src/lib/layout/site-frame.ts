@@ -3,16 +3,18 @@ import { SITE_KEY } from '../sites/site-key';
 import { SITE_META } from '../sites/site-meta';
 import { OfflineBanner } from './offline-banner';
 import { SiteSwitcher } from './site-switcher';
+import { SkipLink } from './skip-link';
 
-// The minimal page frame every public app uses: a skip link, a header with the cross-site switcher, the offline
-// banner, <main id="main"> and a footer. Nothing more: each site's look comes in its own design unit.
+// The minimal page frame the sites without their own use: a skip link, a header with the cross-site switcher, the
+// offline banner, <main id="main"> and a footer. Nothing more: a site that wants its own header and footer (lan) builds
+// its frame from the same pieces (SkipLink, SiteSwitcher, OfflineBanner).
 @Component({
   selector: 'aj-site-frame',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [OfflineBanner, SiteSwitcher],
+  imports: [OfflineBanner, SiteSwitcher, SkipLink],
   styleUrl: './site-frame.css',
   template: `
-    <a class="skip-link" href="#main" (click)="skipToMain($event)">Skip to main content</a>
+    <aj-skip-link />
     <header>
       <aj-site-switcher />
     </header>
@@ -28,12 +30,4 @@ import { SiteSwitcher } from './site-switcher';
 export class SiteFrame {
   protected readonly name = SITE_META[inject(SITE_KEY)].name;
   protected readonly year = new Date().getFullYear();
-
-  // With <base href="/">, a bare "#main" would mean "/#main" and leave the page. Focus main in place instead.
-  protected skipToMain(event: Event): void {
-    event.preventDefault();
-    const main = (event.currentTarget as HTMLElement).ownerDocument.getElementById('main');
-    main?.focus();
-    main?.scrollIntoView?.();
-  }
 }
