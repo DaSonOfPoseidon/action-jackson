@@ -1,0 +1,57 @@
+name: Bug
+description: Something behaves wrong
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: "A triager adds the `area:*` and `priority:*` labels by hand after the issue is filed, because a form cannot set labels."
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Where the bug is.
+      options:
+        - "api (server/src/ActionJackson.Api)"
+        - "edge (server/src/ActionJackson.Edge)"
+        - "data (server/src/ActionJackson.Data: schemas, migrations, seed)"
+        - "core (server/src/ActionJackson.Core and contracts/)"
+        - "web (apps/web: the Angular apps and shared library)"
+        - "deploy (deploy/pc, deploy/pi and the deploy scripts)"
+        - "ci (CI workflows and the check and build scripts)"
+        - "docs (Markdown files anywhere, and docs/)"
+        - "legacy (Next.js, Express and Mongo code, frozen)"
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you saw, and where (a file, a route or a command).
+    validations:
+      required: true
+  - type: textarea
+    id: failure-scenario
+    attributes:
+      label: Failure scenario
+      description: The input or state that triggers it, and the wrong result. For example, "a POST with an empty name returns 200 and stores a blank row".
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected
+      description: What should happen instead.
+    validations:
+      required: false
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      description: Optional. The triager sets the priority label from this.
+      options:
+        - "P0: data loss, security, main path broken"
+        - "P1: wrong behaviour on a real path"
+        - "P2: edge case or broken promise"
+        - "P3: minor"
+    validations:
+      required: false

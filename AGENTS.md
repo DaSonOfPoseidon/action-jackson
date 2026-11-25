@@ -62,6 +62,9 @@ the gate shows them to its reviewers. Add an entry when a finding is answered "n
 ## PR loop
 
 - checks: `scripts/check.sh`
+- ready label: `status:ready`
+- skip labels: `status:blocked`
+- priority labels: `priority:p0, priority:p1, priority:p2, priority:p3`
 - merge: yes
 
 ## Purpose
