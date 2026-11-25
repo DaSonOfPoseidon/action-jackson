@@ -1,8 +1,6 @@
 # Labels for P3 issues the review gate and Codex file (claude-ship's p3-issue.sh reads this from main).
-# Every matching rule adds its labels; a later rule's area: replaces an earlier one, so overrides go last.
+# Every matching rule adds its labels; a later rule's area: replaces an earlier one. The Markdown and docs/ rules go last on purpose, so a Markdown file anywhere gets area:docs.
 *                                   priority:p3,status:ready
-*.md                                area:docs,documentation
-docs/*                              area:docs,documentation
 frontend/*                          area:legacy
 server.js                           area:legacy
 routes/*                            area:legacy
@@ -24,3 +22,5 @@ server/tests/ActionJackson.Data.Tests/*  area:data
 server/src/ActionJackson.Edge/*     area:edge
 server/tests/ActionJackson.Edge.Tests/*  area:edge
 apps/web/*                          area:web
+*.md                                area:docs,documentation
+docs/*                              area:docs,documentation
