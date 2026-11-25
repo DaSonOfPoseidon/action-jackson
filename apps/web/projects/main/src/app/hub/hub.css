@@ -1,0 +1,144 @@
+/* The hub: the original site's mesh background, one question and three big buttons. Text and surface colours come
+   from the token pairs (tokens.spec.ts checks every rule here); the glows, borders and hover edges are decoration
+   with no text on them, so they are plain values. */
+:host {
+  display: block;
+}
+
+main {
+  position: relative;
+  box-sizing: border-box;
+  min-height: 100svh;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 2.75rem;
+  padding: 3rem 1.5rem;
+  line-height: normal;
+  background:
+    radial-gradient(at 20% 10%, rgba(88, 28, 135, 0.22) 0%, transparent 55%),
+    radial-gradient(at 100% 55%, rgba(154, 52, 18, 0.26) 0%, transparent 50%),
+    radial-gradient(at 50% 100%, rgba(20, 83, 45, 0.3) 0%, transparent 60%);
+}
+
+/* Empty until the API is down: laid over the top edge so it never moves the centred content. */
+aj-offline-banner {
+  position: absolute;
+  inset: 0 0 auto;
+  padding: 1rem 1.5rem 0;
+}
+
+h1 {
+  max-width: 22ch;
+  margin: 0;
+  font-weight: 700;
+  font-size: clamp(2.1rem, 6vw, 4rem);
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+  text-align: center;
+  text-wrap: balance;
+}
+
+ul {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The original site's outline button, with each site's colour on its icon and its hover edge. */
+a {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 4.05rem 2.4rem;
+  border: 1px solid #2a2a3a;
+  border-radius: 0.8rem;
+  background: var(--aj-surface);
+  color: var(--aj-text);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  font-weight: 600;
+  font-size: clamp(1.15rem, 1.6vw, 1.4rem);
+  text-decoration: none;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+svg {
+  flex: none;
+  width: 1.7rem;
+  height: 1.7rem;
+}
+
+.lan svg {
+  color: var(--aj-lan-accent);
+}
+
+.car svg {
+  color: var(--aj-car-accent);
+}
+
+.dev svg {
+  color: var(--aj-dev-accent);
+}
+
+a:hover {
+  border-color: var(--edge);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 0 22px var(--glow);
+}
+
+a:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+
+.lan {
+  --edge: #16a34a;
+  --glow: rgba(22, 163, 74, 0.22);
+  --ring: var(--aj-lan-accent);
+}
+
+.car {
+  --edge: #ea580c;
+  --glow: rgba(234, 88, 12, 0.22);
+  --ring: var(--aj-car-accent);
+}
+
+.dev {
+  --edge: #9333ea;
+  --glow: rgba(147, 51, 234, 0.25);
+  --ring: var(--aj-dev-accent);
+}
+
+@media (max-width: 40rem) {
+  ul {
+    flex-direction: column;
+    align-self: stretch;
+  }
+
+  a {
+    width: 100%;
+    justify-content: center;
+    gap: 0.8rem;
+    padding: 3.55rem 1.1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  a {
+    transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  a {
+    border-color: LinkText;
+  }
+}

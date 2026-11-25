@@ -17,6 +17,9 @@ export const TOKEN_NAMES = [
   'focus',
   'bannerBg',
   'bannerText',
+  'lanAccent',
+  'carAccent',
+  'devAccent',
 ] as const;
 
 export type TokenName = (typeof TOKEN_NAMES)[number];
@@ -34,7 +37,8 @@ export interface SiteTokens {
   readonly pairs: readonly TokenPair[];
 }
 
-// The pairings the shell's CSS uses. The focus ring is not text, but it is held to the large-text bar so it stays
+// The pairings the shell's CSS uses. lanAccent, carAccent and devAccent are the colours of the sites' icons on a
+// surface (the main site's hub); the other sites set them to their link colour. The focus ring is not text, but it is held to the large-text bar so it stays
 // visible on both surfaces.
 export const STANDARD_PAIRS: readonly TokenPair[] = [
   { text: 'text', background: 'bg' },
@@ -45,6 +49,9 @@ export const STANDARD_PAIRS: readonly TokenPair[] = [
   { text: 'link', background: 'surface' },
   { text: 'onAccent', background: 'accent' },
   { text: 'bannerText', background: 'bannerBg' },
+  { text: 'lanAccent', background: 'surface' },
+  { text: 'carAccent', background: 'surface' },
+  { text: 'devAccent', background: 'surface' },
   { text: 'focus', background: 'bg', large: true },
   { text: 'focus', background: 'surface', large: true },
 ];

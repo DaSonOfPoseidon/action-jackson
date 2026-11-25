@@ -14,6 +14,9 @@ export const LAN_TOKENS: SiteTokens = {
     focus: '#1d4ed8',
     bannerBg: '#fff3bf',
     bannerText: '#3b2f00',
+    lanAccent: '#0b5563',
+    carAccent: '#0b5563',
+    devAccent: '#0b5563',
   },
   pairs: STANDARD_PAIRS,
 };

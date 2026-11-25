@@ -14,6 +14,9 @@ export const CAR_TOKENS: SiteTokens = {
     focus: '#1d4ed8',
     bannerBg: '#fff3bf',
     bannerText: '#3b2f00',
+    lanAccent: '#8a1c1c',
+    carAccent: '#8a1c1c',
+    devAccent: '#8a1c1c',
   },
   pairs: STANDARD_PAIRS,
 };

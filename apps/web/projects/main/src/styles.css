@@ -1,0 +1,33 @@
+/* The main site's own look, on top of the shared base: the original site's two typefaces, self-hosted (Syne for
+   headings, Figtree for the rest; latin subset, variable weight; licences in fonts/). Not an external font: both come
+   from the site's own origin, which the edge's font-src 'self' allows. The other sites choose their own in their
+   design units. */
+@font-face {
+  font-family: 'Syne';
+  src: url('./fonts/syne-latin-wght-normal.woff2') format('woff2');
+  font-weight: 400 800;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Figtree';
+  src: url('./fonts/figtree-latin-wght-normal.woff2') format('woff2');
+  font-weight: 300 900;
+  font-display: swap;
+}
+
+html {
+  font-family: 'Figtree', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: 'Syne', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+::selection {
+  background: rgba(34, 197, 94, 0.25);
+  color: var(--aj-text);
+}

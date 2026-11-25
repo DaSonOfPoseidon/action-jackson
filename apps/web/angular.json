@@ -20,7 +20,8 @@
             "tsConfig": "projects/main/tsconfig.app.json",
             "index": "projects/main/src/index.html",
             "styles": [
-              "projects/shared/src/styles/base.css"
+              "projects/shared/src/styles/base.css",
+              "projects/main/src/styles.css"
             ],
             "security": {
               "autoCsp": false
