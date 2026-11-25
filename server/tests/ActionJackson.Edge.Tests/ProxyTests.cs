@@ -309,7 +309,29 @@ public class ProxyTests
     }
 
     [Fact]
-    public async Task A_proxied_response_has_all_four_security_headers()
+    public async Task A_proxied_response_with_its_own_csp_keeps_it_and_one_without_gets_the_edges()
+    {
+        var (host, api) = await StartAsync(context =>
+        {
+            if (context.Request.Path.Value!.EndsWith("/own", StringComparison.Ordinal))
+            {
+                context.Response.Headers["Content-Security-Policy"] = "default-src 'none'";
+            }
+
+            return Task.CompletedTask;
+        });
+        await using var _ = host;
+        await using var __ = api;
+
+        var own = await host.GetAsync("/api/lan/own", Lan);
+        var plain = await host.GetAsync("/api/lan/plain", Lan);
+
+        Assert.Equal("default-src 'none'", Assert.Single(own.Headers.GetValues("Content-Security-Policy")));
+        Assert.Equal(HealthAndHeadersTests.ContentSecurityPolicy, Assert.Single(plain.Headers.GetValues("Content-Security-Policy")));
+    }
+
+    [Fact]
+    public async Task A_proxied_response_has_all_five_security_headers()
     {
         var (host, api) = await StartAsync();
         await using var _ = host;
@@ -317,7 +339,7 @@ public class ProxyTests
 
         var response = await host.GetAsync("/api/lan/x", Lan);
 
-        foreach (var name in new[] { "X-Content-Type-Options", "X-Frame-Options", "Referrer-Policy", "Permissions-Policy" })
+        foreach (var name in new[] { "X-Content-Type-Options", "X-Frame-Options", "Referrer-Policy", "Permissions-Policy", "Content-Security-Policy" })
         {
             Assert.True(response.Headers.Contains(name), name);
         }

@@ -3,17 +3,25 @@ using Microsoft.AspNetCore.Http.Features;
 
 namespace ActionJackson.Edge.Platform;
 
-// Adds the same four security headers to every response the edge sends: files, redirects, 404s, health and
-// proxied responses. A header the response already has (the API's own) is left alone. There is no CSP yet (it needs
-// the Angular output) and no HSTS (Cloudflare owns it).
+// Adds the same five security headers to every response the edge sends: files, redirects, 404s, health and
+// proxied responses. A header the response already has (the API's own, its CSP included) is left alone. There is no
+// HSTS (Cloudflare owns it).
+//
+// The CSP header has no default-src and no script-src on purpose. Script control is in each built page: a <meta>
+// policy with the SHA-256 hashes of its inline scripts (apps/web/scripts/csp.mjs). A page obeys both policies, so
+// this one restricts everything else (base, objects, framing, forms, images, fonts, connections) and not scripts.
 internal sealed class SecurityHeadersMiddleware(RequestDelegate next)
 {
+    private const string ContentSecurityPolicy =
+        "base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; style-src 'self' 'unsafe-inline'";
+
     private static readonly (string Name, string Value)[] Headers =
     [
         ("X-Content-Type-Options", "nosniff"),
         ("X-Frame-Options", "DENY"),
         ("Referrer-Policy", "strict-origin-when-cross-origin"),
         ("Permissions-Policy", "camera=(), microphone=(), geolocation=()"),
+        ("Content-Security-Policy", ContentSecurityPolicy),
     ];
 
     public Task InvokeAsync(HttpContext context)
