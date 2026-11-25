@@ -19,3 +19,18 @@ miss pitfall-socket-probe scripts/test-db.sh # pg_isready over the socket passes
 miss pitfall-socket-probe scripts/test-db.sh until pg_isready -h 127.0.0.1 -p 5432 -U postgres; do sleep 1; done
 miss pitfall-socket-probe docs/pitfalls.md pg_isready -U postgres
 miss pitfall-socket-probe tests/db.sh pg_isready -U postgres
+hit pitfall-env-file-parser deploy/pc/garage-init.sh KEY=$(grep '^GARAGE_KEY=' deploy/pc/.env | cut -d= -f2)
+hit pitfall-env-file-parser scripts/deploy.sh sed -e 's/^export //' .env
+hit pitfall-env-file-parser scripts/check.sh cut -d= -f2 < .env
+miss pitfall-env-file-parser scripts/deploy.sh # grep '^EDGE_KEY=' .env is what the old script did
+miss pitfall-env-file-parser scripts/deploy.sh echo "grep .env by hand gives quoted values"
+miss pitfall-env-file-parser tests/env.sh grep '^KEY=' .env
+miss pitfall-env-file-parser scripts/check.sh grep -q '^EDGE_KEY=' deploy/pc/.env.example
+hit pitfall-folded-cache-validator server/src/ActionJackson.Edge/Sites/SiteFiles.cs var tag = mtime.Ticks ^ file.Length;
+hit pitfall-folded-cache-validator server/src/ActionJackson.Edge/Sites/SiteFiles.cs var key = file.Length ^ file.LastWriteTime.Ticks;
+hit pitfall-folded-cache-validator web/src/cache.ts const tag = mtime + size;
+miss pitfall-folded-cache-validator server/src/ActionJackson.Edge/Sites/SiteFiles.cs var tag = mtime.Ticks + "-" + file.Length;
+miss pitfall-folded-cache-validator server/src/ActionJackson.Edge/Sites/SiteFiles.cs // a tag of mtime ^ length collides
+miss pitfall-folded-cache-validator server/tests/ActionJackson.Edge.Tests/SiteFilesTests.cs var pair = mtime ^ length;
+miss pitfall-folded-cache-validator server/src/ActionJackson.Edge/Sites/SiteFiles.cs var note = "mtime ^ length collides";
+miss pitfall-env-file-parser scripts/deploy-lint.sh grep -qx 'arg:--exclude=/.env' "$tmp/pi-calls"
