@@ -21,21 +21,22 @@ function get(path: string, host: string): Promise<{ status: number; body: string
   });
 }
 
-async function answers(path: string, host: string, expected: string): Promise<boolean> {
+async function answers(path: string, host: string, expected: RegExp): Promise<boolean> {
   try {
     const { status, body } = await get(path, host);
-    return status === 200 && body.includes(expected);
+    return status === 200 && expected.test(body);
   } catch {
     return false;
   }
 }
 
 export default async function globalSetup(): Promise<void> {
-  const probes: [string, string, string][] = [['/healthz', 'localhost', '"status":"ok"']];
+  const probes: [string, string, RegExp][] = [['/healthz', 'localhost', /"status":"ok"/]];
   for (const site of SITES) {
-    probes.push(['/', site.host, `<h1>${site.h1.replace(/&/g, '&amp;')}</h1>`]);
+    // A component's styles put an attribute on its h1 (<h1 _ngcontent-...>), so the tag is matched with any attributes.
+    probes.push(['/', site.host, new RegExp(`<h1[^>]*>${site.h1.replace(/&/g, '&amp;')}</h1>`)]);
   }
-  probes.push(['/', 'admin.localhost', '<aj-root>']);
+  probes.push(['/', 'admin.localhost', /<aj-root>/]);
 
   const started = Date.now();
   for (const [path, host, expected] of probes) {

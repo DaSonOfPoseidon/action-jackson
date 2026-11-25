@@ -17,6 +17,8 @@ export const TOKEN_NAMES = [
   'focus',
   'bannerBg',
   'bannerText',
+  'panel',
+  'onPanel',
 ] as const;
 
 export type TokenName = (typeof TOKEN_NAMES)[number];
@@ -34,7 +36,7 @@ export interface SiteTokens {
   readonly pairs: readonly TokenPair[];
 }
 
-// The pairings the shell's CSS uses. The focus ring is not text, but it is held to the large-text bar so it stays
+// The pairings the shell's CSS uses. "panel" is a dark band some pages set text on (the main site's hub). The focus ring is not text, but it is held to the large-text bar so it stays
 // visible on both surfaces.
 export const STANDARD_PAIRS: readonly TokenPair[] = [
   { text: 'text', background: 'bg' },
@@ -45,6 +47,7 @@ export const STANDARD_PAIRS: readonly TokenPair[] = [
   { text: 'link', background: 'surface' },
   { text: 'onAccent', background: 'accent' },
   { text: 'bannerText', background: 'bannerBg' },
+  { text: 'onPanel', background: 'panel' },
   { text: 'focus', background: 'bg', large: true },
   { text: 'focus', background: 'surface', large: true },
 ];

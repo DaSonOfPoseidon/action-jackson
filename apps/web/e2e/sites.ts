@@ -7,16 +7,26 @@ export interface SiteExpectation {
   readonly production: string;
   readonly h1: string;
   readonly title: string;
+  // A sentence the home page's <main> must contain.
+  readonly text: string;
 }
 
 export const SITES: readonly SiteExpectation[] = [
-  { key: 'main', host: 'localhost', production: 'actionjacksoninstalls.com', h1: 'Action Jackson', title: 'Home · Action Jackson' },
+  {
+    key: 'main',
+    host: 'localhost',
+    production: 'actionjacksoninstalls.com',
+    h1: 'Action Jackson',
+    title: 'Home · Action Jackson',
+    text: 'Home networking and car audio installs, and the developer behind them.',
+  },
   {
     key: 'lan',
     host: 'lan.localhost',
     production: 'lan.actionjacksoninstalls.com',
     h1: 'Action Jackson Installs · Home Networking',
     title: 'Home · Action Jackson Home Networking',
+    text: 'This site is being rebuilt.',
   },
   {
     key: 'car',
@@ -24,6 +34,7 @@ export const SITES: readonly SiteExpectation[] = [
     production: 'car.actionjacksoninstalls.com',
     h1: 'Action Jackson · Car Audio & Remote Start',
     title: 'Home · Action Jackson Car Audio & Remote Start',
+    text: 'This site is being rebuilt.',
   },
   {
     key: 'dev',
@@ -31,6 +42,7 @@ export const SITES: readonly SiteExpectation[] = [
     production: 'dev.actionjacksoninstalls.com',
     h1: 'Jackson · Developer Portfolio',
     title: 'Home · Action Jackson Developer Portfolio',
+    text: 'This site is being rebuilt.',
   },
 ];
 

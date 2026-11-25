@@ -13,7 +13,7 @@ for (const site of SITES) {
       await expect(page).toHaveTitle(site.title);
       await expect(page.locator('html')).toHaveAttribute('lang', 'en');
       await expect(page.getByRole('heading', { level: 1 })).toHaveText(site.h1);
-      await expect(page.locator('main#main')).toContainText('This site is being rebuilt.');
+      await expect(page.locator('main#main')).toContainText(site.text);
       const canonical = `https://${site.production}/`;
       await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', canonical);
       await expect(page.locator('meta[property="og:url"]')).toHaveAttribute('content', canonical);

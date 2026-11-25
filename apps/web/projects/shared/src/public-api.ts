@@ -11,6 +11,7 @@ export * from './lib/seo/seo';
 export * from './lib/sites/site-key';
 export * from './lib/sites/site-meta';
 export * from './lib/sites/site-registry';
+export * from './lib/sites/socials';
 export * from './lib/theme/contrast';
 export * from './lib/theme/site-tokens';
 export * from './lib/theme/theme';

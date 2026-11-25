@@ -14,6 +14,8 @@ export const DEV_TOKENS: SiteTokens = {
     focus: '#1d4ed8',
     bannerBg: '#fff3bf',
     bannerText: '#3b2f00',
+    panel: '#101828',
+    onPanel: '#ffffff',
   },
   pairs: STANDARD_PAIRS,
 };

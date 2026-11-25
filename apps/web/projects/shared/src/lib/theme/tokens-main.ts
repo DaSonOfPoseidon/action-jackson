@@ -1,19 +1,22 @@
 import { STANDARD_PAIRS, type SiteTokens } from './tokens';
 
-// Placeholder palette for the main site until its design unit (11). Every pair is checked by tokens.spec.ts.
+// The main site's palette: a pale cool-grey page with a deep petrol blue (link, accent) and a dark slate "panel" that
+// holds the hub's name and site cards, like the faceplate of a patch panel. Every pair is checked by tokens.spec.ts.
 export const MAIN_TOKENS: SiteTokens = {
   key: 'main',
   colors: {
-    bg: '#ffffff',
-    surface: '#f2f4f7',
-    text: '#101828',
-    textMuted: '#344054',
-    link: '#1b3a6b',
-    accent: '#1b3a6b',
+    bg: '#eef1f4',
+    surface: '#ffffff',
+    text: '#0f1c26',
+    textMuted: '#394a58',
+    link: '#0b4f6c',
+    accent: '#0b4f6c',
     onAccent: '#ffffff',
     focus: '#1d4ed8',
     bannerBg: '#fff3bf',
     bannerText: '#3b2f00',
+    panel: '#14283a',
+    onPanel: '#eef1f4',
   },
   pairs: STANDARD_PAIRS,
 };
