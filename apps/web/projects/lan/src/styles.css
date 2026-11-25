@@ -957,6 +957,7 @@ summary {
 
   .hero h1 {
     font-size: 4.5rem;
+    line-height: 1;
   }
 
   .hero-sub {
@@ -1121,6 +1122,7 @@ summary {
   margin: 3rem 0 0;
   padding: 0;
   list-style: none;
+  align-items: start;
 }
 
 @media (min-width: 48rem) {
@@ -1138,7 +1140,6 @@ summary {
 .package {
   display: flex;
   flex-direction: column;
-  height: 100%;
 }
 
 .package.featured {
@@ -1497,7 +1498,7 @@ summary {
 @media (min-width: 48rem) {
   .service-hero h1 {
     font-size: 3rem;
-    line-height: 1.25;
+    line-height: 1;
   }
 }
 
