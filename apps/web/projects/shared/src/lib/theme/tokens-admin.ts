@@ -14,8 +14,9 @@ export const ADMIN_TOKENS: SiteTokens = {
     focus: '#1d4ed8',
     bannerBg: '#fff3bf',
     bannerText: '#3b2f00',
-    panel: '#101828',
-    onPanel: '#ffffff',
+    lanAccent: '#1b3a6b',
+    carAccent: '#1b3a6b',
+    devAccent: '#1b3a6b',
   },
   pairs: STANDARD_PAIRS,
 };

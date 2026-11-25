@@ -28,19 +28,27 @@ for (const site of SITES) {
       // ng-version is written by the prerender too, so it proves nothing about the browser. A click on the skip link is
       // client-only: without the bootstrap the bare link follows its #main href (the click is not cancelled), with it
       // the handler cancels the click and focuses <main>. Poll, since the click may land before the handler is attached.
+      // A page with no frame has no skip link: Angular attaches its component state (__ngContext__) to the root element
+      // only in the browser, and that is the proof there.
       await expect(page.locator('aj-root')).toHaveAttribute('ng-version', /\d/);
-      await expect
-        .poll(
-          () =>
-            page.evaluate(() => {
-              (document.activeElement as HTMLElement | null)?.blur();
-              const link = document.querySelector<HTMLAnchorElement>('a.skip-link');
-              const notCancelled = link?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
-              return { cancelled: notCancelled === false, focused: document.activeElement?.id };
-            }),
-          { timeout: 15_000 },
-        )
-        .toEqual({ cancelled: true, focused: 'main' });
+      if (site.framed) {
+        await expect
+          .poll(
+            () =>
+              page.evaluate(() => {
+                (document.activeElement as HTMLElement | null)?.blur();
+                const link = document.querySelector<HTMLAnchorElement>('a.skip-link');
+                const notCancelled = link?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+                return { cancelled: notCancelled === false, focused: document.activeElement?.id };
+              }),
+            { timeout: 15_000 },
+          )
+          .toEqual({ cancelled: true, focused: 'main' });
+      } else {
+        await expect
+          .poll(() => page.evaluate(() => '__ngContext__' in (document.querySelector('aj-root') ?? {})), { timeout: 15_000 })
+          .toBe(true);
+      }
       expect(await watched.problems()).toEqual([]);
     });
 
@@ -53,7 +61,8 @@ for (const site of SITES) {
     });
 
     test('the switcher links to the other public sites by their production URL and marks this one', async ({ page }) => {
-      await page.goto(pageUrl(site.host));
+      // The hub has no switcher; the not-found page of the same site does.
+      await page.goto(pageUrl(site.host, site.framed ? '/' : '/no-such-page'));
       const nav = page.getByRole('navigation', { name: 'Action Jackson sites' });
       const others = SITES.filter((other) => other.key !== site.key);
       await expect(nav.getByRole('link')).toHaveCount(others.length);

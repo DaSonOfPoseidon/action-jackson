@@ -1,4 +1,4 @@
-// Jackson's public profiles, in one place so every site that shows them (the main hub, the dev portfolio) agrees. They
+// Jackson's public profiles, in one place so every site that shows them (the dev portfolio, and others later) agrees. They
 // are public facts, not secrets, and the API never uses them, so they live here and not in contracts/.
 export interface Social {
   readonly key: 'github' | 'linkedin' | 'email';

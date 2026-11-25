@@ -1,4 +1,4 @@
-// The main site's landing hub: three site cards and the socials, opened through the real edge by its Host name.
+// The main site's landing hub: one question and three big buttons, opened through the real edge by its Host name.
 import AxeBuilder from '@axe-core/playwright';
 import { pageUrl } from './sites';
 import { expect, test } from './fixtures';
@@ -6,85 +6,51 @@ import { expect, test } from './fixtures';
 const HOST = 'localhost';
 
 // Written out here on purpose, not imported from the shared library.
-const CARDS = [
-  { heading: 'Home Networking', href: 'https://lan.actionjacksoninstalls.com/' },
-  { heading: 'Car Audio & Remote Start', href: 'https://car.actionjacksoninstalls.com/' },
-  { heading: 'Developer Portfolio', href: 'https://dev.actionjacksoninstalls.com/' },
-] as const;
-
-const SOCIAL_LINKS = [
-  { name: 'GitHub', href: 'https://github.com/DaSonOfPoseidon' },
-  { name: 'LinkedIn', href: 'https://www.linkedin.com/in/jackson-keithley-115582213/' },
-  { name: 'jackson@actionjacksoninstalls.com', href: 'mailto:jackson@actionjacksoninstalls.com' },
+const BUTTONS = [
+  { name: 'Home networking', href: 'https://lan.actionjacksoninstalls.com/' },
+  { name: 'Car audio and remote start', href: 'https://car.actionjacksoninstalls.com/' },
+  { name: 'Developer portfolio', href: 'https://dev.actionjacksoninstalls.com/' },
 ] as const;
 
 test.describe('main hub', () => {
-  test('lists the three sites as whole-card links, in order, to their production URLs', async ({ page, watched }) => {
+  test('asks one question and lists the three sites as buttons, in order, to their production URLs', async ({ page, watched }) => {
     await page.goto(pageUrl(HOST));
-    const cards = page.locator('main#main').getByRole('list', { name: 'Sites' }).getByRole('listitem');
-    await expect(cards).toHaveCount(CARDS.length);
-    for (const [index, card] of CARDS.entries()) {
-      const item = cards.nth(index);
-      await expect(item.getByRole('heading', { level: 2 })).toHaveText(card.heading);
-      // One link per card, named by the site, pointing at its production host.
-      await expect(item.getByRole('link')).toHaveCount(1);
-      await expect(item.getByRole('link', { name: card.heading, exact: true })).toHaveAttribute('href', card.href);
+    const main = page.locator('main#main');
+    await expect(main.getByRole('heading', { level: 1 })).toHaveText('What are you looking for?');
+    const links = main.getByRole('link');
+    await expect(links).toHaveCount(BUTTONS.length);
+    for (const [index, button] of BUTTONS.entries()) {
+      await expect(links.nth(index)).toHaveText(button.name);
+      await expect(main.getByRole('link', { name: button.name, exact: true })).toHaveAttribute('href', button.href);
     }
     expect(await watched.problems()).toEqual([]);
   });
 
-  test('a click anywhere on a card follows its link', async ({ page }) => {
+  test('is a whole screen: no header, switcher, footer or skip link, and the page is only the question and the buttons', async ({ page }) => {
     await page.goto(pageUrl(HOST));
-    const item = page.locator('main#main').getByRole('list', { name: 'Sites' }).getByRole('listitem').nth(1);
-    const box = (await item.boundingBox())!;
-    // The bottom-right corner of the card is far from its heading text, so only a stretched link answers it.
-    const target = await page.evaluate(
-      ([x, y]) => {
-        const hit = document.elementFromPoint(x, y);
-        return hit?.closest('a')?.getAttribute('href') ?? null;
-      },
-      [box.x + box.width - 6, box.y + box.height - 6],
-    );
-    expect(target).toBe('https://car.actionjacksoninstalls.com/');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expect(page.locator('header, footer, nav, a.skip-link')).toHaveCount(0);
+    await expect(page.getByRole('link')).toHaveCount(BUTTONS.length);
+    // The main element fills the viewport.
+    const box = (await page.locator('main#main').boundingBox())!;
+    expect(box.height).toBeGreaterThanOrEqual(page.viewportSize()!.height);
   });
 
-  test('shows the socials with their real URLs', async ({ page }) => {
-    await page.goto(pageUrl(HOST));
-    const socials = page.locator('main#main').getByRole('navigation', { name: 'Find Jackson online' });
-    await expect(socials.getByRole('link')).toHaveCount(SOCIAL_LINKS.length);
-    for (const social of SOCIAL_LINKS) {
-      await expect(socials.getByRole('link', { name: social.name, exact: true })).toHaveAttribute('href', social.href);
-    }
-  });
-
-  test('tab order runs header, cards, socials, footer and every stop shows a focus ring', async ({ page }) => {
+  test('tab order runs through the three buttons and every stop shows a focus ring', async ({ page }) => {
     await page.goto(pageUrl(HOST));
     await expect(page.locator('aj-root')).toHaveAttribute('ng-version', /\d/);
     const stops: string[] = [];
-    for (let i = 0; i < 10; i += 1) {
+    for (let i = 0; i < BUTTONS.length; i += 1) {
       await page.keyboard.press('Tab');
       stops.push(
         await page.evaluate(() => {
           const el = document.activeElement as HTMLElement;
           const style = getComputedStyle(el);
-          const after = getComputedStyle(el, '::after');
-          const ring = style.outlineStyle !== 'none' || after.outlineStyle !== 'none';
-          return `${el.textContent?.trim()}|${ring ? 'ring' : 'no-ring'}`;
+          return `${el.textContent?.trim()}|${style.outlineStyle !== 'none' && style.outlineWidth !== '0px' ? 'ring' : 'no-ring'}`;
         }),
       );
     }
-    expect(stops).toEqual([
-      'Skip to main content|ring',
-      'Home Networking|ring',
-      'Car Audio & Remote Start|ring',
-      'Developer Portfolio|ring',
-      'Home Networking|ring',
-      'Car Audio & Remote Start|ring',
-      'Developer Portfolio|ring',
-      'GitHub|ring',
-      'LinkedIn|ring',
-      'jackson@actionjacksoninstalls.com|ring',
-    ]);
+    expect(stops).toEqual(BUTTONS.map((button) => `${button.name}|ring`));
   });
 
   test('has no horizontal scroll at 320px, and the page is laid out at 1920px', async ({ page }) => {
@@ -95,6 +61,33 @@ test.describe('main hub', () => {
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
       expect(overflow, `scrollWidth - innerWidth at ${width}px`).toBeLessThanOrEqual(0);
     }
+  });
+
+  test('loads its two self-hosted fonts from its own origin, with no request to another host', async ({ page }) => {
+    const hosts = new Set<string>();
+    page.on('request', (request) => hosts.add(new URL(request.url()).host));
+    const fonts: string[] = [];
+    page.on('response', (response) => {
+      if (new URL(response.url()).pathname.endsWith('.woff2')) {
+        fonts.push(`${response.status()} ${new URL(response.url()).pathname}`);
+      }
+    });
+    await page.goto(pageUrl(HOST));
+    await page.evaluate(() => document.fonts.ready);
+    expect([...hosts]).toEqual([new URL(pageUrl(HOST)).host]);
+    expect(fonts).toHaveLength(2);
+    expect(fonts.every((font) => font.startsWith('200 '))).toBe(true);
+    // The headings use Syne, the buttons Figtree.
+    const used = await page.evaluate(() => [
+      getComputedStyle(document.querySelector('h1')!).fontFamily,
+      getComputedStyle(document.querySelector('main a')!).fontFamily,
+      document.fonts.check('700 16px Syne'),
+      document.fonts.check('600 16px Figtree'),
+    ]);
+    expect(used[0]).toMatch(/^"?Syne"?,/);
+    expect(used[1]).toMatch(/^"?Figtree"?,/);
+    expect(used[2]).toBe(true);
+    expect(used[3]).toBe(true);
   });
 
   test('makes no request to the api and is clean for axe at 320px and at desktop width', async ({ page }) => {

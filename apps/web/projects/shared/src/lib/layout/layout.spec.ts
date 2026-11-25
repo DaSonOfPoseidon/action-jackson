@@ -1,7 +1,8 @@
 import { provideHttpClient, withFetch } from '@angular/common/http';
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, RouterOutlet, provideRouter } from '@angular/router';
+import { FramedPage } from './framed-page';
 import { SITE_KEY } from '../sites/site-key';
 import type { SiteKey } from '../sites/site-registry';
 import { SiteFrame } from './site-frame';
@@ -9,6 +10,9 @@ import { SiteSwitcher } from './site-switcher';
 
 @Component({ imports: [SiteFrame], template: '<aj-site-frame><p id="content">Hello</p></aj-site-frame>' })
 class Host {}
+
+@Component({ imports: [RouterOutlet], template: '<router-outlet />' })
+class RouterHost {}
 
 async function render<T>(component: new () => T, site: SiteKey) {
   TestBed.configureTestingModule({
@@ -87,5 +91,47 @@ describe('SiteFrame', () => {
   it('includes the offline banner region', async () => {
     const root = await render(Host, 'lan');
     expect(root.querySelector('[role="status"]')).not.toBeNull();
+  });
+});
+
+describe('FramedPage', () => {
+  @Component({ template: '<p id="framed">In the frame</p>' })
+  class Inside {}
+  @Component({ template: '<main id="main"><p id="bare">Bare</p></main>' })
+  class Outside {}
+
+  // One route inside the frame, one beside it: the frame is in the HTML of the first only.
+  async function open(url: string) {
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([
+          { path: 'bare', component: Outside },
+          { path: '', component: FramedPage, children: [{ path: 'framed', component: Inside }] },
+        ]),
+        provideHttpClient(withFetch()),
+        { provide: SITE_KEY, useValue: 'main' satisfies SiteKey },
+      ],
+    });
+    const fixture = TestBed.createComponent(RouterHost);
+    await TestBed.inject(Router).navigateByUrl(url);
+    await fixture.whenStable();
+    return fixture.nativeElement as HTMLElement;
+  }
+
+  it('wraps its child route in the frame: skip link, header, main#main, footer', async () => {
+    const root = await open('/framed');
+    expect(root.querySelector('main#main #framed')).not.toBeNull();
+    expect(root.querySelector('a.skip-link')).not.toBeNull();
+    expect(root.querySelector('header')).not.toBeNull();
+    expect(root.querySelector('footer')).not.toBeNull();
+  });
+
+  it('leaves the frame out of a route that is not inside it', async () => {
+    const root = await open('/bare');
+    expect(root.querySelector('main#main #bare')).not.toBeNull();
+    expect(root.querySelector('a.skip-link')).toBeNull();
+    expect(root.querySelector('header')).toBeNull();
+    expect(root.querySelector('footer')).toBeNull();
+    expect(root.querySelectorAll('main').length).toBe(1);
   });
 });

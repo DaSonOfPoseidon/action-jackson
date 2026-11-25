@@ -9,6 +9,9 @@ export interface SiteExpectation {
   readonly title: string;
   // A sentence the home page's <main> must contain.
   readonly text: string;
+  // Whether the home page sits in the page frame (skip link, header with the switcher, footer). The main site's hub is a
+  // whole screen without it; its not-found page has the frame.
+  readonly framed: boolean;
 }
 
 export const SITES: readonly SiteExpectation[] = [
@@ -16,9 +19,10 @@ export const SITES: readonly SiteExpectation[] = [
     key: 'main',
     host: 'localhost',
     production: 'actionjacksoninstalls.com',
-    h1: 'Action Jackson',
+    h1: 'What are you looking for?',
     title: 'Home · Action Jackson',
-    text: 'Home networking and car audio installs, and the developer behind them.',
+    text: 'Developer portfolio',
+    framed: false,
   },
   {
     key: 'lan',
@@ -27,6 +31,7 @@ export const SITES: readonly SiteExpectation[] = [
     h1: 'Action Jackson Installs · Home Networking',
     title: 'Home · Action Jackson Home Networking',
     text: 'This site is being rebuilt.',
+    framed: true,
   },
   {
     key: 'car',
@@ -35,6 +40,7 @@ export const SITES: readonly SiteExpectation[] = [
     h1: 'Action Jackson · Car Audio & Remote Start',
     title: 'Home · Action Jackson Car Audio & Remote Start',
     text: 'This site is being rebuilt.',
+    framed: true,
   },
   {
     key: 'dev',
@@ -43,6 +49,7 @@ export const SITES: readonly SiteExpectation[] = [
     h1: 'Jackson · Developer Portfolio',
     title: 'Home · Action Jackson Developer Portfolio',
     text: 'This site is being rebuilt.',
+    framed: true,
   },
 ];
 

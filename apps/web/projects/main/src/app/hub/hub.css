@@ -1,180 +1,144 @@
-/* The hub: one dark faceplate holding the name and a labelled port for each site, then the socials. Colours come only
-   from the token pairs (tokens.spec.ts checks every rule here); sizes are plain rem. */
+/* The hub: the original site's mesh background, one question and three big buttons. Text and surface colours come
+   from the token pairs (tokens.spec.ts checks every rule here); the glows, borders and hover edges are decoration
+   with no text on them, so they are plain values. */
 :host {
   display: block;
 }
 
-.faceplate {
-  padding: clamp(1.25rem, 5vw, 3rem);
-  border-radius: 1.5rem;
-  background: var(--aj-panel);
-  color: var(--aj-on-panel);
-}
-
-.intro {
-  display: grid;
-  gap: 1.25rem 3rem;
-  align-items: end;
-}
-
-/* "min-content" stacks the two words of the name, whatever the width, so the name is the page's one big shape. */
-h1 {
-  width: min-content;
-  margin: 0;
-  font-size: clamp(3rem, 12vw, 6.5rem);
-  font-weight: 800;
-  line-height: 0.92;
-  letter-spacing: -0.04em;
-}
-
-.lede {
-  max-width: 24rem;
-  margin: 0;
-  font-size: 1.25rem;
-  line-height: 1.45;
-}
-
-.ports {
-  display: grid;
-  gap: 1rem;
-  margin: clamp(2rem, 6vw, 3.5rem) 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.port {
+main {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding: 1rem 1rem 1.25rem;
-  border: 2px solid var(--aj-surface);
-  border-radius: 0.5rem;
-  background: var(--aj-surface);
-  color: var(--aj-text);
+  box-sizing: border-box;
+  min-height: 100svh;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 2.75rem;
+  padding: 3rem 1.5rem;
+  line-height: normal;
+  background:
+    radial-gradient(at 20% 10%, rgba(88, 28, 135, 0.22) 0%, transparent 55%),
+    radial-gradient(at 100% 55%, rgba(154, 52, 18, 0.26) 0%, transparent 50%),
+    radial-gradient(at 50% 100%, rgba(20, 83, 45, 0.3) 0%, transparent 60%);
 }
 
-.top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
-}
-
-/* The patch label: the site's real address, as it would read on a label-maker strip. */
-.host {
-  margin: 0;
-  padding: 0.125rem 0.375rem;
-  border: 1px solid var(--aj-text-muted);
-  border-radius: 0.25rem;
-  color: var(--aj-text-muted);
-  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
-  font-size: 0.75rem;
-  line-height: 1.4;
-  overflow-wrap: anywhere;
-}
-
-.port .icon {
-  flex: none;
-  width: 1.75rem;
-  height: 1.75rem;
-  color: var(--aj-link);
-}
-
-h2 {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 700;
-  line-height: 1.15;
-  letter-spacing: -0.015em;
-}
-
-.blurb {
-  margin: 0;
-  color: var(--aj-text-muted);
-  line-height: 1.5;
-}
-
-/* The heading's link covers the whole card; the ring is drawn on the card, inside its border. */
-.port a {
-  color: var(--aj-link);
-  text-decoration: none;
-}
-
-.port a::after {
-  content: '';
+/* Empty until the API is down: laid over the top edge so it never moves the centred content. */
+aj-offline-banner {
   position: absolute;
-  inset: 0;
-  border-radius: inherit;
+  inset: 0 0 auto;
+  padding: 1rem 1.5rem 0;
 }
 
-.port a:focus-visible {
-  outline: none;
+h1 {
+  max-width: 22ch;
+  margin: 0;
+  font-weight: 700;
+  font-size: clamp(2.1rem, 6vw, 4rem);
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+  text-align: center;
+  text-wrap: balance;
 }
 
-.port a:focus-visible::after {
-  outline: 3px solid var(--aj-focus);
-  outline-offset: -6px;
-}
-
-.port:hover {
-  border-color: var(--aj-accent);
-}
-
-.port:hover a {
-  text-decoration: underline;
-  text-decoration-thickness: 0.12em;
-  text-underline-offset: 0.2em;
-}
-
-.socials ul {
+ul {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.25rem 1.75rem;
-  margin: 1.5rem 0 0;
+  justify-content: center;
+  gap: 1.25rem;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.socials a {
+/* The original site's outline button, with each site's colour on its icon and its hover edge. */
+a {
+  box-sizing: border-box;
   display: inline-flex;
   align-items: center;
-  gap: 0.625rem;
-  min-height: 2.75rem;
-  color: var(--aj-link);
-  overflow-wrap: anywhere;
+  gap: 1rem;
+  padding: 4.05rem 2.4rem;
+  border: 1px solid #2a2a3a;
+  border-radius: 0.8rem;
+  background: var(--aj-surface);
+  color: var(--aj-text);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  font-weight: 600;
+  font-size: clamp(1.15rem, 1.6vw, 1.4rem);
+  text-decoration: none;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
 }
 
-.socials .icon {
+svg {
   flex: none;
-  width: 1.25rem;
-  height: 1.25rem;
+  width: 1.7rem;
+  height: 1.7rem;
 }
 
-@media (min-width: 48rem) {
-  .intro {
-    grid-template-columns: auto 1fr;
+.lan svg {
+  color: var(--aj-lan-accent);
+}
+
+.car svg {
+  color: var(--aj-car-accent);
+}
+
+.dev svg {
+  color: var(--aj-dev-accent);
+}
+
+a:hover {
+  border-color: var(--edge);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 0 22px var(--glow);
+}
+
+a:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+
+.lan {
+  --edge: #16a34a;
+  --glow: rgba(22, 163, 74, 0.22);
+  --ring: var(--aj-lan-accent);
+}
+
+.car {
+  --edge: #ea580c;
+  --glow: rgba(234, 88, 12, 0.22);
+  --ring: var(--aj-car-accent);
+}
+
+.dev {
+  --edge: #9333ea;
+  --glow: rgba(147, 51, 234, 0.25);
+  --ring: var(--aj-dev-accent);
+}
+
+@media (max-width: 40rem) {
+  ul {
+    flex-direction: column;
+    align-self: stretch;
   }
 
-  .ports {
-    grid-template-columns: repeat(3, 1fr);
+  a {
+    width: 100%;
+    justify-content: center;
+    gap: 0.8rem;
+    padding: 3.55rem 1.1rem;
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .port {
-    transition: border-color 0.15s ease;
+@media (prefers-reduced-motion: reduce) {
+  a {
+    transition: none;
   }
 }
 
 @media (forced-colors: active) {
-  .port,
-  .host {
-    border-color: CanvasText;
-  }
-
-  .port a:focus-visible::after {
-    outline-color: Highlight;
+  a {
+    border-color: LinkText;
   }
 }

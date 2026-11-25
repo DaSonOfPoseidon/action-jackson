@@ -1,6 +1,7 @@
 // Public API of the shared library, imported by the apps as "@aj/shared" (a tsconfig path, no package build).
 export * from './lib/api/api-client';
 export * from './lib/api/api-problem';
+export * from './lib/layout/framed-page';
 export * from './lib/layout/offline-banner';
 export * from './lib/layout/site-frame';
 export * from './lib/layout/site-switcher';

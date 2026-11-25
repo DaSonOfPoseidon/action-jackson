@@ -1,5 +1,6 @@
 /* Global base styles for every app. The colours come from the per-site tokens (lib/theme), applied as --aj-* custom
-   properties on :root. No external fonts, CDNs or analytics: a system font stack only. */
+   properties on :root. No external fonts, CDNs or analytics: a system font stack, unless a site self-hosts its own
+   typefaces (the main site does, in projects/main/src/styles.css). */
 html {
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   font-size: 100%;

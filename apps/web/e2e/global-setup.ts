@@ -34,7 +34,9 @@ export default async function globalSetup(): Promise<void> {
   const probes: [string, string, RegExp][] = [['/healthz', 'localhost', /"status":"ok"/]];
   for (const site of SITES) {
     // A component's styles put an attribute on its h1 (<h1 _ngcontent-...>), so the tag is matched with any attributes.
-    probes.push(['/', site.host, new RegExp(`<h1[^>]*>${site.h1.replace(/&/g, '&amp;')}</h1>`)]);
+    // The h1 is text, not a pattern: "?" and the like are escaped.
+    const h1 = site.h1.replace(/&/g, '&amp;').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    probes.push(['/', site.host, new RegExp(`<h1[^>]*>${h1}</h1>`)]);
   }
   probes.push(['/', 'admin.localhost', /<aj-root>/]);
 
