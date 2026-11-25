@@ -1,0 +1,11 @@
+ban pitfall-read-max-then-insert warn *.js,*.jsx,*.ts,*.tsx,*.cs,*.py,*.sql,*.go,*.java,*.kt,!*tests/*,!*.test.*,!*.spec.* '(^|[^[:alnum:]_])(MAX|Max|max)(Async)?[(][^;]*[)][[:space:]]*[+][[:space:]]*1([^[:alnum:]_.]|$)' unless '^[[:space:]]*(//|#|--|/\*|\*)|^[^"'']*["''].*(MAX|Max|max)(Async)?[(]' -- Take the number from a DB sequence or a unique constraint with retry; max + 1 hands the same number to two concurrent requests.
+ban pitfall-client-file-type warn *.js,*.jsx,*.ts,*.tsx,*.cs,*.py,*.go,*.java,*.kt,!*tests/*,!*__tests__/*,!*.test.*,!*.spec.* '(includes|Contains|contains|indexOf|has)[(][^)]*(mimetype|MimeType|mime_type|ContentType|content_type)|(mimetype|MimeType|mime_type|ContentType|content_type)[^;]*[.](includes|Contains|contains|indexOf|has)[(]|(mimetype|mime_type|content_type)[[:space:]]+(not[[:space:]]+)?in[[:space:]]' unless '^[[:space:]]*(//|#|--|/\*|\*)|^[^"'']*["''].*(mimetype|MimeType|mime_type|ContentType|content_type)' -- Sniff the upload's magic bytes; the declared MIME type and the file name come from the client.
+ban pitfall-socket-probe warn *.sh,*.bash,*.yml,*.yaml,*.toml,*.json,*Dockerfile,!*tests/* '(^|[^[:alnum:]_])pg_isready([^[:alnum:]_]|$)' unless '^[[:space:]]*#|pg_isready[^#]*-h' -- Probe the TCP port the clients use (pg_isready -h 127.0.0.1 -p 5432): the socket answers during the init server's start-up.
+# pitfall: Read-max-then-insert numbering -> pitfall-read-max-then-insert
+# pitfall: Status lists that disagree -> none: enum and validation drift is a behaviour, not one literal line
+# pitfall: Duplicated business calculations -> none: duplicate logic has no single-line signature
+# pitfall: A read endpoint with no auth -> none: auth gaps need the route and middleware, not one line
+# pitfall: Trusting the client's file type -> pitfall-client-file-type
+# pitfall: UI copy promising what the backend doesn't do -> none: copy must match behaviour; no literal signature
+# pitfall: Derived amounts that default to zero -> none: `|| 0` is common in correct code; needs per-variant checks
+# pitfall: A readiness probe that passes before the real service is up -> pitfall-socket-probe
