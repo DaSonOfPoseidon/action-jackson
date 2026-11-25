@@ -1,0 +1,43 @@
+hit pitfall-read-max-then-insert models/Invoice.js const next = Math.max(...existing.map((i) => i.number)) + 1;
+hit pitfall-read-max-then-insert server/src/ActionJackson.Data/Numbering.cs var next = await db.Invoices.MaxAsync(i => i.Number) + 1;
+hit pitfall-read-max-then-insert db/numbering.sql SELECT MAX(number) + 1 FROM invoices;
+miss pitfall-read-max-then-insert db/numbering.sql SELECT nextval('invoice_number_seq');
+miss pitfall-read-max-then-insert routes/invoices.js // the old code took MAX(number) + 1 here
+miss pitfall-read-max-then-insert routes/invoices.js const note = "MAX(number) + 1 was the old rule";
+miss pitfall-read-max-then-insert tests/numbering.test.ts const next = list.Max(x => x.Number) + 1;
+hit pitfall-client-file-type routes/files.js if (!ALLOWED_TYPES.includes(file.mimetype)) {
+hit pitfall-client-file-type server/src/ActionJackson.Api/Uploads/Upload.cs if (!allowed.Contains(file.ContentType)) return Results.BadRequest();
+hit pitfall-client-file-type app/upload.py if content_type not in ALLOWED:
+miss pitfall-client-file-type routes/files.js const kind = sniffKind(buffer); if (!ALLOWED_KINDS.includes(kind)) {
+miss pitfall-client-file-type routes/files.js // never trust ALLOWED.includes(file.mimetype) here
+miss pitfall-client-file-type src/upload.ts const note = "checked: ALLOWED.includes(file.mimetype)";
+miss pitfall-client-file-type tests/files.test.js assert(ALLOWED.includes(file.mimetype));
+hit pitfall-socket-probe scripts/test-db.sh   until pg_isready -U postgres; do sleep 1; done
+hit pitfall-socket-probe deploy/pc/compose.yml     test: ["CMD-SHELL", "pg_isready -U postgres"]
+hit pitfall-socket-probe .github/workflows/ci.yml       --health-cmd "pg_isready -U postgres"
+miss pitfall-socket-probe scripts/test-db.sh # pg_isready over the socket passes too early
+miss pitfall-socket-probe scripts/test-db.sh until pg_isready -h 127.0.0.1 -p 5432 -U postgres; do sleep 1; done
+miss pitfall-socket-probe docs/pitfalls.md pg_isready -U postgres
+miss pitfall-socket-probe tests/db.sh pg_isready -U postgres
+hit pitfall-env-file-parser deploy/pc/garage-init.sh KEY=$(grep '^GARAGE_KEY=' deploy/pc/.env | cut -d= -f2)
+hit pitfall-env-file-parser scripts/deploy.sh sed -e 's/^export //' .env
+hit pitfall-env-file-parser scripts/check.sh cut -d= -f2 < .env
+miss pitfall-env-file-parser scripts/deploy.sh # grep '^EDGE_KEY=' .env is what the old script did
+miss pitfall-env-file-parser scripts/deploy.sh echo "grep .env by hand gives quoted values"
+miss pitfall-env-file-parser tests/env.sh grep '^KEY=' .env
+miss pitfall-env-file-parser scripts/check.sh grep -q '^EDGE_KEY=' deploy/pc/.env.example
+hit pitfall-folded-cache-validator server/src/ActionJackson.Edge/Sites/SiteFiles.cs var tag = mtime.Ticks ^ file.Length;
+hit pitfall-folded-cache-validator server/src/ActionJackson.Edge/Sites/SiteFiles.cs var key = file.Length ^ file.LastWriteTime.Ticks;
+hit pitfall-folded-cache-validator web/src/cache.ts const tag = mtime + size;
+miss pitfall-folded-cache-validator server/src/ActionJackson.Edge/Sites/SiteFiles.cs var tag = mtime.Ticks + "-" + file.Length;
+miss pitfall-folded-cache-validator server/src/ActionJackson.Edge/Sites/SiteFiles.cs // a tag of mtime ^ length collides
+miss pitfall-folded-cache-validator server/tests/ActionJackson.Edge.Tests/SiteFilesTests.cs var pair = mtime ^ length;
+miss pitfall-folded-cache-validator server/src/ActionJackson.Edge/Sites/SiteFiles.cs var note = "mtime ^ length collides";
+miss pitfall-env-file-parser scripts/deploy-lint.sh grep -qx 'arg:--exclude=/.env' "$tmp/pi-calls"
+hit pitfall-read-max-then-insert models/Invoice.js log("max"); const next = Math.max(...ids) + 1;
+hit pitfall-read-max-then-insert models/Invoice.js log('max'); const next = Math.max(...ids) + 1;
+hit pitfall-client-file-type routes/files.js log("upload"); if (!ALLOWED.includes(file.mimetype)) {
+hit pitfall-socket-probe scripts/test-db.sh until pg_isready -U postgres --health-interval 1; do sleep 1; done
+miss pitfall-socket-probe scripts/test-db.sh until pg_isready --host=127.0.0.1 -p 5432; do sleep 1; done
+hit pitfall-folded-cache-validator server/src/ActionJackson.Edge/Sites/SiteFiles.cs log("tag"); var tag = mtime.Ticks ^ file.Length;
+hit pitfall-folded-cache-validator server/src/ActionJackson.Edge/Sites/SiteFiles.cs log("tag"); var tag = mtime.Ticks + length;
