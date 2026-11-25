@@ -2,6 +2,12 @@
   "name": "action-jackson-web",
   "version": "0.0.0",
   "private": true,
+  "scripts": {
+    "test": "ng test shared --no-watch && node --test \"scripts/*.test.mjs\"",
+    "build": "for app in main lan car dev admin; do ng build $app || exit 1; done && node scripts/csp.mjs dist && node scripts/seo.mjs dist",
+    "test:dist": "node --test \"scripts/*.dist-test.mjs\"",
+    "e2e": "playwright test"
+  },
   "dependencies": {
     "@angular/common": "22.3.0",
     "@angular/compiler": "22.3.0",

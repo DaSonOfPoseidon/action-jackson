@@ -6,7 +6,8 @@
 # The image is Debian (glibc), not alpine: esbuild's native binary must also run in the Playwright image, which
 # shares node_modules. The npm cache lives in the named volume aj-npm. The labels keep these throwaway containers
 # out of monitoring alerts (ContainerGone) and WUD. Output files belong to the calling user, not root (#4).
-# Memory: PEAK_NOTE. AJ_NODE_MEMORY overrides the cap.
+# Memory: 4g, no swap. Measured (apps/web, Angular 22.3, five apps built one after another): the full build passes at
+# 1280m and is killed at 1g, so its peak is between 1.0 and 1.25 GiB; the unit tests pass at 2g. AJ_NODE_MEMORY overrides the cap.
 set -e
 cd "$(dirname "$0")/.."
 memory=${AJ_NODE_MEMORY:-4g}
