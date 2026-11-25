@@ -5,12 +5,19 @@ namespace ActionJackson.Edge.Tests;
 
 public class HealthAndHeadersTests
 {
+    // The edge's header policy. It has no default-src and no script-src: a built page carries its own script-src
+    // (a <meta> with the hashes of its inline scripts, added by apps/web/scripts/csp.mjs), and both policies are
+    // enforced, so this one must not restrict scripts.
+    internal const string ContentSecurityPolicy =
+        "base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; style-src 'self' 'unsafe-inline'";
+
     private static readonly (string Name, string Value)[] SecurityHeaders =
     [
         ("X-Content-Type-Options", "nosniff"),
         ("X-Frame-Options", "DENY"),
         ("Referrer-Policy", "strict-origin-when-cross-origin"),
         ("Permissions-Policy", "camera=(), microphone=(), geolocation=()"),
+        ("Content-Security-Policy", ContentSecurityPolicy),
     ];
 
     private static void AssertSecurityHeaders(HttpResponseMessage response)
@@ -65,6 +72,20 @@ public class HealthAndHeadersTests
         Assert.Equal(HttpStatusCode.OK, head.StatusCode);
         Assert.Empty(await head.Content.ReadAsByteArrayAsync());
         Assert.Equal(HttpStatusCode.MethodNotAllowed, post.StatusCode);
+    }
+
+    [Fact]
+    public async Task The_csp_header_restricts_nothing_about_scripts_and_is_sent_once()
+    {
+        using var root = new WebRoot().WithSites("main");
+        await using var host = await EdgeHost.StartAsync(root);
+
+        var response = await host.GetAsync("/");
+
+        var policy = Assert.Single(response.Headers.GetValues("Content-Security-Policy"));
+        Assert.DoesNotContain("script-src", policy);
+        Assert.DoesNotContain("default-src", policy);
+        Assert.DoesNotContain("unsafe-eval", policy);
     }
 
     [Fact]

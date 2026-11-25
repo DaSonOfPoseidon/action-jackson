@@ -84,19 +84,7 @@ mkdir -p "$stage/sites"
 [ -f "$stage/app/ActionJackson.Edge.dll" ] || die "the publish did not produce $stage/app/ActionJackson.Edge.dll"
 
 # 3. One folder per site key of contracts/sites.json: the Angular output when there is one, the placeholder otherwise.
-keys=$(python3 -I -c 'import json, sys; print(*[s["key"] for s in json.load(open(sys.argv[1]))["sites"]])' contracts/sites.json)
-for site in $keys; do
-	printf '%s' "$site" | grep -Eq '^[a-z][a-z0-9-]*$' || die "contracts/sites.json has an unusable site key"
-	if [ -d "$dist/$site/browser" ]; then
-		source_dir=$dist/$site/browser
-	elif [ -d "$dist/$site" ]; then
-		source_dir=$dist/$site
-	else
-		source_dir=deploy/pi/placeholder
-	fi
-	mkdir -p "$stage/sites/$site"
-	cp -R "$source_dir/." "$stage/sites/$site/"
-done
+"$root/scripts/stage-sites.sh" "$dist" "$stage/sites" || die "staging the sites failed"
 cp deploy/pi/Dockerfile deploy/pi/compose.yml "$stage/"
 # Belt and braces: the key must be nowhere in what is about to leave this machine (the pattern comes from stdin).
 if printf '%s' "$key" | grep -rIlF -f - "$stage" >/dev/null 2>&1; then

@@ -43,4 +43,17 @@ if [ -f deploy/pc/compose.yml ]; then
   scripts/deploy-lint.sh
 fi
 
-# A later unit adds the apps/web/ (Angular) block here, in the same "only when present" style.
+# Web (Angular workspace, run in a container by scripts/node.sh: the host's Node is older than Angular's engines).
+if [ -f apps/web/package.json ]; then
+  echo "== web"
+  # Install exact lockfile versions, without package scripts, when node_modules is missing or older than the lockfile.
+  if [ ! -d apps/web/node_modules ] || [ apps/web/package-lock.json -nt apps/web/node_modules ]; then
+    scripts/node.sh npm ci --ignore-scripts
+    touch apps/web/node_modules
+  fi
+  scripts/node.sh npm audit signatures
+  scripts/node.sh npm test
+  scripts/node.sh npm run build
+  scripts/node.sh npm run test:dist
+  scripts/web-e2e.sh
+fi

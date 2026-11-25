@@ -1,0 +1,8 @@
+.notice {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--aj-banner-text);
+  background: var(--aj-banner-bg);
+  color: var(--aj-banner-text);
+  font-weight: 600;
+}

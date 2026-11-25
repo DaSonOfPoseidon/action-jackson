@@ -114,6 +114,7 @@ tests/                 — Backend Jest + Supertest tests (10 files)
 docker-compose.yml     — 3-service orchestration (mongo, api, frontend)
 server/                — ASP.NET Core (new stack): src/ActionJackson.{Api,Core,Data,Edge}, tests/
   src/ActionJackson.Edge — the Pi's web tier: host routing, redirects, site files, the /api proxy
+apps/web/              — Angular workspace: apps main, lan, car, dev (prerendered) and admin (client-rendered), library shared
 contracts/             — files shared by the API, the edge and the Angular apps (lan-options.json, sites.json)
 deploy/                — pc/ (api, postgres, redis, garage), pi/ (the edge)
 .env                   — Environment configuration (not checked in)
@@ -164,6 +165,27 @@ deploy/                — pc/ (api, postgres, redis, garage), pi/ (the edge)
   there, never in a second copy. `contracts/sites.json` is the registry of sites: each site's key, its hosts (production and
   `.localhost`), whether it is a single-page app, the `www` host redirects and the legacy path redirects. `ActionJackson.Edge`
   embeds it and refuses to start on a bad one; the Angular apps import the same file.
+
+### Web (Angular, in Docker)
+- `apps/web/` is an Angular 22 workspace: the apps `main`, `lan`, `car`, `dev` and `admin` (project names equal the site
+  keys of `contracts/sites.json`) and the library `shared` (`@aj/shared`, consumed by path mapping, never built alone).
+  Node commands never run on the host (its Node is older than Angular's engines): `scripts/node.sh <command>` runs them in
+  a pinned Node 24 container, in `apps/web`, e.g. `scripts/node.sh npm ci --ignore-scripts`, `scripts/node.sh npm test`.
+- Every version is pinned exactly (`.npmrc` has `save-exact=true`); install with `npm ci --ignore-scripts`, then
+  `npm audit signatures`. Runtime dependencies are Angular, rxjs and tslib only. No zone.js, no external fonts or CDNs.
+- npm scripts: `npm test` (Vitest for `shared`, then `node --test` for the build scripts), `npm run build` (every app, then
+  `scripts/csp.mjs`, then `scripts/seo.mjs`), `npm run test:dist` (checks the build output). The output is
+  `apps/web/dist/<key>/browser`, which `scripts/stage-sites.sh` stages for the edge (the Pi deploy and the e2e run use it).
+- The public apps are prerendered (static output, route `/404` becomes `404.html`, `sitemap.xml` and `robots.txt` per site);
+  admin is client-rendered, noindex, with a `Disallow: /` `robots.txt`. A public page makes no API call at render time.
+- CSP: Angular's `autoCsp` refuses to combine with prerender, so `scripts/csp.mjs` adds, to every built page, a
+  `<meta http-equiv="Content-Security-Policy">` with `script-src 'self'` and the SHA-256 of each inline script, and fails
+  the build on an inline event handler or `javascript:` URL. The edge adds the rest as a header (no `script-src`): both
+  policies are enforced, so scripts are controlled by the meta and everything else by the header.
+- `scripts/web-e2e.sh` (after a build) publishes the edge, stages `build/e2e/sites`, starts the edge in a container with a
+  random key and the API down, and runs Playwright (Chromium, image `playwright:v<version>-noble`) against it by Host name,
+  with axe `wcag2aaa`. It removes its containers and network on exit. CI's `web` job runs the same specs against a plain
+  `dotnet` edge (`EDGE_ORIGIN` is where the edge listens).
 
 ### Deploy (new stack, PC)
 - The new backend runs from `deploy/pc/compose.yml` (project `action-jackson`): `api` (built from `server/`, with the repo root as the build context), `postgres`

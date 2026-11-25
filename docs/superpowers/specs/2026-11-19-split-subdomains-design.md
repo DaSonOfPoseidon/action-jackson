@@ -80,6 +80,11 @@ Cloudflare tunnel (cloudflared on the Pi): apex · www · lan · car · dev · a
   meaningful JavaScript. The admin is client-rendered.
 - **Dependencies:** Angular and Angular CDK only, plus CSS custom-property tokens per site. No component library.
   Versions are pinned exactly, installed with `npm ci --ignore-scripts`, and checked with `npm audit signatures`.
+- **Content-Security-Policy:** two policies, both enforced. Each built page carries a `<meta>` policy with
+  `script-src 'self'` and the SHA-256 of its inline scripts (Angular's `autoCsp` cannot be combined with prerender, so
+  `apps/web/scripts/csp.mjs` does it after the build). The edge sends a header policy for everything else (base, objects,
+  framing, forms, images, fonts, connections, styles) and none for scripts, so the header never restricts the meta's
+  hashes. A proxied API response that sets its own CSP keeps it.
 
 ### Backend: `server/ActionJackson.slnx`
 
