@@ -25,8 +25,22 @@ for (const site of SITES) {
 
     test('the page hydrates with no content-security-policy violation and no console error', async ({ page, watched }) => {
       await page.goto(pageUrl(site.host));
-      // The client bootstrap is the script the meta policy hashes: it ran when the root carries ng-version.
+      // ng-version is written by the prerender too, so it proves nothing about the browser. A click on the skip link is
+      // client-only: without the bootstrap the bare link follows its #main href (the click is not cancelled), with it
+      // the handler cancels the click and focuses <main>. Poll, since the click may land before the handler is attached.
       await expect(page.locator('aj-root')).toHaveAttribute('ng-version', /\d/);
+      await expect
+        .poll(
+          () =>
+            page.evaluate(() => {
+              (document.activeElement as HTMLElement | null)?.blur();
+              const link = document.querySelector<HTMLAnchorElement>('a.skip-link');
+              const notCancelled = link?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+              return { cancelled: notCancelled === false, focused: document.activeElement?.id };
+            }),
+          { timeout: 15_000 },
+        )
+        .toEqual({ cancelled: true, focused: 'main' });
       expect(await watched.problems()).toEqual([]);
     });
 
