@@ -34,3 +34,10 @@ miss pitfall-folded-cache-validator server/src/ActionJackson.Edge/Sites/SiteFile
 miss pitfall-folded-cache-validator server/tests/ActionJackson.Edge.Tests/SiteFilesTests.cs var pair = mtime ^ length;
 miss pitfall-folded-cache-validator server/src/ActionJackson.Edge/Sites/SiteFiles.cs var note = "mtime ^ length collides";
 miss pitfall-env-file-parser scripts/deploy-lint.sh grep -qx 'arg:--exclude=/.env' "$tmp/pi-calls"
+hit pitfall-read-max-then-insert models/Invoice.js log("max"); const next = Math.max(...ids) + 1;
+hit pitfall-read-max-then-insert models/Invoice.js log('max'); const next = Math.max(...ids) + 1;
+hit pitfall-client-file-type routes/files.js log("upload"); if (!ALLOWED.includes(file.mimetype)) {
+hit pitfall-socket-probe scripts/test-db.sh until pg_isready -U postgres --health-interval 1; do sleep 1; done
+miss pitfall-socket-probe scripts/test-db.sh until pg_isready --host=127.0.0.1 -p 5432; do sleep 1; done
+hit pitfall-folded-cache-validator server/src/ActionJackson.Edge/Sites/SiteFiles.cs log("tag"); var tag = mtime.Ticks ^ file.Length;
+hit pitfall-folded-cache-validator server/src/ActionJackson.Edge/Sites/SiteFiles.cs log("tag"); var tag = mtime.Ticks + length;
