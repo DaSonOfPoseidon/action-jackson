@@ -21,6 +21,7 @@
             "index": "projects/main/src/index.html",
             "styles": [
               "projects/shared/src/styles/base.css",
+              "projects/shared/src/styles/fonts.css",
               "projects/main/src/styles.css"
             ],
             "security": {
@@ -82,7 +83,9 @@
             "tsConfig": "projects/lan/tsconfig.app.json",
             "index": "projects/lan/src/index.html",
             "styles": [
-              "projects/shared/src/styles/base.css"
+              "projects/shared/src/styles/base.css",
+              "projects/shared/src/styles/fonts.css",
+              "projects/shared/src/styles/fonts-mono.css"
             ],
             "security": {
               "autoCsp": false
