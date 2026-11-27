@@ -49,12 +49,26 @@ jobs:
 
   web:
     runs-on: ubuntu-latest
+    # The e2e run's real API needs a database. The same image as the dotnet job (and the PC's): the probe asks over TCP
+    # (docs/pitfalls.md, "A readiness probe that passes before the real service is up"). POSTGRES_DB is created at init.
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: aj_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -h 127.0.0.1 -U postgres -d aj_e2e" --health-interval 5s --health-timeout 5s --health-retries 10
     defaults:
       run:
         working-directory: apps/web
     env:
-      # The e2e run opens http://<key>.localhost; Chromium maps those names to this address (playwright.config.ts).
+      # The e2e run opens http://<key>.localhost; Chromium maps those names to an edge's address (playwright.config.ts).
+      # EDGE_ORIGIN is the edge whose API is down; EDGE_API_ORIGIN is a second edge with the real API behind it.
       EDGE_ORIGIN: http://127.0.0.1:8080
+      EDGE_API_ORIGIN: http://127.0.0.1:8090
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -72,6 +86,8 @@ jobs:
       # The edge is published with plain dotnet, and its sites are staged by the script the Pi deploy uses.
       - run: dotnet publish server/src/ActionJackson.Edge -c Release -p:UseAppHost=false -o build/e2e/edge
         working-directory: .
+      - run: dotnet publish server/src/ActionJackson.Api -c Release -p:UseAppHost=false -o build/e2e/api
+        working-directory: .
       - run: scripts/stage-sites.sh apps/web/dist build/e2e/sites
         working-directory: .
       # A random key for this run: it is not a deploy secret. The API address is one nothing listens on, so the API is down.
@@ -83,11 +99,31 @@ jobs:
           Edge__Key=$key Edge__WebRoot=$PWD/build/e2e/sites Edge__ApiUrl=http://127.0.0.1:9 \
             HTTP_PORT=8080 TUNNEL_PORT=8081 ASPNETCORE_HTTP_PORTS= \
             nohup dotnet build/e2e/edge/ActionJackson.Edge.dll >build/e2e/edge.log 2>&1 &
+      # The real API, on the service's database (it migrates and seeds at start), and a second edge in front of it. One random
+      # key for the API and that edge: the API trusts X-Client-IP only on a request that carries it. The wait asks for
+      # "db":"ok", not for the port: the API listens only after it migrated, and answers 503 while the database is down.
+      - name: Start the API and the edge in front of it
+        working-directory: .
+        run: |
+          key=$(openssl rand -hex 32)
+          echo "::add-mask::$key"
+          Edge__Key=$key ConnectionStrings__Postgres="Host=localhost;Database=aj_e2e;Username=postgres;Password=test" \
+            HTTP_PORT=8110 ASPNETCORE_HTTP_PORTS= \
+            nohup dotnet build/e2e/api/ActionJackson.Api.dll >build/e2e/api.log 2>&1 &
+          Edge__Key=$key Edge__WebRoot=$PWD/build/e2e/sites Edge__ApiUrl=http://127.0.0.1:8110 \
+            HTTP_PORT=8090 TUNNEL_PORT=8091 ASPNETCORE_HTTP_PORTS= \
+            nohup dotnet build/e2e/edge/ActionJackson.Edge.dll >build/e2e/edge-api.log 2>&1 &
+          for i in $(seq 1 90); do
+            if curl -fsS -m 3 http://127.0.0.1:8110/healthz 2>/dev/null | grep -q '"db":"ok"'; then exit 0; fi
+            sleep 1
+          done
+          echo "the API did not report db ok within 90 seconds" >&2
+          exit 1
       - run: npx playwright install --with-deps chromium
       # The global setup waits until the edge serves a real page of every site, so no sleep is needed here.
       - run: npx playwright test
       - if: failure()
-        run: cat ../../build/e2e/edge.log
+        run: tail -n 100 ../../build/e2e/edge.log ../../build/e2e/edge-api.log ../../build/e2e/api.log
       - if: failure()
         uses: actions/upload-artifact@v5
         with:

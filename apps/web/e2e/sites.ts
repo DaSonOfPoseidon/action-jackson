@@ -69,5 +69,10 @@ export function edgeOrigin(): string {
   return origin.replace(/\/+$/, '');
 }
 
+// The second edge, with the real API behind it, when the run has one (scripts/web-e2e.sh and the CI web job set it).
+export function apiEdgeOrigin(): string | undefined {
+  return process.env['EDGE_API_ORIGIN']?.replace(/\/+$/, '') || undefined;
+}
+
 // The URL a browser opens for a site: its Host name, port 80, which Chromium maps to the edge.
 export const pageUrl = (host: string, path = '/'): string => `http://${host}${path}`;
