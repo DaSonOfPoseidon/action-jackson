@@ -1,14 +1,13 @@
 // The lan site's business pages (the ported original site), opened through the real edge by Host name lan.localhost.
 // What each page must show is written out here on purpose, not imported from the app.
-import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
 import { contrastFailures, settled } from './contrast-audit';
 import { edgeOrigin, pageUrl } from './sites';
 import { expect, test } from './fixtures';
+import { axeViolations, hydrated } from './lan-helpers';
 
 const HOST = 'lan.localhost';
 const PRODUCTION = 'lan.actionjacksoninstalls.com';
-const AXE_TAGS = ['wcag2a', 'wcag2aa', 'wcag2aaa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 const SUFFIX = 'Action Jackson Home Networking';
 
 interface Route {
@@ -26,7 +25,7 @@ const ROUTES: readonly Route[] = [
   { path: '/services/smart-home', h1: 'Smart Home Infrastructure That Actually Works.', title: `Smart Home Automation · ${SUFFIX}`, faqs: 6 },
   { path: '/services/cameras', h1: 'Subscription-Free Security Cameras.', title: `PoE Camera Systems · ${SUFFIX}`, faqs: 6 },
   { path: '/services/wiring', h1: 'Structured Cabling & Low-Voltage Networking.', title: `Structured Cabling & Low Voltage · ${SUFFIX}`, faqs: 7 },
-  { path: '/get-started', h1: 'Get started', title: `Get started · ${SUFFIX}` },
+  { path: '/get-started', h1: 'Get Started.', title: `Get started · ${SUFFIX}` },
 ];
 
 const SERVICE_LINKS = [
@@ -35,29 +34,6 @@ const SERVICE_LINKS = [
   { name: 'Cameras', href: '/services/cameras' },
   { name: 'Structured Wiring', href: '/services/wiring' },
 ] as const;
-
-// Waits until the page is hydrated. A click on the skip link is handled only by the bootstrapped app: it cancels the
-// click and focuses <main>. (Same proof as sites.spec.ts.)
-async function hydrated(page: Page): Promise<void> {
-  await expect
-    .poll(
-      () =>
-        page.evaluate(() => {
-          (document.activeElement as HTMLElement | null)?.blur();
-          const link = document.querySelector<HTMLAnchorElement>('a.skip-link');
-          const notCancelled = link?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
-          return { cancelled: notCancelled === false, focused: document.activeElement?.id };
-        }),
-      { timeout: 15_000 },
-    )
-    .toEqual({ cancelled: true, focused: 'main' });
-}
-
-async function axeViolations(page: Page): Promise<string[]> {
-  await settled(page);
-  const results = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
-  return results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`);
-}
 
 // The visible primary navigation: the desktop list at wide widths, the menu button's list at narrow ones.
 const primaryNav = (page: Page) => page.getByRole('navigation', { name: 'Primary' });
@@ -135,7 +111,7 @@ test.describe('lan pages', () => {
         });
       }
 
-      test('every link on it that stays on the site resolves, and each /get-started link reaches the placeholder', async ({ page, request }) => {
+      test('every link on it that stays on the site resolves, and each /get-started link reaches the consultation form', async ({ page, request }) => {
         await page.goto(pageUrl(HOST, route.path));
         const hrefs = await page.locator('a[href]').evaluateAll((anchors) => anchors.map((a) => a.getAttribute('href') ?? ''));
         const internal = [...new Set(hrefs.filter((href) => href.startsWith('/')).map((href) => href.split('#')[0] || '/'))];
@@ -144,7 +120,7 @@ test.describe('lan pages', () => {
           const response = await request.get(edgeOrigin() + path, { headers: { Host: HOST } });
           expect(response.status(), path).toBe(200);
           if (path === '/get-started') {
-            expect(await response.text()).toContain('Get started');
+            expect(await response.text()).toContain('Submit Consultation Request');
           }
         }
       });
@@ -291,8 +267,8 @@ test.describe('lan pages', () => {
     });
   }
 
-  test('says nothing about a reply time, a free consultation or a volume discount', async ({ page }) => {
-    const claims = [/within 24 hours/i, /no obligations?/i, /free consultation/i, /volume discount/i, /proposal within/i];
+  test('says nothing about a reply time, a free consultation, a volume discount or an email in the inbox', async ({ page }) => {
+    const claims = [/within 24 hours/i, /no obligations?/i, /free consultation/i, /volume discount/i, /proposal within/i, /check your inbox/i];
     for (const route of ROUTES) {
       await page.goto(pageUrl(HOST, route.path));
       const text = await page.locator('body').innerText();

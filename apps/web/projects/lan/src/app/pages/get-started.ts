@@ -1,18 +1,28 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ConsultationForm } from '../forms/consultation-form';
 
-// The placeholder every "Get Started" and "Schedule Consultation" button points to, so none of them 404s. The consultation
-// request form replaces it in unit 13. No form, no API call, and no promise about what happens after a request.
+// The page every "Get Started" and "Schedule Consultation" button points to: the consultation request form. The page is
+// prerendered with the form in it (disabled until the app runs, see ConsultationForm), and makes no API call to render.
 @Component({
   selector: 'aj-get-started',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink],
+  imports: [ConsultationForm],
   template: `
-    <div class="plain-page">
-      <h1>Get started</h1>
-      <p>The consultation request form is coming in the next update.</p>
-      <a class="btn btn-outline btn-lg gradient-border" routerLink="/">Back to Home</a>
-    </div>
+    <section class="form-hero">
+      <div class="wrap w-3xl">
+        <p class="eyebrow">Consultation</p>
+        <h1>Get Started.</h1>
+        <p class="form-lede">Tell us about your home and what you're looking for.</p>
+      </div>
+    </section>
+
+    <section class="form-section">
+      <div class="wrap w-2xl">
+        <div class="card form-card">
+          <aj-consultation-form />
+        </div>
+      </div>
+    </section>
   `,
 })
 export class GetStarted {}

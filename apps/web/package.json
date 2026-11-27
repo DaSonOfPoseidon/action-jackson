@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "test": "ng test shared --no-watch && node --test \"scripts/*.test.mjs\"",
+    "test": "ng test shared --no-watch && ng test lan --no-watch && node --test \"scripts/*.test.mjs\"",
     "build": "for app in main lan car dev admin; do ng build $app || exit 1; done && node scripts/csp.mjs dist && node scripts/seo.mjs dist",
     "test:dist": "node --test \"scripts/*.dist-test.mjs\"",
     "e2e": "playwright test"
