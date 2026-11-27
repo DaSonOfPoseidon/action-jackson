@@ -2227,7 +2227,8 @@ details[open] > summary .plus {
 }
 
 .cf-field input,
-.cf-field select {
+.cf-field select,
+.cf-field textarea {
   box-sizing: border-box;
   width: 100%;
   min-height: 3rem;
@@ -2245,8 +2246,14 @@ details[open] > summary .plus {
   appearance: auto;
 }
 
+.cf-field textarea {
+  min-height: 6rem;
+  resize: vertical;
+}
+
 .cf-field input:hover,
-.cf-field select:hover {
+.cf-field select:hover,
+.cf-field textarea:hover {
   border-color: rgba(34, 197, 94, 0.6);
 }
 
@@ -2371,6 +2378,134 @@ details[open] > summary .plus {
 .cf-sent strong {
   color: var(--aj-text);
   letter-spacing: 0.08em;
+}
+
+.form-aside {
+  margin-top: 1rem;
+  max-width: 36rem;
+  font-size: 0.9375rem;
+  line-height: 1.5rem;
+  color: var(--aj-text-muted);
+}
+
+/* ---- The quote builder (/quote) ---- */
+.qf-gap {
+  margin-top: 1rem;
+}
+
+/* A kind's name and its one line: both inside the label, beside the radio. */
+.qf-kind-name {
+  display: block;
+  font-weight: 600;
+  color: var(--aj-text);
+}
+
+.qf-kind-desc {
+  display: block;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--aj-text-muted);
+}
+
+/* The price: a panel of the same raised surface as the fields, with the theme's text pairs only. */
+.qf-price {
+  padding: 1.25rem;
+  border: 1px solid #2a2a3a;
+  border-radius: 0.75rem;
+  background: var(--aj-surface-raised);
+  color: var(--aj-text);
+}
+
+.qf-price h3 {
+  margin: 0 0 0.75rem;
+  font-family: 'Syne', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 1.125rem;
+  line-height: 1.5rem;
+  font-weight: 600;
+  color: var(--aj-text);
+}
+
+.qf-price-note {
+  margin: 0;
+  color: var(--aj-text-muted);
+}
+
+.qf-price-retry {
+  margin-top: 0.75rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.qf-price-lines {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A line: its name, then the quantity at the unit price, with the line total beside both. The text wraps; nothing scrolls. */
+.qf-price-lines li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.125rem 1rem;
+}
+
+.qf-line-name {
+  grid-column: 1;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.qf-line-math {
+  grid-column: 1;
+  color: var(--aj-text-muted);
+}
+
+.qf-line-total {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.qf-sum {
+  display: grid;
+  gap: 0.5rem;
+  margin: 1rem 0 0;
+  padding-top: 1rem;
+  border-top: 1px solid #2a2a3a;
+}
+
+.qf-sum-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.qf-sum-row dt,
+.qf-sum-row dd {
+  margin: 0;
+}
+
+.qf-sum-row dd {
+  font-variant-numeric: tabular-nums;
+}
+
+.qf-sum-main {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  font-weight: 700;
+}
+
+.cf-sent .qf-number {
+  font-size: 2rem;
+  line-height: 2.5rem;
+}
+
+.cf-sent .qf-amount strong {
+  font-size: 1.25rem;
 }
 
 @media (min-width: 48rem) {

@@ -26,6 +26,7 @@ const ROUTES: readonly Route[] = [
   { path: '/services/cameras', h1: 'Subscription-Free Security Cameras.', title: `PoE Camera Systems · ${SUFFIX}`, faqs: 6 },
   { path: '/services/wiring', h1: 'Structured Cabling & Low-Voltage Networking.', title: `Structured Cabling & Low Voltage · ${SUFFIX}`, faqs: 7 },
   { path: '/get-started', h1: 'Get Started.', title: `Get started · ${SUFFIX}` },
+  { path: '/quote', h1: 'Get a Quote.', title: `Get a quote · ${SUFFIX}` },
 ];
 
 const SERVICE_LINKS = [
@@ -346,7 +347,7 @@ test.describe('lan pages', () => {
     expect(crumb.itemListElement.at(-1).item).toBe(`https://${PRODUCTION}/services/networking`);
   });
 
-  test('the sitemap lists exactly the seven public routes, and not the not-found page', async ({ request }) => {
+  test('the sitemap lists exactly the public routes of ROUTES, and not the not-found page', async ({ request }) => {
     const response = await request.get(`${edgeOrigin()}/sitemap.xml`, { headers: { Host: HOST } });
     expect(response.status()).toBe(200);
     const locs = [...(await response.text()).matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]).sort();

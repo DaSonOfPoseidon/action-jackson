@@ -91,7 +91,7 @@ import { NetworkDiagram } from '../ui/network-diagram';
         </ul>
         <p class="more-note">
           Just need a few cable drops or a single service? We do standalone work too — no package required.
-          <a class="accent-link" routerLink="/get-started">Get a quote</a>.
+          <a class="accent-link" routerLink="/quote">Get a quote</a>.
         </p>
       </div>
     </section>

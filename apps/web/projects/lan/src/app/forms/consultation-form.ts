@@ -248,6 +248,7 @@ interface FieldInfo {
           <p>Your request was received.</p>
         }
         <p>We'll review your request and contact you to schedule your consultation.</p>
+        <p>Know what you need? <a class="accent-link" routerLink="/quote">Build a quote</a>.</p>
         <a class="btn btn-outline btn-lg gradient-border" routerLink="/">Back to Home</a>
       </div>
     </aj-form-status>

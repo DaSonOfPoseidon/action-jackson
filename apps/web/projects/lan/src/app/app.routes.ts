@@ -30,6 +30,13 @@ export const routes: Routes = [
     title: 'Get started',
     data: { [ROUTE_DESCRIPTION]: 'Schedule a consultation with Action Jackson Installs for home networking, smart home, cameras and structured wiring in Columbia, MO.' },
   },
+  {
+    // Loaded when opened, like get-started: the form brings Angular's forms package, which the other pages do not need.
+    path: 'quote',
+    loadComponent: () => import('./pages/quote').then((m) => m.Quote),
+    title: 'Get a quote',
+    data: { [ROUTE_DESCRIPTION]: 'Build a quote for ethernet drops, cable runs and home networking services with Action Jackson Installs in Columbia, MO, or ask for a whole-home install.' },
+  },
   { path: '404', ...notFound },
   { path: '**', ...notFound },
 ];

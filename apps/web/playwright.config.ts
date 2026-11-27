@@ -7,7 +7,7 @@ import { defineConfig, devices } from '@playwright/test';
 // edge picks the site by Host exactly as it does in production.
 //
 // EDGE_API_ORIGIN is a second edge of the same build with the real API and a fresh database behind it. A browser maps the
-// host names to one edge for its whole life, so the specs that need it (e2e/lan-forms.spec.ts) run as a project of their own
+// host names to one edge for its whole life, so the specs that need it (e2e/lan-forms.spec.ts, lan-quote.spec.ts, lan-book.spec.ts) run as a project of their own
 // with that edge in its mapping. Their tests are tagged: @down on the API-down edge, @up on the other.
 const edgeOrigin = process.env['EDGE_ORIGIN'];
 if (!edgeOrigin) {
@@ -20,7 +20,7 @@ const resolverArgs = (origin: string): string[] => {
   return [`--host-resolver-rules=MAP *.localhost ${hostPort},MAP localhost ${hostPort}`];
 };
 
-const forms = /lan-forms\.spec\.ts$/;
+const forms = /lan-(forms|quote|book)\.spec\.ts$/;
 
 export default defineConfig({
   testDir: './e2e',
