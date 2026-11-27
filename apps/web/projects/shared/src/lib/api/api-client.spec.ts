@@ -57,6 +57,43 @@ describe('ApiClient', () => {
     expect(await result).toEqual({ id: 7 });
   });
 
+  it('always sends Content-Type: application/json with a body', async () => {
+    const { api, http } = setup();
+    const result = firstValueFrom(api.post('consultations', { name: 'A' }));
+    const req = http.expectOne('/api/lan/consultations');
+    expect(req.request.headers.get('Content-Type')).toBe('application/json');
+    req.flush({});
+    await result;
+  });
+
+  it('sends the extra headers of a post along with Content-Type', async () => {
+    const { api, http } = setup();
+    const result = firstValueFrom(api.post('appointments', { a: 1 }, { headers: { 'Idempotency-Key': 'abc' } }));
+    const req = http.expectOne('/api/lan/appointments');
+    expect(req.request.headers.get('Idempotency-Key')).toBe('abc');
+    expect(req.request.headers.get('Content-Type')).toBe('application/json');
+    req.flush({});
+    await result;
+  });
+
+  it('does not let a caller replace Content-Type, in any letter case', async () => {
+    const { api, http } = setup();
+    const result = firstValueFrom(api.post('x', {}, { headers: { 'content-TYPE': 'text/plain' } }));
+    const req = http.expectOne('/api/lan/x');
+    expect(req.request.headers.getAll('Content-Type')).toEqual(['application/json']);
+    req.flush({});
+    await result;
+  });
+
+  it('sends no Content-Type on a get', async () => {
+    const { api, http } = setup();
+    const result = firstValueFrom(api.get('quotes/pricing'));
+    const req = http.expectOne('/api/lan/quotes/pricing');
+    expect(req.request.headers.has('Content-Type')).toBe(false);
+    req.flush({});
+    await result;
+  });
+
   it('refuses a path that could leave /api/<site>/', () => {
     const { api } = setup();
     for (const bad of ['/etc/passwd', '../car/x', 'a/../b', 'https://evil.example/x', '//evil.example', 'a?b=1', '']) {

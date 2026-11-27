@@ -1,0 +1,50 @@
+:host {
+  display: block;
+}
+
+.sending {
+  margin: 0;
+  color: var(--aj-text);
+  font-weight: 600;
+}
+
+/* The theme's banner pair, as the offline notice has it: its contrast is checked with the tokens. */
+.notice {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--aj-banner-text);
+  border-radius: 0.5rem;
+  background: var(--aj-banner-bg);
+  color: var(--aj-banner-text);
+  font-weight: 600;
+}
+
+.summary-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.125rem;
+  line-height: 1.5rem;
+  color: var(--aj-banner-text);
+}
+
+.summary-list {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.summary a {
+  color: var(--aj-banner-text);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.summary:focus {
+  outline: 3px solid var(--aj-banner-text);
+  outline-offset: 2px;
+}
+
+/* The notice sits on a light banner on a dark page: the page's focus ring (the site's focus colour) would not show
+   on it, so a link inside takes the banner's own text colour for its ring. */
+.summary a:focus-visible {
+  outline: 3px solid var(--aj-banner-text);
+  outline-offset: 2px;
+}
