@@ -403,6 +403,18 @@ describe('BookingForm', () => {
       expect(page.dayLabels().length).toBe(2);
     });
 
+    it('drops the chosen day and time when the new list cannot be loaded, so a slot that is not on screen is never sent', async () => {
+      const { page, http } = await setup();
+      await fillSurvey(page, http);
+      await page.kind(1);
+      problem(expectAvailability(http), 503, { title: 'Service unavailable' }, { 'retry-after': '30' });
+      await page.settle();
+      expect(page.has('button.bf-day')).toBe(false);
+      await page.submit();
+      expect(page.summaryLinks()).toEqual(['Day: Choose a day.']);
+      http.expectNone('/api/lan/appointments');
+    });
+
     it('shows the offline notice when nothing answers', async () => {
       const { page, http } = await setup();
       await page.kind(0);
@@ -718,6 +730,41 @@ describe('BookingForm', () => {
       expect(page.submitButton.disabled).toBe(false);
       await page.type('bf-phone', '5735550100');
       expect(page.has('#bf-phone-error')).toBe(false);
+    });
+
+    for (const [field, id, value] of [
+      ['quote number', 'bf-quote-number', '87654321'],
+      ['email', 'bf-email', 'grace@example.com'],
+    ] as const) {
+      it(`drops the "wrong kind of quote" error when the ${field} changes, so the corrected request is sent`, async () => {
+        const { page, http } = await setup();
+        await fillSurvey(page, http);
+        await page.submit();
+        problem(expectBook(http), 400, { title: 'Invalid', errors: { kind: ['Whole-home install needs a whole-home quote.'] } });
+        await page.settle();
+        expect(page.summaryLinks()).toEqual(['Appointment type: Whole-home install needs a whole-home quote.']);
+        await page.type(id, value);
+        expect(page.has('#bf-kind-error')).toBe(false);
+        await page.submit();
+        expect(page.summaryLinks()).toEqual([]);
+        expectBook(http).flush(BOOKED, { status: 201, statusText: 'Created' });
+        await page.settle();
+      });
+    }
+
+    it('drops a day or time error when the kind changes, so the day that is still open can be sent again', async () => {
+      const { page, http } = await setup();
+      await fillSurvey(page, http);
+      await page.submit();
+      problem(expectBook(http), 400, { title: 'Invalid', errors: { time: ['That time is closed.'] } });
+      await page.settle();
+      answer(expectAvailability(http));
+      await page.settle();
+      expect(page.text('#bf-slot-error')).toContain('That time is closed.');
+      await page.kind(1);
+      answer(expectAvailability(http));
+      await page.settle();
+      expect(page.has('#bf-slot-error')).toBe(false);
     });
 
     it('puts a date or time error on the day picker and asks for the open times again', async () => {

@@ -892,7 +892,8 @@ export class QuoteForm {
 
   // The last answer for a body (or its failure). It is shown only while it is for the body on the page.
   private readonly priceResult = signal<PriceResult>({ key: null, price: null });
-  // Bumped for every new body: an answer of an older request finds a different number and is dropped.
+  // Bumped for every change of the body, a return to an answered one included: an answer of an older request finds a
+  // different number and is dropped.
   private requestId = 0;
 
   protected readonly panel = computed<{ kind: 'none' } | { kind: 'updating' } | { kind: 'error' } | { kind: 'ok'; price: Price }>(() => {
@@ -955,13 +956,15 @@ export class QuoteForm {
     // app runs, while every count is 0, or for a body whose answer is already there.
     effect((onCleanup) => {
       const key = this.priceKey();
+      // Every run is a change of the counts (or the app starting): a request that is still out was for other counts, so its
+      // answer is dropped, even when these counts already have an answer or none is asked for.
+      const id = ++this.requestId;
       if (!this.ready() || key === null) {
         return;
       }
       if (untracked(this.priceResult).key === key) {
         return;
       }
-      const id = ++this.requestId;
       const timer = setTimeout(() => void this.fetchPrice(key, id), PRICE_DEBOUNCE_MS);
       onCleanup(() => clearTimeout(timer));
     });
@@ -1122,8 +1125,11 @@ export class QuoteForm {
     this.serverErrors.set({});
     this.status.set({ kind: 'sending' });
     try {
+      // What the quote is for, taken now: the form stays editable while the request is out.
+      const sentKind = this.model().kind;
+      const sentEmail = this.model().email.trim();
       const answer = await firstValueFrom(this.api.post<Record<string, unknown> | null>('quotes', this.payload()));
-      this.created.set(this.createdFrom(answer));
+      this.created.set(this.createdFrom(answer, sentKind, sentEmail));
       this.sent.set(true);
       this.status.set({ kind: 'sent' });
       afterNextRender(() => this.sentHeading()?.nativeElement.focus(), { injector: this.injector });
@@ -1139,11 +1145,10 @@ export class QuoteForm {
 
   // Only what the answer really holds: a number that is not eight digits, or an amount that is not a number, is left out
   // (never replaced by 0).
-  private createdFrom(answer: Record<string, unknown> | null): Created {
-    const kind = this.model().kind;
+  private createdFrom(answer: Record<string, unknown> | null, kind: string, email: string): Created {
     const number = typeof answer?.['quoteNumber'] === 'string' && QUOTE_NUMBER.test(answer['quoteNumber']) ? answer['quoteNumber'] : '';
     const amount = (value: unknown): number | null => (isNumber(value) ? value : null);
-    return { number, kind, total: amount(answer?.['total']), deposit: amount(answer?.['deposit']), email: this.model().email.trim() };
+    return { number, kind, total: amount(answer?.['total']), deposit: amount(answer?.['deposit']), email };
   }
 
   // The summary entries of the fields that show a message, in the order of the page.

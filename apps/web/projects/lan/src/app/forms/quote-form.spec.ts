@@ -1,7 +1,8 @@
 import { provideHttpClient, withFetch } from '@angular/common/http';
 import { HttpTestingController, type TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { By } from '@angular/platform-browser';
+import { RouterLink, provideRouter } from '@angular/router';
 import { OFFLINE_COPY, SITE_KEY } from '@aj/shared';
 import { LIMITS, QUOTE_OPTIONS } from '../data/options';
 import { QuoteForm } from './quote-form';
@@ -404,6 +405,23 @@ describe('QuoteForm', () => {
       expect(document.activeElement).toBe(page.$('.cf-sent h2'));
     });
 
+    it('builds the confirmation from what was sent, not from the form as it is edited while the request is out', async () => {
+      const { page, http, fixture } = await setup();
+      await page.fillWhole();
+      await page.submit();
+      const req = expectCreate(http);
+      await page.click('qf-kind-0');
+      await page.type('qf-email', 'someone-else@example.com');
+      ok(req, WHOLE_CREATED);
+      await page.settle();
+      const sent = page.text('.cf-sent');
+      expect(sent).toContain('50607080');
+      expect(sent).toContain(money(321.5));
+      expect(sent).not.toContain(money(0));
+      const link = fixture.debugElement.query(By.directive(RouterLink)).injector.get(RouterLink);
+      expect(link.state).toEqual({ email: 'ada@example.com' });
+    });
+
     it('leaves the deposit line out when the deposit is 0, and never shows a total it was not sent', async () => {
       const { page, http } = await setup();
       await page.fillDrops();
@@ -669,6 +687,43 @@ describe('QuoteForm', () => {
       await page.tick(2000);
       http.expectNone(() => true);
       expect(page.text('.qf-price')).toContain(money(246.9));
+    });
+
+    it('drops the answer of a request that was out when the counts returned to the ones already priced', async () => {
+      const { page, http } = await dropsSetup();
+      await page.type('qf-run-cat6', '2');
+      await page.tick(500);
+      ok(expectCalculate(http), CALCULATED);
+      await page.settle();
+      await page.type('qf-run-cat6', '3');
+      await page.tick(500);
+      const pending = expectCalculate(http);
+      await page.type('qf-run-cat6', '2');
+      await page.tick(2000);
+      http.expectNone(() => true);
+      ok(pending, { ...CALCULATED, total: 600, subtotal: 600, deposit: 60 });
+      await page.settle();
+      // The panel stays on the counts that are on the page, with the answer that is theirs.
+      expect(page.text('.qf-price')).toContain(money(246.9));
+      expect(page.text('.qf-price')).not.toContain(money(600));
+      expect(page.text('.qf-price')).not.toContain('Updating the price');
+    });
+
+    it('drops the answer of a request that was out when every count went back to 0', async () => {
+      const { page, http } = await dropsSetup();
+      await page.type('qf-run-cat6', '2');
+      await page.tick(500);
+      const pending = expectCalculate(http);
+      await page.type('qf-run-cat6', '0');
+      await page.tick(2000);
+      ok(pending, CALCULATED);
+      await page.settle();
+      await page.type('qf-run-cat6', '2');
+      await page.tick(500);
+      // Nothing was kept from the dropped answer for the body that came back: it is asked for again.
+      ok(expectCalculate(http), { ...CALCULATED, total: 999, subtotal: 999, deposit: 99 });
+      await page.settle();
+      expect(page.text('.qf-price')).toContain(money(999));
     });
 
     it('says the price cannot be shown, never $0, for an offline answer, and offers to try again', async () => {

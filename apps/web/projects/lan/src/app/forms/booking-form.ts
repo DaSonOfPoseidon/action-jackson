@@ -162,7 +162,7 @@ interface FieldInfo {
                 [formField]="f.quoteNumber"
                 [attr.aria-invalid]="invalid('quoteNumber')"
                 [attr.aria-describedby]="describedBy('quoteNumber', 'bf-quote-number-error')"
-                (input)="clearServer('quoteNumber')"
+                (input)="clearServer('quoteNumber', 'kind')"
               />
               @if (errorText('quoteNumber'); as text) {
                 <p id="bf-quote-number-error" class="cf-error"><span class="sr-only">Error: </span>{{ text }}</p>
@@ -179,7 +179,7 @@ interface FieldInfo {
                 [formField]="f.email"
                 [attr.aria-invalid]="invalid('email')"
                 [attr.aria-describedby]="describedBy('email', 'bf-email-error')"
-                (input)="clearServer('email')"
+                (input)="clearServer('email', 'kind')"
               />
               @if (errorText('email'); as text) {
                 <p id="bf-email-error" class="cf-error"><span class="sr-only">Error: </span>{{ text }}</p>
@@ -196,7 +196,7 @@ interface FieldInfo {
           <div class="cf-choices">
             @for (option of kinds; track option.value; let i = $index) {
               <label class="cf-choice">
-                <input type="radio" [id]="'bf-kind-' + i" [value]="option.value" [formField]="f.kind" (change)="clearServer('kind')" />
+                <input type="radio" [id]="'bf-kind-' + i" [value]="option.value" [formField]="f.kind" (change)="clearServer('kind', 'date', 'time')" />
                 <span>
                   <span class="qf-kind-name">{{ option.label }}</span>
                   <span class="qf-kind-desc">{{ kindText[option.value] }}</span>
@@ -215,7 +215,7 @@ interface FieldInfo {
                 [formField]="f.hours"
                 [attr.aria-invalid]="invalid('durationMinutes')"
                 [attr.aria-describedby]="describedBy('durationMinutes', 'bf-hours-error')"
-                (change)="clearServer('durationMinutes')"
+                (change)="clearServer('durationMinutes', 'date', 'time')"
               >
                 @for (hours of lengths; track hours) {
                   <option [value]="hours">{{ hours === '1' ? '1 hour' : hours + ' hours' }}</option>
@@ -563,6 +563,9 @@ export class BookingForm {
       }
       const problem = error as ApiProblem;
       this.slots.set(problem.status === 429 ? { state: 'limited', retryAfter: problem.retryAfter } : isOffline(problem) ? { state: 'offline' } : { state: 'failed' });
+      // The picker is gone, so the choice made in it is too: a day that is not on the page is never sent.
+      this.chosenDate.set('');
+      this.chosenTime.set('');
     }
   }
 
@@ -616,9 +619,11 @@ export class BookingForm {
     return ids.length > 0 ? ids.join(' ') : null;
   }
 
-  protected clearServer(path: string): void {
-    if (this.serverErrors()[path]) {
-      this.serverErrors.update(({ [path]: _gone, ...rest }) => rest);
+  // An edit makes what the API said about these fields out of date. The quote number and the email pick the quote, and the
+  // "wrong kind of quote" answer on `kind` depends on that quote, so an edit of either clears it too.
+  protected clearServer(...paths: string[]): void {
+    if (paths.some((path) => this.serverErrors()[path])) {
+      this.serverErrors.update((errors) => Object.fromEntries(Object.entries(errors).filter(([path]) => !paths.includes(path))));
     }
   }
 

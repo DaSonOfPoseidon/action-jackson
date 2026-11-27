@@ -229,7 +229,8 @@ deploy/                — pc/ (api, postgres, redis, garage), pi/ (the edge)
   `Idempotency-Key` (a UUID v4 from `crypto.getRandomValues`, `forms/uuid.ts`: `crypto.randomUUID` does not exist on plain
   http, which the LAN edge and the e2e edges are). The key stays the same while the request is the same, so a retry after an
   offline answer is the same request, and a change makes a new key. The API's refusals with a sentence of their own (404, 409,
-  422, the 24-hour 429) are shown with that sentence (`FormStatusState` `failed` with a `detail`).
+  422) are shown with that sentence (`FormStatusState` `failed` with a `detail`), and the 24-hour 429 as `rate-limited` with its
+  `detail`.
 
 ### Deploy (new stack, PC)
 - The new backend runs from `deploy/pc/compose.yml` (project `action-jackson`): `api` (built from `server/`, with the repo root as the build context), `postgres`
