@@ -150,6 +150,14 @@ describe('FormStatus', () => {
     expect(text(alert(root))).toContain('Email us at hello@example.com.');
   });
 
+  it('shows the API\'s own sentence for a failure that has one, with the contact line, and no generic text', async () => {
+    const { root } = await setup({ kind: 'failed', detail: 'No quote matches that number and email.' });
+    expect(text(alert(root))).toContain('No quote matches that number and email.');
+    expect(text(alert(root))).toContain('Your answers are still in the form');
+    expect(text(alert(root))).toContain('Email us at hello@example.com.');
+    expect(text(alert(root))).not.toContain('could not be sent');
+  });
+
   it('leaves both regions in the page when the state goes back to idle, and empties them', async () => {
     const { root, set } = await setup({ kind: 'failed' });
     await set({ kind: 'idle' });

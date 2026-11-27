@@ -13,7 +13,7 @@
 #   5. runs the Playwright image (the tag is the exact @playwright/test version) on that network. Its Chromium maps
 #      *.localhost and localhost to an edge, so the specs open http://<key>.localhost like a visitor. Two addresses go
 #      in: EDGE_ORIGIN (the API-down edge, which every spec uses) and EDGE_API_ORIGIN (the edge with the API behind it,
-#      which e2e/lan-forms.spec.ts uses for real submissions);
+#      which e2e/lan-forms.spec.ts, lan-quote.spec.ts and lan-book.spec.ts use for real submissions);
 #   6. removes the containers, the network and the database on any exit (trap), so a failed run leaves nothing behind
 #      (the shared Postgres container stays up, as scripts/check.sh leaves it). The names carry the process id, so no
 #      fixed name is ever in use and two runs back to back (or at once) don't clash. Nothing here touches the deployed

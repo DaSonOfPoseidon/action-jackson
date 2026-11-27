@@ -26,6 +26,8 @@ const ROUTES: readonly Route[] = [
   { path: '/services/cameras', h1: 'Subscription-Free Security Cameras.', title: `PoE Camera Systems · ${SUFFIX}`, faqs: 6 },
   { path: '/services/wiring', h1: 'Structured Cabling & Low-Voltage Networking.', title: `Structured Cabling & Low Voltage · ${SUFFIX}`, faqs: 7 },
   { path: '/get-started', h1: 'Get Started.', title: `Get started · ${SUFFIX}` },
+  { path: '/quote', h1: 'Get a Quote.', title: `Get a quote · ${SUFFIX}` },
+  { path: '/book', h1: 'Book an Appointment.', title: `Book an appointment · ${SUFFIX}` },
 ];
 
 const SERVICE_LINKS = [
@@ -224,6 +226,8 @@ test.describe('lan pages', () => {
       await expect(footer.getByRole('link', { name: link.name, exact: true })).toHaveAttribute('href', link.href);
     }
     await expect(footer.getByRole('link', { name: 'Schedule Consultation', exact: true })).toHaveAttribute('href', '/get-started');
+    await expect(footer.getByRole('link', { name: 'Get a Quote', exact: true })).toHaveAttribute('href', '/quote');
+    await expect(footer.getByRole('link', { name: 'Book an Appointment', exact: true })).toHaveAttribute('href', '/book');
     await expect(footer.getByRole('link', { name: 'About', exact: true })).toHaveAttribute('href', '/about');
     await expect(footer).toContainText(`© ${new Date().getFullYear()} Action Jackson Installs. All rights reserved.`);
   });
@@ -346,7 +350,7 @@ test.describe('lan pages', () => {
     expect(crumb.itemListElement.at(-1).item).toBe(`https://${PRODUCTION}/services/networking`);
   });
 
-  test('the sitemap lists exactly the seven public routes, and not the not-found page', async ({ request }) => {
+  test('the sitemap lists exactly the public routes of ROUTES, and not the not-found page', async ({ request }) => {
     const response = await request.get(`${edgeOrigin()}/sitemap.xml`, { headers: { Host: HOST } });
     expect(response.status()).toBe(200);
     const locs = [...(await response.text()).matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]).sort();

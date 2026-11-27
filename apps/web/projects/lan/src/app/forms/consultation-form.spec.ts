@@ -363,6 +363,40 @@ describe('ConsultationForm', () => {
       expect(page.root.querySelector('#cf-phone-error')).toBeNull();
     });
 
+    it('drops the errors of fields that were edited while the request was out, and keeps the others', async () => {
+      const { page, http } = await setup();
+      await page.fillValid();
+      await page.type('cf-phone', 'abc1234');
+      await page.submit();
+      const req = expectPost(http);
+      await page.type('cf-phone', '5735550100');
+      problem(req, 400, {
+        title: 'Invalid',
+        errors: { 'customer.phone': ['Please enter a valid phone number.'], 'customer.email': ['Enter a valid email address.'] },
+      });
+      await page.settle();
+      expect(page.root.querySelector('#cf-phone-error')).toBeNull();
+      expect(page.text('#cf-email-error')).toBe('Error: Enter a valid email address.');
+      expect(page.summaryLinks()).toEqual(['Email: Enter a valid email address.']);
+    });
+
+    it('lets the corrected request be sent when every error was for a value edited while the request was out', async () => {
+      const { page, http } = await setup();
+      await page.fillValid();
+      await page.type('cf-phone', 'abc1234');
+      await page.submit();
+      const req = expectPost(http);
+      await page.type('cf-phone', '5735550100');
+      problem(req, 400, { title: 'Invalid', errors: { 'customer.phone': ['Please enter a valid phone number.'] } });
+      await page.settle();
+      expect(page.root.querySelector('#cf-phone-error')).toBeNull();
+      expect(page.summaryLinks()).toEqual([]);
+      await page.submit();
+      expectPost(http).flush(CREATED, { status: 201, statusText: 'Created' });
+      await page.settle();
+      expect(page.text('.cf-sent')).toContain('12345678');
+    });
+
     it('sends the current values when the visitor sends again', async () => {
       const { page, http } = await setup();
       await page.fillValid();

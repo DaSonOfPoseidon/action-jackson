@@ -248,6 +248,7 @@ interface FieldInfo {
           <p>Your request was received.</p>
         }
         <p>We'll review your request and contact you to schedule your consultation.</p>
+        <p>Know what you need? <a class="accent-link" routerLink="/quote">Build a quote</a>.</p>
         <a class="btn btn-outline btn-lg gradient-border" routerLink="/">Back to Home</a>
       </div>
     </aj-form-status>
@@ -292,6 +293,8 @@ export class ConsultationForm {
   private readonly attempted = signal(false);
   // The API's messages by field path, from its last 400. A field's messages go when the visitor changes it.
   private readonly serverErrors = signal<Readonly<Record<string, readonly string[]>>>({});
+  // The fields edited since the request went out: the API judged their old values, so its errors for them are dropped.
+  private readonly editedWhileSending = new Set<string>();
 
   private readonly honeypot = viewChild<ElementRef<HTMLInputElement>>('honeypot');
   private readonly sentHeading = viewChild<ElementRef<HTMLElement>>('sentHeading');
@@ -344,7 +347,12 @@ export class ConsultationForm {
     return ids.length > 0 ? ids.join(' ') : null;
   }
 
+  // An edit makes what the API said about the field out of date. While a request is out, the answer is not here yet: the
+  // field is noted, and its error is dropped when the answer comes (see `fail`).
   protected clearServer(path: string): void {
+    if (this.sending()) {
+      this.editedWhileSending.add(path);
+    }
     if (this.serverErrors()[path]) {
       this.serverErrors.update(({ [path]: _gone, ...rest }) => rest);
     }
@@ -378,6 +386,7 @@ export class ConsultationForm {
     const keyboardOnButton = this.submitButton()?.nativeElement === this.document.activeElement;
     this.sending.set(true);
     this.serverErrors.set({});
+    this.editedWhileSending.clear();
     this.status.set({ kind: 'sending' });
     try {
       const created = await firstValueFrom(this.api.post<{ requestNumber?: unknown }>('consultations', this.payload()));
@@ -424,7 +433,13 @@ export class ConsultationForm {
     if (problem.status === 400 && problem.errors) {
       const sorted = mapFieldErrors(problem.errors, this.fields.map((field) => field.path), OTHER_ERROR);
       if (Object.keys(sorted.byField).length > 0 || sorted.other.length > 0) {
-        this.serverErrors.set(sorted.byField);
+        // A field the visitor corrected while the request was out keeps no error: it was about the value they replaced.
+        const byField = Object.fromEntries(Object.entries(sorted.byField).filter(([path]) => !this.editedWhileSending.has(path)));
+        this.serverErrors.set(byField);
+        if (Object.keys(byField).length === 0 && sorted.other.length === 0) {
+          this.status.set({ kind: 'idle' });
+          return;
+        }
         this.status.set({ kind: 'invalid', errors: this.summary(), other: sorted.other });
         return;
       }

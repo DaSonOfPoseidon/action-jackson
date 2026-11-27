@@ -22,8 +22,9 @@ export type FormStatusState =
   | { readonly kind: 'rate-limited'; readonly detail?: string; readonly retryAfter?: number }
   // The API cannot be reached (status 0 or 503).
   | { readonly kind: 'offline' }
-  // Anything else (a 413, a 415, a 500, an answer that is not a problem).
-  | { readonly kind: 'failed' };
+  // Anything else (a 413, a 415, a 500, an answer that is not a problem). With a `detail` the page shows the API's own
+  // sentence instead of the generic one: only for answers whose text is written for a visitor (a 404 or a 409 of a booking).
+  | { readonly kind: 'failed'; readonly detail?: string };
 
 // "try again in 2 minutes", rounded up, for a wait in seconds. Empty when the answer gave none.
 export function retryText(seconds: number | undefined): string {
@@ -88,7 +89,11 @@ export function retryText(seconds: number | undefined): string {
           <p class="notice">{{ offline }} Your answers are still in the form, so you can try again.</p>
         }
         @case ('failed') {
-          <p class="notice">Your request could not be sent. Your answers are still in the form, so you can try again. {{ contact() }}</p>
+          @if (current.detail) {
+            <p class="notice">{{ current.detail }} Your answers are still in the form, so you can try again. {{ contact() }}</p>
+          } @else {
+            <p class="notice">Your request could not be sent. Your answers are still in the form, so you can try again. {{ contact() }}</p>
+          }
         }
       }
     </div>
