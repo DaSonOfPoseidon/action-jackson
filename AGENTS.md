@@ -175,10 +175,10 @@ deploy/                — pc/ (api, postgres, redis, garage), pi/ (the edge)
   Node commands never run on the host (its Node is older than Angular's engines): `scripts/node.sh <command>` runs them in
   a pinned Node 24 container, in `apps/web`, e.g. `scripts/node.sh npm ci --ignore-scripts`, `scripts/node.sh npm test`.
 - Every version is pinned exactly (`.npmrc` has `save-exact=true`); install with `npm ci --ignore-scripts`, then
-  `npm audit signatures`. Runtime dependencies are Angular, rxjs and tslib only. No zone.js, no external fonts, icon kits or CDNs (a site may self-host its own fonts: Syne and Figtree, shared by main
+  `npm audit signatures`. Runtime dependencies are Angular (`@angular/forms` included: the lan form uses Signal Forms, a stable API in 22.3, so its own `@standard-schema/spec` and `zod` come with it), rxjs and tslib only. No zone.js, no external fonts, icon kits or CDNs (a site may self-host its own fonts: Syne and Figtree, shared by main
   and lan, and IBM Plex Mono, lan only, live in `apps/web/projects/shared/src/fonts/` as woff2 with their OFL licences,
   wired in by `shared/src/styles/fonts.css` and `fonts-mono.css`, and served from the site's own origin).
-- npm scripts: `npm test` (Vitest for `shared`, then `node --test` for the build scripts), `npm run build` (every app, then
+- npm scripts: `npm test` (Vitest for `shared` and for `lan`, then `node --test` for the build scripts), `npm run build` (every app, then
   `scripts/csp.mjs`, then `scripts/seo.mjs`), `npm run test:dist` (checks the build output). The output is
   `apps/web/dist/<key>/browser`, which `scripts/stage-sites.sh` stages for the edge (the Pi deploy and the e2e run use it).
 - The public apps are prerendered (static output, route `/404` becomes `404.html`, `sitemap.xml` and `robots.txt` per site);
@@ -187,17 +187,31 @@ deploy/                — pc/ (api, postgres, redis, garage), pi/ (the edge)
   `<meta http-equiv="Content-Security-Policy">` with `script-src 'self'` and the SHA-256 of each inline script, and fails
   the build on an inline event handler or `javascript:` URL. The edge adds the rest as a header (no `script-src`): both
   policies are enforced, so scripts are controlled by the meta and everything else by the header.
-- `scripts/web-e2e.sh` (after a build) publishes the edge, stages `build/e2e/sites`, starts the edge in a container with a
-  random key and the API down, and runs Playwright (Chromium, image `playwright:v<version>-noble`) against it by Host name,
-  with axe `wcag2aaa`. It removes its containers and network on exit. CI's `web` job runs the same specs against a plain
-  `dotnet` edge (`EDGE_ORIGIN` is where the edge listens).
-- The lan app is the ported business site (`/`, `/about`, `/services/{networking,smart-home,cameras,wiring}`, a placeholder
-  `/get-started`), in the original site's look. Its frame (`lan-frame.ts`: header bar, footer) is built from the shared skip
+- `scripts/web-e2e.sh` (after a build) publishes the edge and the API, stages `build/e2e/sites`, and starts in containers, with a
+  random key: an edge whose API is down, a real API on a fresh database of the throwaway Postgres (`scripts/test-db.sh`;
+  the script waits for `/healthz` to say `"db":"ok"`, the database is dropped on exit, and the deployed stack is never
+  touched) and a second edge in front of it. It runs Playwright (Chromium, image `playwright:v<version>-noble`) by Host
+  name, with axe `wcag2aaa`, and removes its containers and network on exit. `EDGE_ORIGIN` is the API-down edge, which every
+  spec uses; `EDGE_API_ORIGIN` is the edge with the API, used by `e2e/lan-forms.spec.ts` (Playwright projects
+  `forms-api-down` and `forms-api-up`, chosen by the `@down` and `@up` tags in the test titles). The API rate-limits
+  consultations to 3 per 15 minutes per client IP and all e2e traffic shares one, so the `@up` block sends exactly three
+  POSTs, in one serial block. CI's `web` job runs the same specs against plain `dotnet` processes: the API on a Postgres
+  service container, and both edges.
+- The lan app is the ported business site (`/`, `/about`, `/services/{networking,smart-home,cameras,wiring}`, and the
+  consultation request form at `/get-started`), in the original site's look. Its frame (`lan-frame.ts`: header bar, footer) is built from the shared skip
   link, site switcher and offline banner; its look is `projects/lan/src/styles.css`, with colours from the tokens (every pair in
   `tokens-lan.ts` is AAA). Menus and FAQs are `<details>`, so they work without script. Page copy is typed constants under
   `projects/lan/src/app/data/` (prices are copy, never computed). Structured data (JSON-LD) is written into `<head>` by
   `useJsonLd` (`<` for every `<`). `e2e/contrast-audit.ts` reads the real pixels behind every piece of text (axe cannot
   judge text on gradients), so any new background behind text is checked by `e2e/lan.spec.ts`.
+- The consultation form (`projects/lan/src/app/forms/consultation-form.ts`) posts to `POST /api/lan/consultations`. Its option
+  lists are imported from `contracts/lan-options.json` (`data/options.ts`), never copied. The page is prerendered with
+  the submit button disabled until the app runs (a click before that must not submit natively), and it makes no API call to
+  render. Client checks state only what the contract says; the name and phone formats are the API's, shown from its 400.
+  The shared library has the helpers the quote, booking and car forms reuse: `ApiClient.post(path, body, { headers })`,
+  `mapFieldErrors` (the API's JSON-path errors onto a form's fields) and `<aj-form-status>` (sending, sent, field errors,
+  429, offline, failed, in one pair of live regions). The success copy says only what the API does: the email is queued, and
+  SMTP may be off (issue #15), so it promises no time and no email.
 
 ### Deploy (new stack, PC)
 - The new backend runs from `deploy/pc/compose.yml` (project `action-jackson`): `api` (built from `server/`, with the repo root as the build context), `postgres`

@@ -4,7 +4,6 @@ import { ABOUT_META } from './data/about';
 import { HOME_META } from './data/home';
 import { SERVICE_LINKS } from './data/service-links';
 import { About } from './pages/about';
-import { GetStarted } from './pages/get-started';
 import { Home } from './pages/home';
 
 // The business pages, at the same paths as the original site (the edge redirects the apex host's /services/* and
@@ -25,8 +24,9 @@ export const routes: Routes = [
     data: { [ROUTE_DESCRIPTION]: service.seoDescription, serviceId: service.id },
   })),
   {
+    // Loaded when opened, like the service pages: the form brings Angular's forms package, which no other page needs.
     path: 'get-started',
-    component: GetStarted,
+    loadComponent: () => import('./pages/get-started').then((m) => m.GetStarted),
     title: 'Get started',
     data: { [ROUTE_DESCRIPTION]: 'Schedule a consultation with Action Jackson Installs for home networking, smart home, cameras and structured wiring in Columbia, MO.' },
   },

@@ -123,6 +123,10 @@ aj-icon svg {
   --w: 36rem;
 }
 
+.w-2xl {
+  --w: 42rem;
+}
+
 .w-3xl {
   --w: 48rem;
 }
@@ -2102,29 +2106,286 @@ details[open] > summary .plus {
   }
 }
 
-/* ---- Placeholder and not-found pages ---- */
-.plain-page {
-  max-width: 40rem;
-  margin-inline: auto;
-  padding: 6rem 1.5rem;
-  box-sizing: border-box;
-  text-align: center;
+/* ---- The consultation request form (/get-started) ---- */
+.form-hero {
+  position: relative;
+  padding-block: 4rem 2rem;
+  background: linear-gradient(to bottom right, rgba(88, 28, 135, 0.2), #0a0a0f, rgba(20, 83, 45, 0.1));
 }
 
-.plain-page h1 {
+.form-hero h1 {
+  margin-top: 0.5rem;
   font-size: 2.25rem;
-  line-height: 2.5rem;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--aj-text);
+}
+
+.form-lede {
+  margin-top: 1rem;
+  max-width: 36rem;
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+  color: var(--aj-text-muted);
+}
+
+.form-section {
+  padding-block: 2rem 5rem;
+}
+
+.form-card {
+  padding: 1.5rem;
+}
+
+.cform {
+  display: grid;
+  gap: 2rem;
+}
+
+.cf-note,
+.cf-hint,
+.cf-wait {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--aj-text-muted);
+}
+
+.cf-wait {
+  margin: 0;
+}
+
+.cf-set {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.cf-set legend {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding: 0;
+  font-family: 'Syne', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 1.125rem;
+  line-height: 1.5rem;
+  font-weight: 600;
+  color: var(--aj-text);
+}
+
+/* The step number: a small badge, so the sections read as a short sequence. It is decoration (aria-hidden). */
+.cf-step {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  border-radius: 9999px;
+  background: rgba(20, 83, 45, 0.25);
+  color: var(--aj-link);
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.cf-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 40rem) {
+  .cf-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.cf-field {
+  display: grid;
+  align-content: start;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
+.cf-grid + .cf-field {
+  margin-top: 1rem;
+}
+
+.cf-field label {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 600;
+  color: var(--aj-text);
+}
+
+.cf-optional {
+  font-weight: 400;
+  color: var(--aj-text-muted);
+}
+
+.cf-field input,
+.cf-field select {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid #7a7a96;
+  border-radius: 0.5rem;
+  background: var(--aj-surface-raised);
+  color: var(--aj-text);
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+
+.cf-field select {
+  appearance: auto;
+}
+
+.cf-field input:hover,
+.cf-field select:hover {
+  border-color: rgba(34, 197, 94, 0.6);
+}
+
+.cf-field [aria-invalid='true'] {
+  border-color: var(--aj-accent-orange);
+  border-width: 2px;
+}
+
+/* An error: its words carry it (and a screen reader reads "Error:"); the colour and the thicker edge only support it. */
+.cf-error {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 600;
+  color: var(--aj-accent-orange);
+}
+
+.cf-set > .cf-error {
+  margin-top: 0.75rem;
+}
+
+.cf-choices {
+  display: grid;
+  gap: 0.5rem;
+}
+
+@media (min-width: 40rem) {
+  .cf-set:not(:last-of-type) .cf-choices {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* A checkbox or radio and its label are on one line: the input never wraps below its text, and a long label wraps
+   beside it. The whole row is the click target. */
+.cf-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #2a2a3a;
+  border-radius: 0.5rem;
+  background: var(--aj-surface-raised);
+  color: var(--aj-text);
+  line-height: 1.5rem;
+  cursor: pointer;
+}
+
+.cf-choice:hover {
+  border-color: rgba(34, 197, 94, 0.5);
+}
+
+.cf-choice input {
+  flex: none;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin: 0;
+  accent-color: var(--aj-accent);
+}
+
+.cf-choice span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Off screen, not display: none (a bot fills what it can see in the DOM). */
+.cf-trap {
+  position: absolute;
+  left: -10000px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.cf-submit {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* Switched off (before the app runs, or while sending): the muted text on the raised surface, a pair the theme checks, not
+   a faded button whose text would no longer be AAA. */
+.cf-submit:disabled {
+  border-color: #7a7a96;
+  background: var(--aj-surface-raised);
+  box-shadow: none;
+  color: var(--aj-text-muted);
+  cursor: not-allowed;
+  filter: none;
+}
+
+.cf-status {
+  display: block;
+  margin-top: 1.5rem;
+}
+
+.cf-status:empty {
+  margin-top: 0;
+}
+
+.cf-sent {
+  display: grid;
+  justify-items: start;
+  gap: 1rem;
+  color: var(--aj-text);
+}
+
+.cf-sent h2 {
+  font-size: 1.5rem;
+  line-height: 2rem;
   font-weight: 700;
   color: var(--aj-text);
 }
 
-.plain-page p {
-  margin-top: 1rem;
+.cf-sent h2:focus {
+  outline: none;
+}
+
+.cf-sent p {
   color: var(--aj-text-muted);
 }
 
-.plain-page .btn {
-  margin-top: 2rem;
+.cf-sent strong {
+  color: var(--aj-text);
+  letter-spacing: 0.08em;
+}
+
+@media (min-width: 48rem) {
+  .form-hero {
+    padding-block: 6rem 2.5rem;
+  }
+
+  .form-hero h1 {
+    font-size: 3.75rem;
+    line-height: 1;
+  }
+
+  .form-card {
+    padding: 2.5rem;
+  }
 }
 
 aj-not-found {
