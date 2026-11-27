@@ -19,6 +19,12 @@ test('localhost/get-started?a=1 is a 301 to the lan site with the path and the q
   expect(response.headers()['location']).toBe('https://lan.localhost/get-started?a=1');
 });
 
+test('localhost/services/cameras?x=1 is a 301 to the lan site with the path and the query kept', async ({ request }) => {
+  const response = await get(request, 'localhost', '/services/cameras?x=1');
+  expect(response.status()).toBe(301);
+  expect(response.headers()['location']).toBe('https://lan.localhost/services/cameras?x=1');
+});
+
 test('a redirect carries the edge CSP header too', async ({ request }) => {
   const response = await get(request, 'www.localhost');
   expect(response.headers()['content-security-policy']).toContain("frame-ancestors 'none'");

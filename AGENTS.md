@@ -175,8 +175,9 @@ deploy/                — pc/ (api, postgres, redis, garage), pi/ (the edge)
   Node commands never run on the host (its Node is older than Angular's engines): `scripts/node.sh <command>` runs them in
   a pinned Node 24 container, in `apps/web`, e.g. `scripts/node.sh npm ci --ignore-scripts`, `scripts/node.sh npm test`.
 - Every version is pinned exactly (`.npmrc` has `save-exact=true`); install with `npm ci --ignore-scripts`, then
-  `npm audit signatures`. Runtime dependencies are Angular, rxjs and tslib only. No zone.js, no external fonts or CDNs (a site may self-host its own: main ships Syne and Figtree under
-  `apps/web/projects/main/src/fonts/`, woff2 and OFL licence, served from its own origin).
+  `npm audit signatures`. Runtime dependencies are Angular, rxjs and tslib only. No zone.js, no external fonts, icon kits or CDNs (a site may self-host its own fonts: Syne and Figtree, shared by main
+  and lan, and IBM Plex Mono, lan only, live in `apps/web/projects/shared/src/fonts/` as woff2 with their OFL licences,
+  wired in by `shared/src/styles/fonts.css` and `fonts-mono.css`, and served from the site's own origin).
 - npm scripts: `npm test` (Vitest for `shared`, then `node --test` for the build scripts), `npm run build` (every app, then
   `scripts/csp.mjs`, then `scripts/seo.mjs`), `npm run test:dist` (checks the build output). The output is
   `apps/web/dist/<key>/browser`, which `scripts/stage-sites.sh` stages for the edge (the Pi deploy and the e2e run use it).
@@ -190,6 +191,13 @@ deploy/                — pc/ (api, postgres, redis, garage), pi/ (the edge)
   random key and the API down, and runs Playwright (Chromium, image `playwright:v<version>-noble`) against it by Host name,
   with axe `wcag2aaa`. It removes its containers and network on exit. CI's `web` job runs the same specs against a plain
   `dotnet` edge (`EDGE_ORIGIN` is where the edge listens).
+- The lan app is the ported business site (`/`, `/about`, `/services/{networking,smart-home,cameras,wiring}`, a placeholder
+  `/get-started`), in the original site's look. Its frame (`lan-frame.ts`: header bar, footer) is built from the shared skip
+  link, site switcher and offline banner; its look is `projects/lan/src/styles.css`, with colours from the tokens (every pair in
+  `tokens-lan.ts` is AAA). Menus and FAQs are `<details>`, so they work without script. Page copy is typed constants under
+  `projects/lan/src/app/data/` (prices are copy, never computed). Structured data (JSON-LD) is written into `<head>` by
+  `useJsonLd` (`<` for every `<`). `e2e/contrast-audit.ts` reads the real pixels behind every piece of text (axe cannot
+  judge text on gradients), so any new background behind text is checked by `e2e/lan.spec.ts`.
 
 ### Deploy (new stack, PC)
 - The new backend runs from `deploy/pc/compose.yml` (project `action-jackson`): `api` (built from `server/`, with the repo root as the build context), `postgres`

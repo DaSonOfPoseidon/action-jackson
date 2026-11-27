@@ -1,0 +1,18 @@
+/* IBM Plex Mono, for the small labels, numbers and prices the original site sets in mono (the lan site). Latin subset,
+   the two weights the original loads (400 and 500; a bolder mono is the browser's synthesized bold, as on the original
+   site). From @fontsource/ibm-plex-mono 5.3.0 (https://registry.npmjs.org/@fontsource/ibm-plex-mono/-/ibm-plex-mono-5.3.0.tgz,
+   files/ibm-plex-mono-latin-{400,500}-normal.woff2); licence in ../fonts/OFL-ibm-plex-mono.txt. Kept apart from
+   fonts.css so a site that does not use it (main) does not ship it. */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('../fonts/ibm-plex-mono-latin-400-normal.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('../fonts/ibm-plex-mono-latin-500-normal.woff2') format('woff2');
+  font-weight: 500;
+  font-display: swap;
+}

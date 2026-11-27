@@ -1,0 +1,17 @@
+/* The original site's two typefaces, self-hosted and shared by the sites that use them (main and lan): Syne for
+   headings, Figtree for the rest. Latin subset, variable weight; licences beside the files in ../fonts/. Not external
+   fonts: both come from the site's own origin, which the edge's font-src 'self' allows. A site lists this file in its
+   angular.json styles after base.css, and sets font-family itself. */
+@font-face {
+  font-family: 'Syne';
+  src: url('../fonts/syne-latin-wght-normal.woff2') format('woff2');
+  font-weight: 400 800;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Figtree';
+  src: url('../fonts/figtree-latin-wght-normal.woff2') format('woff2');
+  font-weight: 300 900;
+  font-display: swap;
+}

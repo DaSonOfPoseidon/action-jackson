@@ -17,6 +17,11 @@ export const ADMIN_TOKENS: SiteTokens = {
     lanAccent: '#1b3a6b',
     carAccent: '#1b3a6b',
     devAccent: '#1b3a6b',
+    surfaceRaised: '#f2f4f7',
+    accentDeep: '#1b3a6b',
+    accentPurple: '#1b3a6b',
+    accentOrange: '#1b3a6b',
+    accentCyan: '#1b3a6b',
   },
   pairs: STANDARD_PAIRS,
 };

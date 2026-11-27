@@ -20,6 +20,11 @@ export const TOKEN_NAMES = [
   'lanAccent',
   'carAccent',
   'devAccent',
+  'surfaceRaised',
+  'accentDeep',
+  'accentPurple',
+  'accentOrange',
+  'accentCyan',
 ] as const;
 
 export type TokenName = (typeof TOKEN_NAMES)[number];
@@ -54,6 +59,22 @@ export const STANDARD_PAIRS: readonly TokenPair[] = [
   { text: 'devAccent', background: 'surface' },
   { text: 'focus', background: 'bg', large: true },
   { text: 'focus', background: 'surface', large: true },
+  // surfaceRaised is the lighter card surface (the lan site's raised cards and menus). accentDeep is the far end of an
+  // accent-filled button's gradient, so the label must pass on both ends. accentPurple, accentOrange and accentCyan are
+  // the lan site's service accents, as text on its three surfaces; the other sites set them to their link colour.
+  { text: 'text', background: 'surfaceRaised' },
+  { text: 'textMuted', background: 'surfaceRaised' },
+  { text: 'link', background: 'surfaceRaised' },
+  { text: 'onAccent', background: 'accentDeep' },
+  { text: 'accentPurple', background: 'bg' },
+  { text: 'accentPurple', background: 'surface' },
+  { text: 'accentPurple', background: 'surfaceRaised' },
+  { text: 'accentOrange', background: 'bg' },
+  { text: 'accentOrange', background: 'surface' },
+  { text: 'accentOrange', background: 'surfaceRaised' },
+  { text: 'accentCyan', background: 'bg' },
+  { text: 'accentCyan', background: 'surface' },
+  { text: 'accentCyan', background: 'surfaceRaised' },
 ];
 
 // "textMuted" is --aj-text-muted in CSS.
