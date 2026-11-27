@@ -732,6 +732,49 @@ describe('BookingForm', () => {
       expect(page.has('#bf-phone-error')).toBe(false);
     });
 
+    it('drops the errors of fields that were edited while the request was out, and keeps the others', async () => {
+      const { page, http } = await setup();
+      await fillSurvey(page, http);
+      await page.type('bf-phone', 'abc1234');
+      await page.submit();
+      const req = expectBook(http);
+      await page.type('bf-phone', '5735550100');
+      problem(req, 400, { title: 'Invalid', errors: { phone: ['Please enter a valid phone number.'], notes: ['Notes are too long.'] } });
+      await page.settle();
+      expect(page.has('#bf-phone-error')).toBe(false);
+      expect(page.text('#bf-notes-error')).toBe('Error: Notes are too long.');
+      expect(page.summaryLinks()).toEqual(['Notes: Notes are too long.']);
+    });
+
+    it('lets the corrected request be sent when every error was for a value edited while the request was out', async () => {
+      const { page, http } = await setup();
+      await fillSurvey(page, http);
+      await page.type('bf-phone', 'abc1234');
+      await page.submit();
+      const req = expectBook(http);
+      await page.type('bf-phone', '5735550100');
+      problem(req, 400, { title: 'Invalid', errors: { phone: ['Please enter a valid phone number.'] } });
+      await page.settle();
+      expect(page.has('#bf-phone-error')).toBe(false);
+      expect(page.summaryLinks()).toEqual([]);
+      expect(page.submitButton.disabled).toBe(false);
+      await page.submit();
+      expectBook(http).flush(BOOKED, { status: 201, statusText: 'Created' });
+      await page.settle();
+    });
+
+    it('does not refresh the open times for a day or time error when the day or time was changed while the request was out', async () => {
+      const { page, http } = await setup();
+      await fillSurvey(page, http);
+      await page.submit();
+      const req = expectBook(http);
+      await page.time('10:00');
+      problem(req, 400, { title: 'Invalid', errors: { time: ['That time is closed.'] } });
+      await page.settle();
+      http.expectNone(() => true);
+      expect(page.has('#bf-slot-error')).toBe(false);
+    });
+
     for (const [field, id, value] of [
       ['quote number', 'bf-quote-number', '87654321'],
       ['email', 'bf-email', 'grace@example.com'],

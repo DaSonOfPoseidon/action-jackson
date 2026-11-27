@@ -416,6 +416,8 @@ export class BookingForm {
 
   private readonly attempted = signal(false);
   private readonly serverErrors = signal<Readonly<Record<string, readonly string[]>>>({});
+  // The fields edited since the request went out: the API judged their old values, so its errors for them are dropped.
+  private readonly editedWhileSending = new Set<string>();
 
   // The Idempotency-Key of the request last sent, and the request (as text) it belongs to.
   private idempotencyKey = '';
@@ -621,7 +623,11 @@ export class BookingForm {
 
   // An edit makes what the API said about these fields out of date. The quote number and the email pick the quote, and the
   // "wrong kind of quote" answer on `kind` depends on that quote, so an edit of either clears it too.
+  // While a request is out its answer is not here yet: the fields are noted, and their errors are dropped when it comes.
   protected clearServer(...paths: string[]): void {
+    if (this.sending()) {
+      paths.forEach((path) => this.editedWhileSending.add(path));
+    }
     if (paths.some((path) => this.serverErrors()[path])) {
       this.serverErrors.update((errors) => Object.fromEntries(Object.entries(errors).filter(([path]) => !paths.includes(path))));
     }
@@ -643,6 +649,7 @@ export class BookingForm {
     const keyboardOnButton = this.submitButton()?.nativeElement === this.document.activeElement;
     this.sending.set(true);
     this.serverErrors.set({});
+    this.editedWhileSending.clear();
     this.status.set({ kind: 'sending' });
     try {
       const body = this.payload();
@@ -714,9 +721,15 @@ export class BookingForm {
     if (problem.status === 400 && problem.errors) {
       const sorted = mapFieldErrors(problem.errors, this.fields.map((field) => field.path), OTHER_ERROR);
       if (Object.keys(sorted.byField).length > 0 || sorted.other.length > 0) {
-        this.serverErrors.set(sorted.byField);
+        // A field the visitor corrected while the request was out keeps no error: it was about the value they replaced.
+        const byField = Object.fromEntries(Object.entries(sorted.byField).filter(([path]) => !this.editedWhileSending.has(path)));
+        this.serverErrors.set(byField);
+        if (Object.keys(byField).length === 0 && sorted.other.length === 0) {
+          this.status.set({ kind: 'idle' });
+          return;
+        }
         this.status.set({ kind: 'invalid', errors: this.summary(), other: sorted.other });
-        if (sorted.byField['date'] || sorted.byField['time']) {
+        if (byField['date'] || byField['time']) {
           this.refreshSlots();
         }
         return;

@@ -800,6 +800,41 @@ describe('QuoteForm', () => {
       expect(page.has('#qf-zip-error')).toBe(false);
     });
 
+    it('drops the errors of fields that were edited while the request was out, and keeps the others', async () => {
+      const { page, http } = await setup();
+      await page.fillDrops();
+      await page.type('qf-zip', '6520');
+      await page.submit();
+      const req = expectCreate(http);
+      await page.type('qf-zip', '65201');
+      problem(req, 400, {
+        title: 'Invalid',
+        errors: { 'homeInfo.address.zip': ['ZIP code must be in the format 12345 or 12345-6789.'], 'customer.phone': ['Please enter a valid phone number.'] },
+      });
+      await page.settle();
+      expect(page.has('#qf-zip-error')).toBe(false);
+      expect(page.text('#qf-phone-error')).toBe('Error: Please enter a valid phone number.');
+      expect(page.summaryLinks()).toEqual(['Phone: Please enter a valid phone number.']);
+    });
+
+    it('lets the corrected request be sent when every error was for a value edited while the request was out', async () => {
+      const { page, http } = await setup();
+      await page.fillDrops();
+      await page.type('qf-zip', '6520');
+      await page.submit();
+      const req = expectCreate(http);
+      await page.type('qf-zip', '65201');
+      problem(req, 400, { title: 'Invalid', errors: { 'homeInfo.address.zip': ['ZIP code must be in the format 12345 or 12345-6789.'] } });
+      await page.settle();
+      expect(page.has('#qf-zip-error')).toBe(false);
+      expect(page.summaryLinks()).toEqual([]);
+      expect(page.submitButton.disabled).toBe(false);
+      await page.submit();
+      ok(expectCreate(http), DROPS_CREATED);
+      await page.settle();
+      expect(page.has('.cf-sent')).toBe(true);
+    });
+
     it('puts the scope error of a whole-home 400 on the scope', async () => {
       const { page, http } = await setup();
       await page.fillWhole();
