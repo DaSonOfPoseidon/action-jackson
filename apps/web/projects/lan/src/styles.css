@@ -2504,6 +2504,132 @@ details[open] > summary .plus {
   line-height: 2.5rem;
 }
 
+/* ---- Booking (/book) ---- */
+.bf-slot {
+  outline-offset: 0.5rem;
+}
+
+/* Earlier, the window, Later: the window's text wraps between the two buttons and never pushes them off a narrow screen. */
+.bf-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.bf-window {
+  flex: 1 1 8rem;
+  margin: 0;
+  text-align: center;
+  font-weight: 600;
+  color: var(--aj-text);
+}
+
+.bf-nav .btn {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* Disabled (the first or the last window): the muted text on the raised surface, a pair the theme checks. */
+.bf-nav .btn:disabled {
+  border-color: #7a7a96;
+  background: var(--aj-surface-raised);
+  color: var(--aj-text-muted);
+  cursor: not-allowed;
+}
+
+.bf-slots-live {
+  margin-top: 1rem;
+}
+
+.bf-slots-note {
+  margin: 0;
+  color: var(--aj-text-muted);
+}
+
+#bf-slots-retry {
+  margin-top: 0.75rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* The open days: buttons that wrap. A chosen day is marked by its colours and its edge, and aria-pressed says it. */
+.bf-days {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bf-day {
+  min-height: 3rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid #7a7a96;
+  border-radius: 0.5rem;
+  background: var(--aj-surface-raised);
+  color: var(--aj-text);
+  font: inherit;
+  font-size: 0.9375rem;
+  line-height: 1.5rem;
+  cursor: pointer;
+}
+
+.bf-day:hover {
+  border-color: rgba(34, 197, 94, 0.6);
+}
+
+.bf-day[aria-pressed='true'] {
+  border-color: var(--aj-accent);
+  background: linear-gradient(to right, var(--aj-accent), var(--aj-accent-deep));
+  color: var(--aj-on-accent);
+  font-weight: 600;
+}
+
+.bf-times {
+  min-width: 0;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.bf-times legend {
+  margin-bottom: 0.75rem;
+  padding: 0;
+  font-weight: 600;
+  color: var(--aj-text);
+}
+
+.cf-sent .bf-kind-booked {
+  color: var(--aj-text);
+  font-weight: 600;
+}
+
+.bf-when {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  color: var(--aj-text-muted);
+}
+
+.bf-when div {
+  display: grid;
+  gap: 0.125rem;
+}
+
+.bf-when dt {
+  font-size: 0.875rem;
+  color: var(--aj-text-muted);
+}
+
+.bf-when dd {
+  margin: 0;
+  color: var(--aj-text);
+  font-weight: 600;
+}
+
 .cf-sent .qf-amount strong {
   font-size: 1.25rem;
 }

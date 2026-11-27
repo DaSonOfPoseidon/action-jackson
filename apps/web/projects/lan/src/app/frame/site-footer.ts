@@ -33,6 +33,8 @@ import { SERVICE_LINKS } from '../data/service-links';
             <p id="footer-links" class="footer-title">Quick Links</p>
             <ul class="footer-links">
               <li><a routerLink="/get-started">Schedule Consultation</a></li>
+              <li><a routerLink="/quote">Get a Quote</a></li>
+              <li><a routerLink="/book">Book an Appointment</a></li>
               <li><a routerLink="/about">About</a></li>
             </ul>
           </nav>

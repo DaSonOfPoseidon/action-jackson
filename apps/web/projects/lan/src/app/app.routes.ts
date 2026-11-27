@@ -37,6 +37,14 @@ export const routes: Routes = [
     title: 'Get a quote',
     data: { [ROUTE_DESCRIPTION]: 'Build a quote for ethernet drops, cable runs and home networking services with Action Jackson Installs in Columbia, MO, or ask for a whole-home install.' },
   },
+  {
+    // Loaded when opened, like get-started and quote. A visitor comes here with a quote number (the quote's page links to
+    // /book?quote=<number>), and the page is prerendered once, at /book, with the form empty.
+    path: 'book',
+    loadComponent: () => import('./pages/book').then((m) => m.Book),
+    title: 'Book an appointment',
+    data: { [ROUTE_DESCRIPTION]: 'Book a site survey or an install appointment for your Action Jackson Installs quote in Columbia, MO. Choose from the open days and times.' },
+  },
   { path: '404', ...notFound },
   { path: '**', ...notFound },
 ];

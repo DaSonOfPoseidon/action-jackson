@@ -192,13 +192,15 @@ deploy/                — pc/ (api, postgres, redis, garage), pi/ (the edge)
   the script waits for `/healthz` to say `"db":"ok"`, the database is dropped on exit, and the deployed stack is never
   touched) and a second edge in front of it. It runs Playwright (Chromium, image `playwright:v<version>-noble`) by Host
   name, with axe `wcag2aaa`, and removes its containers and network on exit. `EDGE_ORIGIN` is the API-down edge, which every
-  spec uses; `EDGE_API_ORIGIN` is the edge with the API, used by `e2e/lan-forms.spec.ts` (Playwright projects
-  `forms-api-down` and `forms-api-up`, chosen by the `@down` and `@up` tags in the test titles). The API rate-limits
-  consultations to 3 per 15 minutes per client IP and all e2e traffic shares one, so the `@up` block sends exactly three
-  POSTs, in one serial block. CI's `web` job runs the same specs against plain `dotnet` processes: the API on a Postgres
+  spec uses; `EDGE_API_ORIGIN` is the edge with the API, used by `e2e/lan-forms.spec.ts`, `lan-quote.spec.ts` and
+  `lan-book.spec.ts` (Playwright projects `forms-api-down` and `forms-api-up`, chosen by the `@down` and `@up` tags in the test
+  titles). The API rate-limits per client IP and all e2e traffic shares one, so each `@up` block is one serial block with a
+  budget written in a comment: consultations 3 of 3 (`lan-forms.spec.ts`), quote creates 2 of 3 and booking POSTs 3 of 5
+  (`lan-quote.spec.ts`, which also holds the booking steps, because they need its quote), calculate and availability calls a
+  handful of 30 a minute. A new `@up` test that posts must be added to that budget. CI's `web` job runs the same specs against plain `dotnet` processes: the API on a Postgres
   service container, and both edges.
 - The lan app is the ported business site (`/`, `/about`, `/services/{networking,smart-home,cameras,wiring}`, and the
-  consultation request form at `/get-started`), in the original site's look. Its frame (`lan-frame.ts`: header bar, footer) is built from the shared skip
+  consultation request form at `/get-started`, the quote builder at `/quote` and the booking page at `/book`), in the original site's look. Its frame (`lan-frame.ts`: header bar, footer) is built from the shared skip
   link, site switcher and offline banner; its look is `projects/lan/src/styles.css`, with colours from the tokens (every pair in
   `tokens-lan.ts` is AAA). Menus and FAQs are `<details>`, so they work without script. Page copy is typed constants under
   `projects/lan/src/app/data/` (prices are copy, never computed). Structured data (JSON-LD) is written into `<head>` by
@@ -212,6 +214,22 @@ deploy/                — pc/ (api, postgres, redis, garage), pi/ (the edge)
   `mapFieldErrors` (the API's JSON-path errors onto a form's fields) and `<aj-form-status>` (sending, sent, field errors,
   429, offline, failed, in one pair of live regions). The success copy says only what the API does: the email is queued, and
   SMTP may be off (issue #15), so it promises no time and no email.
+- The quote builder (`forms/quote-form.ts`, `POST /api/lan/quotes`) and the booking page (`forms/booking-form.ts`,
+  `POST /api/lan/appointments`) follow the same pattern and are lazy-loaded pages. **Every amount on them comes from an API
+  answer** (`POST /api/lan/quotes/calculate` for the live price, the 201 for the quote): the browser formats a number with
+  `Intl.NumberFormat` and never adds, multiplies or rounds one. While there is no answer for the counts on the page (waiting,
+  offline, any error) the price panel says so, never $0 and never an older answer as current; a whole-home quote has no price
+  (the API sends a total of 0 on purpose) and shows only its deposit. The price is asked for 500 ms after the last change, one
+  call per settled change, and an answer for older counts is dropped. The quote's success links to `/book?quote=<number>`; the
+  email goes in the router's navigation state, never in a URL. There is no customer email for a quote, and a booking's
+  confirmation email may be off (issue #15), so neither page says one was sent.
+- Booking dates and times are Chicago time (`America/Chicago`), the business's: the window of open days starts at today's date
+  **in Chicago** (`forms/booking-dates.ts`, `Intl.DateTimeFormat` with the time zone, never `toISOString()`, which is the UTC day),
+  covers 31 days at a time and stops 90 days ahead; start times are labelled Central Time. Each submit sends an
+  `Idempotency-Key` (a UUID v4 from `crypto.getRandomValues`, `forms/uuid.ts`: `crypto.randomUUID` does not exist on plain
+  http, which the LAN edge and the e2e edges are). The key stays the same while the request is the same, so a retry after an
+  offline answer is the same request, and a change makes a new key. The API's refusals with a sentence of their own (404, 409,
+  422, the 24-hour 429) are shown with that sentence (`FormStatusState` `failed` with a `detail`).
 
 ### Deploy (new stack, PC)
 - The new backend runs from `deploy/pc/compose.yml` (project `action-jackson`): `api` (built from `server/`, with the repo root as the build context), `postgres`

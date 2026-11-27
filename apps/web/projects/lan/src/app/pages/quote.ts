@@ -14,7 +14,10 @@ import { QuoteForm } from '../forms/quote-form';
         <p class="eyebrow">Quote</p>
         <h1>Get a Quote.</h1>
         <p class="form-lede">Build a quote for cable runs and services and see the price as you go, or ask for a whole-home install.</p>
-        <p class="form-aside">Not sure what you need? <a class="accent-link" routerLink="/get-started">Ask for a consultation</a>.</p>
+        <p class="form-aside">
+          Already have a quote number? <a class="accent-link" routerLink="/book">Book an appointment</a>. Not sure what you need?
+          <a class="accent-link" routerLink="/get-started">Ask for a consultation</a>.
+        </p>
       </div>
     </section>
 

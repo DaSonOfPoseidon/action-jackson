@@ -27,6 +27,7 @@ const ROUTES: readonly Route[] = [
   { path: '/services/wiring', h1: 'Structured Cabling & Low-Voltage Networking.', title: `Structured Cabling & Low Voltage · ${SUFFIX}`, faqs: 7 },
   { path: '/get-started', h1: 'Get Started.', title: `Get started · ${SUFFIX}` },
   { path: '/quote', h1: 'Get a Quote.', title: `Get a quote · ${SUFFIX}` },
+  { path: '/book', h1: 'Book an Appointment.', title: `Book an appointment · ${SUFFIX}` },
 ];
 
 const SERVICE_LINKS = [
@@ -225,6 +226,8 @@ test.describe('lan pages', () => {
       await expect(footer.getByRole('link', { name: link.name, exact: true })).toHaveAttribute('href', link.href);
     }
     await expect(footer.getByRole('link', { name: 'Schedule Consultation', exact: true })).toHaveAttribute('href', '/get-started');
+    await expect(footer.getByRole('link', { name: 'Get a Quote', exact: true })).toHaveAttribute('href', '/quote');
+    await expect(footer.getByRole('link', { name: 'Book an Appointment', exact: true })).toHaveAttribute('href', '/book');
     await expect(footer.getByRole('link', { name: 'About', exact: true })).toHaveAttribute('href', '/about');
     await expect(footer).toContainText(`© ${new Date().getFullYear()} Action Jackson Installs. All rights reserved.`);
   });

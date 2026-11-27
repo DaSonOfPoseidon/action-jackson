@@ -407,16 +407,63 @@ test.describe('the quote builder, before the API is needed', () => {
   }
 });
 
-// Two quotes of this run, the quote number of the first one, in order: the whole block is serial, because the second test
-// needs the first one's number (and the booking specs after it need the quote). This is the only ordered part of the run
-// that touches the quote and booking endpoints.
+// Two quotes and the bookings of the first one, in order: the whole block is serial, because the bookings need the number of
+// the first quote and the second booking needs the first one to exist. This is the only ordered part of the run that touches
+// the quote and booking endpoints (and the booking page's real-API side lives here, not in lan-book.spec.ts, for that reason).
 //
 // The API's limits are fixed (no bypass is added for tests) and every request of this run comes from one address. This block
-// sends exactly: 2 POSTs to /api/lan/quotes (limit 3 per 15 minutes), and its price asks for the counts it types (the limit
-// is 30 per minute: a handful). Nothing else in the run posts to quotes.
+// sends exactly:
+//   - 2 POSTs to /api/lan/quotes       (limit 3 per 15 minutes): a drops-only quote and a whole-home quote;
+//   - 3 POSTs to /api/lan/appointments (limit 5 per 15 minutes, and every POST counts, a 404 too): a wrong email (404), the
+//     booking (201) and the same quote again (409);
+//   - a handful of calculate calls (limit 30 per minute) and availability GETs (limit 30 per minute).
+// Nothing else in the run posts to these endpoints.
 const STAMP = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
 const EMAIL_A = `e2e-quote-a-${STAMP}@example.com`;
 const EMAIL_B = `e2e-quote-b-${STAMP}@example.com`;
+
+const BOOK_SUBMIT = 'Book Appointment';
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+
+// "2026-11-30" as the page writes a booked day: the calendar date, whatever the time zone.
+const longDate = (day: string): string =>
+  new Intl.DateTimeFormat('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }).format(new Date(`${day}T12:00:00Z`));
+
+// "09:00" as the page writes a start time.
+const clock = (time: string): string => {
+  const [hours, minutes] = time.split(':').map(Number);
+  return `${hours % 12 === 0 ? 12 : hours % 12}:${String(minutes).padStart(2, '0')} ${hours < 12 ? 'AM' : 'PM'}`;
+};
+
+// An instant of the API's answer, as the Central Time of day it is written in.
+const centralClock = (instant: string): string => {
+  const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago', hour: 'numeric', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date(instant));
+  const part = (type: string): string => parts.find((p) => p.type === type)!.value;
+  return clock(`${part('hour')}:${part('minute')}`);
+};
+
+interface Availability {
+  timeZone: string;
+  days: { date: string; starts: string[] }[];
+}
+
+// The number of the drops-only quote the second test creates, for the bookings after it.
+let quoteNumber = '';
+
+// Opens the booking page for the first quote, chooses a site survey, and picks the first time of the `nth` open day the API
+// lists (the API's own answer: what is open depends on the day the run is on). Returns what was picked.
+async function pickSurveySlot(page: Page, nth: number): Promise<{ date: string; time: string }> {
+  await page.goto(pageUrl(HOST, `/book?quote=${quoteNumber}`));
+  await expect(page.getByRole('button', { name: BOOK_SUBMIT })).toBeEnabled({ timeout: 15_000 });
+  const answered = page.waitForResponse((response) => new URL(response.url()).pathname === '/api/lan/availability' && response.request().method() === 'GET');
+  await page.getByRole('radio', { name: /^Site Survey/ }).check();
+  const open = ((await (await answered).json()) as Availability).days.filter((day) => day.starts.length > 0);
+  expect(open.length).toBeGreaterThan(nth);
+  const { date, starts } = open[nth];
+  await page.locator(`#bf-day-${date}`).click();
+  await page.getByRole('radio', { name: clock(starts[0]), exact: true }).check();
+  return { date, time: starts[0] };
+}
 
 interface Calculation {
   lines: { code: string; description: string; quantity: number; unitPrice: number; lineTotal: number }[];
@@ -465,6 +512,7 @@ test.describe.serial('the quote builder against the real API @up', () => {
     const body = (await response.json()) as { quoteNumber: string; kind: string; total: number; deposit: number };
     expect(body.quoteNumber).toMatch(/^\d{8}$/);
     expect(body.kind).toBe('drops-only');
+    quoteNumber = body.quoteNumber;
 
     const sent = page.locator('.cf-sent');
     await expect(sent.getByRole('heading', { level: 2 })).toHaveText('Quote created');
@@ -490,6 +538,76 @@ test.describe.serial('the quote builder against the real API @up', () => {
     await atTop(page);
     expect(await axeViolations(page)).toEqual([]);
     expect(await contrastFailures(page, browser)).toEqual([]);
+
+    // The link goes to the booking page with the number prefilled and the email, from the navigation state (not the URL).
+    await sent.getByRole('link', { name: 'Book an appointment' }).click();
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Book an Appointment.');
+    await expect(page.getByRole('textbox', { name: 'Quote number' })).toHaveValue(body.quoteNumber);
+    await expect(page.getByRole('textbox', { name: 'Email on the quote' })).toHaveValue(EMAIL_A);
+    expect(page.url()).toBe(pageUrl(HOST, `/book?quote=${body.quoteNumber}`));
+  });
+
+  test("says there is no such quote for a wrong email, with the API's own sentence, and keeps the form (404)", async ({ page, watched }) => {
+    await pickSurveySlot(page, 0);
+    await page.getByRole('textbox', { name: 'Email on the quote' }).fill(`wrong-${STAMP}@example.com`);
+    const answered = page.waitForResponse((response) => new URL(response.url()).pathname === '/api/lan/appointments' && response.request().method() === 'POST');
+    await page.getByRole('button', { name: BOOK_SUBMIT }).click();
+    expect((await answered).status()).toBe(404);
+    await expect(page.locator('aj-form-status [role="alert"]')).toContainText('No quote matches that number and email.');
+    await expect(page.getByRole('textbox', { name: 'Quote number' })).toHaveValue(quoteNumber);
+    await expect(page.getByRole('button', { name: BOOK_SUBMIT })).toBeEnabled();
+    await expect(page.locator('form.cform')).toHaveCount(1);
+    expect(await watched.problems([pageUrl(HOST, '/api/lan/appointments')])).toEqual([]);
+  });
+
+  test('books a site survey from the open times and shows the start and end in Central Time (201)', async ({ page, browser, watched }) => {
+    test.setTimeout(120_000);
+    const slot = await pickSurveySlot(page, 0);
+    await page.getByRole('textbox', { name: 'Email on the quote' }).fill(EMAIL_A);
+    await page.getByRole('textbox', { name: 'Phone' }).fill('(573) 555-0100');
+    const answered = page.waitForResponse((response) => new URL(response.url()).pathname === '/api/lan/appointments' && response.request().method() === 'POST');
+    await page.getByRole('button', { name: BOOK_SUBMIT }).click();
+    const response = await answered;
+    expect(response.status()).toBe(201);
+    expect(response.request().headers()['idempotency-key']).toMatch(UUID);
+    expect(response.request().postDataJSON()).toEqual({ quoteNumber, email: EMAIL_A, kind: 'survey', date: slot.date, time: slot.time, phone: '(573) 555-0100', honeypot: '' });
+    const booked = (await response.json()) as { reference: string; kind: string; startsAt: string; endsAt: string };
+    expect(booked.reference).toBe(quoteNumber);
+
+    const sent = page.locator('.cf-sent');
+    await expect(sent.getByRole('heading', { level: 2 })).toHaveText('Appointment booked');
+    await expect(sent.getByRole('heading', { level: 2 })).toBeFocused();
+    await expect(sent.locator('strong.mono')).toHaveText(quoteNumber);
+    await expect(sent).toContainText('Site Survey');
+    // The start and the end the API sent, in Central Time: the day and time that were picked, and the 2 hours of a survey.
+    await expect(sent.locator('dd').first()).toHaveText(`${longDate(slot.date)}, ${clock(slot.time)} Central Time`);
+    await expect(sent.locator('dd').nth(1)).toContainText(`${centralClock(booked.endsAt)} Central Time`);
+    expect(centralClock(booked.startsAt)).toBe(clock(slot.time));
+    // What the API does is what the page says: the confirmation email may be off (issue #15), so none is claimed.
+    await expect(sent).toContainText("We'll contact you before the appointment to confirm.");
+    expect(await sent.innerText()).not.toMatch(/inbox|emailed|confirmation email|check your|within/i);
+    await expect(page.locator('form.cform')).toHaveCount(0);
+    expect(await watched.problems()).toEqual([]);
+
+    await atTop(page);
+    expect(await axeViolations(page)).toEqual([]);
+    expect(await contrastFailures(page, browser)).toEqual([]);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await atTop(page);
+    expect(await axeViolations(page)).toEqual([]);
+    expect(await contrastFailures(page, browser)).toEqual([]);
+  });
+
+  test('says the quote already has an appointment when it is booked again with a new slot (409)', async ({ page, watched }) => {
+    await pickSurveySlot(page, 0);
+    await page.getByRole('textbox', { name: 'Email on the quote' }).fill(EMAIL_A);
+    const answered = page.waitForResponse((response) => new URL(response.url()).pathname === '/api/lan/appointments' && response.request().method() === 'POST');
+    await page.getByRole('button', { name: BOOK_SUBMIT }).click();
+    expect((await answered).status()).toBe(409);
+    await expect(page.locator('aj-form-status [role="alert"]')).toContainText('This quote already has an appointment.');
+    await expect(page.getByRole('textbox', { name: 'Email on the quote' })).toHaveValue(EMAIL_A);
+    await expect(page.locator('form.cform')).toHaveCount(1);
+    expect(await watched.problems([pageUrl(HOST, '/api/lan/appointments')])).toEqual([]);
   });
 
   test('creates a whole-home quote, shows only its deposit and never a $0 total (201)', async ({ page, browser, watched }) => {
@@ -517,6 +635,26 @@ test.describe.serial('the quote builder against the real API @up', () => {
     await atTop(page);
     expect(await axeViolations(page)).toEqual([]);
     expect(await contrastFailures(page, browser)).toEqual([]);
+  });
+});
+
+test.describe('the whole-home install times, from the real API @up', () => {
+  // A GET, not a POST: it spends none of the booking budget above. A whole-home install starts only at its day's opening time.
+  test('lists only the opening time of each open day for a whole-home install', async ({ page }) => {
+    await page.goto(pageUrl(HOST, '/book'));
+    await expect(page.getByRole('button', { name: BOOK_SUBMIT })).toBeEnabled({ timeout: 15_000 });
+    const answered = page.waitForResponse((response) => new URL(response.url()).pathname === '/api/lan/availability' && response.request().method() === 'GET');
+    await page.getByRole('radio', { name: /^Whole-Home Install/ }).check();
+    const response = await answered;
+    expect(new URL(response.url()).searchParams.has('durationMinutes')).toBe(false);
+    const open = ((await response.json()) as Availability).days.filter((day) => day.starts.length > 0);
+    expect(open.length).toBeGreaterThan(0);
+    for (const day of open) {
+      expect(day.starts, day.date).toEqual(['08:00']);
+    }
+    await page.locator(`#bf-day-${open[0].date}`).click();
+    await expect(page.locator('.bf-times label')).toHaveText(['8:00 AM']);
+    await expect(page.locator('.bf-times legend')).toContainText('Central Time');
   });
 });
 
